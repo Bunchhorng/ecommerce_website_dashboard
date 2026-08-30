@@ -1,0 +1,67 @@
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class ProductResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'slug' => $this->slug,
+            'name' => $this->name,
+            'short_description' => $this->short_description,
+            'price' => (float) $this->price,
+            'compare_at_price' => $this->compare_at_price !== null ? (float) $this->compare_at_price : null,
+            'rating_avg' => (float) $this->rating_avg,
+            'rating_count' => (int) $this->rating_count,
+            'is_featured' => (bool) $this->is_featured,
+            'is_active' => (bool) $this->is_active,
+            'in_stock' => $this->inStock ?? $this->computeInStock(),
+            'cover_image' => $this->resolveCoverImage(),
+            'brand' => $this->whenLoaded('brand', fn () => [
+                'slug' => $this->brand->slug,
+                'name' => $this->brand->name,
+            ]),
+            'category' => $this->whenLoaded('category', fn () => [
+                'slug' => $this->category->slug,
+                'name' => $this->category->name,
+            ]),
+        ];
+    }
+
+    protected function computeInStock(): bool
+    {
+        $variants = $this->variants;
+        if ($variants === null) {
+            return (float) ($this->inventory?->first()?->quantity ?? 0) > 0;
+        }
+
+        foreach ($variants as $variant) {
+            if (!(bool) $variant->is_active) {
+                continue;
+            }
+            $inventory = $variant->inventory;
+            $quantity = $inventory ? (int) $inventory->quantity - (int) $inventory->reserved_quantity : 0;
+            if ($quantity > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function resolveCoverImage(): ?string
+    {
+        if ($this->relationLoaded('images')) {
+            $cover = $this->images->firstWhere('is_cover', true);
+            $image = $cover ?? $this->images->first();
+            return $image?->image_path;
+        }
+
+        return $this->cover_image;
+    }
+}

@@ -1,0 +1,146 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Models\Order;
+use App\Models\Payment;
+use App\Models\PaymentTransaction;
+use App\Models\Shipment;
+use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+
+class OrderService
+{
+    public function __construct(private InventoryService $inventory)
+    {
+    }
+
+    /**
+     * Paginated list of a user's orders, newest first.
+     */
+    public function listFor(User $user, ?string $status = null): LengthAwarePaginator
+    {
+        return $user->orders()
+            ->with(['items', 'payment', 'shipments'])
+            ->when($status !== null, fn ($q) => $q->where('status', $status))
+            ->latest('placed_at')
+            ->paginate(10);
+    }
+
+    /**
+     * Find an order by its number, scoped to the owning user.
+     */
+    public function findByNumber(User $user, string $orderNumber): Order
+    {
+        $order = $user->orders()->with(['items', 'payment', 'shipments'])->where('order_number', $orderNumber)->first();
+
+        if ($order === null) {
+            throw new NotFoundHttpException();
+        }
+
+        return $order;
+    }
+
+    /**
+     * The strict order lifecycle state map.
+     */
+    public function transitions(): array
+    {
+        return [
+            Order::STATUS_PENDING => [Order::STATUS_CONFIRMED, Order::STATUS_CANCELLED],
+            Order::STATUS_CONFIRMED => [Order::STATUS_PROCESSING, Order::STATUS_CANCELLED, Order::STATUS_REFUNDED],
+            Order::STATUS_PROCESSING => [Order::STATUS_SHIPPED, Order::STATUS_CANCELLED],
+            Order::STATUS_SHIPPED => [Order::STATUS_DELIVERED, Order::STATUS_REFUNDED],
+            Order::STATUS_DELIVERED => [Order::STATUS_REFUNDED],
+        ];
+    }
+
+    /**
+     * Transition an order through the strict state machine.
+     */
+    public function transition(Order $order, string $to): Order
+    {
+        return DB::transaction(function () use ($order, $to): Order {
+            $allowed = $this->transitions()[$order->status] ?? [];
+
+            if (! in_array($to, $allowed, true)) {
+                throw ValidationException::withMessages(['message' => "Invalid status transition from {$order->status} to {$to}"]);
+            }
+
+            if ($to === Order::STATUS_SHIPPED) {
+                $shipment = $order->shipments()->first();
+                if ($shipment !== null) {
+                    $shipment->status = Shipment::STATUS_SHIPPED;
+                    $shipment->shipped_at = now();
+                    $shipment->save();
+                }
+            }
+
+            if ($to === Order::STATUS_DELIVERED) {
+                $shipment = $order->shipments()->first();
+                if ($shipment !== null) {
+                    $shipment->status = Shipment::STATUS_DELIVERED;
+                    $shipment->delivered_at = now();
+                    $shipment->save();
+                }
+            }
+
+            if ($to === Order::STATUS_REFUNDED) {
+                $payment = $order->payment;
+                if ($payment !== null) {
+                    $payment->status = Payment::STATUS_REFUNDED;
+                    $payment->save();
+
+                    PaymentTransaction::create([
+                        'payment_id' => $payment->id,
+                        'type' => 'refund',
+                        'status' => 'success',
+                        'amount' => round((float) $payment->amount, 2),
+                        'reference' => $payment->transaction_id,
+                    ]);
+                }
+
+                $order->payment_status = Order::PAYMENT_REFUNDED;
+            }
+
+            $order->status = $to;
+            $order->save();
+
+            return $order->load(['items', 'payment', 'shipments']);
+        });
+    }
+
+    /**
+     * Cancel an order by the customer or admin, releasing active reservations.
+     */
+    public function cancelOwn(Order $order): Order
+    {
+        return DB::transaction(function () use ($order): Order {
+            $allowed = [Order::STATUS_PENDING, Order::STATUS_CONFIRMED, Order::STATUS_PROCESSING];
+
+            if (! in_array($order->status, $allowed, true)) {
+                throw ValidationException::withMessages(['message' => 'Order cannot be cancelled in its current state']);
+            }
+
+            if ($order->status === Order::STATUS_PENDING) {
+                $items = [];
+                foreach ($order->items as $item) {
+                    $items[(int) $item->product_variant_id] = (int) $item->quantity;
+                }
+                $this->inventory->releaseMany($items);
+            }
+
+            $order->status = Order::STATUS_CANCELLED;
+            $order->payment_status = Order::PAYMENT_UNPAID;
+            $order->note = trim(($order->note ? $order->note.' ' : '').'cancelled');
+            $order->save();
+
+            return $order->load(['items', 'payment', 'shipments']);
+        });
+    }
+}

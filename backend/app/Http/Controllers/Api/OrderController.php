@@ -1,0 +1,54 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\OrderListResource;
+use App\Http\Resources\OrderResource;
+use App\Services\OrderService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
+
+class OrderController extends Controller
+{
+    public function __construct(protected OrderService $orders)
+    {
+    }
+
+    public function index(Request $request)
+    {
+        $paginator = $this->orders->listFor($request->user(), $request->query('status'));
+
+        return [
+            'data' => OrderListResource::collection($paginator->items()),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+        ];
+    }
+
+    public function show(Request $request, string $orderNumber)
+    {
+        return $this->resolveForUser($request->user(), $orderNumber);
+    }
+
+    public function cancel(Request $request, string $orderNumber)
+    {
+        $order = $this->resolveForUser($request->user(), $orderNumber);
+        $order = $this->orders->cancelOwn($order);
+
+        return new OrderResource($order);
+    }
+
+    protected function resolveForUser($user, string $orderNumber): \App\Models\Order
+    {
+        try {
+            return $this->orders->findByNumber($user, $orderNumber);
+        } catch (ModelNotFoundException $e) {
+            abort(404, 'Order not found.');
+        }
+    }
+}

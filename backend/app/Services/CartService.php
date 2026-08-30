@@ -1,0 +1,194 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Models\Cart;
+use App\Models\ProductVariant;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+
+class CartService
+{
+    public function __construct(private InventoryService $inventory)
+    {
+    }
+
+    /**
+     * Resolve (or create) the cart for a user or guest session.
+     */
+    public function forUser(?User $user, ?string $sessionId): Cart
+    {
+        if ($user !== null) {
+            $cart = Cart::firstOrCreate(['user_id' => $user->id]);
+        } else {
+            if ($sessionId === null) {
+                throw ValidationException::withMessages(['message' => 'Unable to resolve cart']);
+            }
+            $cart = Cart::firstOrCreate(['session_id' => $sessionId]);
+        }
+
+        return $cart;
+    }
+
+    /**
+     * Load all cart items with variant and product image data.
+     */
+    public function items(Cart $cart): Collection
+    {
+        return $cart->items()->with(['variant.product.images'])->get();
+    }
+
+    /**
+     * Add a variant to the cart, capping quantity by available stock.
+     */
+    public function add(Cart $cart, int $variantId, int $quantity = 1): Cart
+    {
+        $variant = ProductVariant::where('id', $variantId)->where('is_active', true)->first();
+
+        if ($variant === null) {
+            throw ValidationException::withMessages(['message' => 'Variant not found']);
+        }
+
+        $available = $this->inventory->available($variantId);
+
+        if ($available <= 0) {
+            throw ValidationException::withMessages(['message' => 'Variant is out of stock']);
+        }
+
+        $addQty = min(max($quantity, 0), $available);
+
+        DB::transaction(function () use ($cart, $variantId, $addQty): void {
+            $item = $cart->items()->where('product_variant_id', $variantId)->first();
+
+            if ($item === null) {
+                $cart->items()->create([
+                    'product_variant_id' => $variantId,
+                    'quantity' => $addQty,
+                ]);
+            } else {
+                $newQty = min((int) $item->quantity + $addQty, $this->inventory->available($variantId));
+                $item->update(['quantity' => max($newQty, 1)]);
+            }
+        });
+
+        return $cart->load('items.variant.product.images');
+    }
+
+    /**
+     * Update a cart item quantity (removing when zero or negative).
+     */
+    public function update(Cart $cart, int $cartItemId, int $quantity): Cart
+    {
+        $item = $cart->items()->where('id', $cartItemId)->first();
+
+        if ($item === null || (int) $item->cart_id !== (int) $cart->id) {
+            throw ValidationException::withMessages(['message' => 'Not found']);
+        }
+
+        if ($quantity <= 0) {
+            $item->delete();
+
+            return $cart->load('items.variant.product.images');
+        }
+
+        $available = $this->inventory->available((int) $item->product_variant_id);
+        $item->update(['quantity' => min($quantity, $available)]);
+
+        return $cart->load('items.variant.product.images');
+    }
+
+    /**
+     * Remove an item from the cart.
+     */
+    public function remove(Cart $cart, int $cartItemId): void
+    {
+        $item = $cart->items()->where('id', $cartItemId)->first();
+
+        if ($item !== null) {
+            $item->delete();
+        }
+    }
+
+    /**
+     * Remove all items from the cart.
+     */
+    public function clear(Cart $cart): void
+    {
+        $cart->items()->delete();
+    }
+
+    /**
+     * Compute cart totals.
+     *
+     * @return array{items_count: int, subtotal: float, tax_amount: float, discount_applicable: float, total: float}
+     */
+    public function totals(Cart $cart): array
+    {
+        $subtotal = 0.0;
+        $itemsCount = 0;
+
+        foreach ($cart->items()->with('variant.product')->get() as $item) {
+            $variant = $item->variant;
+
+            if ($variant === null) {
+                continue;
+            }
+
+            $unit = $variant->price !== null ? round((float) $variant->price, 2) : round((float) ($variant->product?->price ?? 0), 2);
+            $subtotal += round($unit * (int) $item->quantity, 2);
+            $itemsCount += (int) $item->quantity;
+        }
+
+        $subtotal = round($subtotal, 2);
+        $taxAmount = round($subtotal * 0.10, 2);
+
+        return [
+            'items_count' => $itemsCount,
+            'subtotal' => $subtotal,
+            'tax_amount' => $taxAmount,
+            'discount_applicable' => 0.0,
+            'total' => round($subtotal + $taxAmount, 2),
+        ];
+    }
+
+    /**
+     * Migrate a guest (session) cart's items into the user's cart.
+     */
+    public function mergeGuestIntoUser(User $user, ?string $sessionId): void
+    {
+        if ($sessionId === null) {
+            return;
+        }
+
+        $guestCart = Cart::where('session_id', $sessionId)->first();
+
+        if ($guestCart === null) {
+            return;
+        }
+
+        $userCart = Cart::firstOrCreate(['user_id' => $user->id]);
+
+        DB::transaction(function () use ($userCart, $guestCart): void {
+            foreach ($guestCart->items as $item) {
+                $existing = $userCart->items()->where('product_variant_id', $item->product_variant_id)->first();
+
+                if ($existing === null) {
+                    $userCart->items()->create([
+                        'product_variant_id' => $item->product_variant_id,
+                        'quantity' => $item->quantity,
+                    ]);
+                } else {
+                    $existing->update([
+                        'quantity' => (int) $existing->quantity + (int) $item->quantity,
+                    ]);
+                }
+            }
+
+            $guestCart->items()->delete();
+        });
+    }
+}
