@@ -1,0 +1,75 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import StoreLayout from '@/layouts/StoreLayout.vue'
+import AccountLayout from '@/layouts/AccountLayout.vue'
+import AdminLayout from '@/layouts/AdminLayout.vue'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    title?: string
+    requiresAuth?: boolean
+    admin?: boolean
+  }
+}
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  scrollBehavior(_to, _from, savedPosition) {
+    return savedPosition ?? { top: 0 }
+  },
+  routes: [
+    {
+      path: '/',
+      component: StoreLayout,
+      children: [
+        { path: '', name: 'home', component: () => import('@/views/HomeView.vue'), meta: { title: 'Home' } },
+        { path: 'shop', name: 'shop', component: () => import('@/views/ShopView.vue'), meta: { title: 'Shop' } },
+        { path: 'product/:slug', name: 'product-detail', component: () => import('@/views/ProductDetailView.vue'), meta: { title: 'Product' } },
+        { path: 'cart', name: 'cart', component: () => import('@/views/CartView.vue'), meta: { title: 'Cart' } },
+        { path: 'checkout', name: 'checkout', component: () => import('@/views/CheckoutView.vue'), meta: { title: 'Checkout', requiresAuth: true } },
+        { path: 'order/success/:orderId', name: 'order-success', component: () => import('@/views/OrderSuccessView.vue'), meta: { title: 'Order Confirmed' } },
+        { path: 'order/tracking/:orderId', name: 'order-tracking', component: () => import('@/views/OrderTrackingView.vue'), meta: { title: 'Track Order' } }
+      ]
+    },
+    {
+      path: '/account',
+      component: AccountLayout,
+      meta: { requiresAuth: true },
+      children: [
+        { path: '', name: 'account-dashboard', component: () => import('@/views/account/DashboardView.vue'), meta: { title: 'Dashboard' } },
+        { path: 'orders', name: 'account-orders', component: () => import('@/views/account/OrdersView.vue'), meta: { title: 'My Orders' } },
+        { path: 'wishlist', name: 'account-wishlist', component: () => import('@/views/account/WishlistView.vue'), meta: { title: 'Wishlist' } },
+        { path: 'addresses', name: 'account-addresses', component: () => import('@/views/account/AddressesView.vue'), meta: { title: 'Addresses' } },
+        { path: 'profile', name: 'account-profile', component: () => import('@/views/account/ProfileView.vue'), meta: { title: 'Profile' } },
+        { path: 'notifications', name: 'account-notifications', component: () => import('@/views/account/NotificationsView.vue'), meta: { title: 'Notifications' } },
+        { path: 'reviews', name: 'account-reviews', component: () => import('@/views/account/ReviewsView.vue'), meta: { title: 'My Reviews' } },
+        { path: 'password', name: 'account-password', component: () => import('@/views/account/ChangePasswordView.vue'), meta: { title: 'Change Password' } }
+      ]
+    },
+    {
+      path: '/admin',
+      component: AdminLayout,
+      meta: { requiresAuth: true, admin: true },
+      redirect: { name: 'admin-dashboard' },
+      children: [
+        { path: 'dashboard', name: 'admin-dashboard', component: () => import('@/views/admin/AdminDashboardView.vue'), meta: { title: 'Dashboard' } },
+        { path: 'products', name: 'admin-products', component: () => import('@/views/admin/AdminProductsView.vue'), meta: { title: 'Products' } },
+        { path: 'products/new', name: 'admin-product-create', component: () => import('@/views/admin/AddProductView.vue'), meta: { title: 'Add Product' } },
+        { path: 'orders', name: 'admin-orders', component: () => import('@/views/admin/AdminOrdersView.vue'), meta: { title: 'Orders' } },
+        { path: 'customers', name: 'admin-customers', component: () => import('@/views/admin/AdminCustomersView.vue'), meta: { title: 'Customers' } },
+        { path: 'coupons', name: 'admin-coupons', component: () => import('@/views/admin/AdminCouponsView.vue'), meta: { title: 'Coupons' } },
+        { path: 'reviews', name: 'admin-reviews', component: () => import('@/views/admin/AdminReviewsView.vue'), meta: { title: 'Reviews' } },
+        { path: 'categories', name: 'admin-categories', component: () => import('@/views/admin/AdminCategoriesView.vue'), meta: { title: 'Categories' } },
+        { path: 'brands', name: 'admin-brands', component: () => import('@/views/admin/AdminBrandsView.vue'), meta: { title: 'Brands' } },
+        { path: 'shipping', name: 'admin-shipping', component: () => import('@/views/admin/AdminShippingMethodsView.vue'), meta: { title: 'Shipping Methods' } }
+      ]
+    },
+    { path: '/:pathMatch(.*)*', redirect: '/' }
+  ]
+})
+
+router.beforeEach((to) => {
+  document.title = to.meta.title ? `${to.meta.title} · ShopVerse` : 'ShopVerse'
+  return true
+})
+
+export default router

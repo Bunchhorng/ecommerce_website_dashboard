@@ -1,0 +1,62 @@
+<script setup lang="ts">
+import { ArrowRight, PackageOpen } from 'lucide-vue-next'
+import { useCartStore } from '@/stores/cart'
+import type { AddToCartInput } from '@/stores/cart'
+import { useWishlistStore } from '@/stores/wishlist'
+import type { Product } from '@/types'
+import EmptyState from './EmptyState.vue'
+import ProductCard from './ProductCard.vue'
+
+withDefaults(
+  defineProps<{
+    title: string
+    subtitle?: string
+    products?: Product[]
+    viewAllLink?: string
+  }>(),
+  { subtitle: '', products: () => [], viewAllLink: '/shop' }
+)
+
+const cartStore = useCartStore()
+const wishlistStore = useWishlistStore()
+
+function handleAdd(payload: AddToCartInput): void {
+  cartStore.addItem({ product: payload.product, variantId: payload.variantId, quantity: 1 })
+}
+
+function handleWishlist(productId: string): void {
+  wishlistStore.toggle(productId)
+}
+</script>
+
+<template>
+  <section v-if="products.length > 0">
+    <div class="mb-5 flex items-end justify-between gap-4">
+      <div>
+        <h2 class="section-title">{{ title }}</h2>
+        <p v-if="subtitle" class="section-subtitle">{{ subtitle }}</p>
+      </div>
+      <RouterLink
+        :to="viewAllLink"
+        class="flex shrink-0 items-center gap-1 text-sm font-semibold text-primary transition-colors hover:text-primary-dark"
+      >
+        View All
+        <ArrowRight :size="16" />
+      </RouterLink>
+    </div>
+    <div class="grid grid-flow-col auto-cols-[170px] gap-4 overflow-x-auto pb-2 snap-x sm:auto-cols-[200px]">
+      <ProductCard
+        v-for="product in products"
+        :key="product.id"
+        :product="product"
+        @add-to-cart="handleAdd"
+        @wishlist-toggle="handleWishlist"
+      />
+    </div>
+  </section>
+  <EmptyState v-else title="No products yet">
+    <template #icon>
+      <PackageOpen :size="28" />
+    </template>
+  </EmptyState>
+</template>
