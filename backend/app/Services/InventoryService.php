@@ -66,7 +66,7 @@ class InventoryService
         return DB::transaction(function () use ($items): bool {
             foreach ($items as $variantId => $quantity) {
                 if (! $this->reserve((int) $variantId, (int) $quantity)) {
-                    throw new \RuntimeException('Inventory reservation failed');
+                    return false;
                 }
             }
 

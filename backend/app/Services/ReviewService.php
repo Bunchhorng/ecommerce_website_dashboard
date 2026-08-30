@@ -27,6 +27,16 @@ class ReviewService
             ]);
         }
 
+        $existing = Review::where('user_id', $user->id)
+            ->where('product_id', (int) $data['product_id'])
+            ->first();
+
+        if ($existing !== null) {
+            throw ValidationException::withMessages([
+                'product_id' => ['You have already reviewed this product.'],
+            ]);
+        }
+
         return Review::create([
             'user_id' => $user->id,
             'product_id' => (int) $data['product_id'],

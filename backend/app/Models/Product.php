@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['category_id', 'brand_id', 'name', 'slug', 'description', 'short_description', 'price', 'compare_at_price', 'cost_price', 'sku', 'barcode', 'weight', 'is_featured', 'is_active', 'rating_avg', 'rating_count', 'meta_title', 'meta_description', 'seo_keywords'])]
 class Product extends Model
 {
+    use HasFactory;
     use SoftDeletes;
 
     protected function casts(): array
