@@ -1,0 +1,27 @@
+{
+  "nav": {
+    "home": "Home",
+    "shop": "Shop",
+    "cart": "Cart",
+    "wishlist": "Wishlist",
+    "dashboard": "Dashboard"
+  },
+  "actions": {
+    "add_to_cart": "Add to Cart",
+    "buy_now": "Buy Now",
+    "checkout": "Proceed to Checkout",
+    "filter": "Filter Products",
+    "apply_coupon": "Apply Coupon"
+  },
+  "product": {
+    "sku": "SKU",
+    "in_stock": "In Stock",
+    "out_of_stock": "Out of Stock",
+    "rating": "Rating"
+  },
+  "checkout": {
+    "shipping_address": "Shipping Address",
+    "payment_method": "Payment Method",
+    "order_summary": "Order Summary"
+  }
+}

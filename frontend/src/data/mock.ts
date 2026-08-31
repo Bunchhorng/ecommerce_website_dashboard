@@ -362,7 +362,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'p9',
     slug: 'velvet-matte-lipstick-ruby',
-    title: 'Velvet Matte Lipstick — Ruby',
+    title: 'Velvet Matte Lipstick, Ruby',
     brand: brandOf('elara-beauty'),
     category: cat('beauty'),
     sku: 'VEL-LP-009',
@@ -548,7 +548,7 @@ export const REVIEWS: Review[] = [
   { id: 'r6', productId: 'p8', author: 'Sara Kim', rating: 5, title: 'Skin is glowing', body: 'Two weeks in and my dry patches are gone. No breakouts, absorbs instantly.', date: '2026-07-08', verified: true, status: 'approved' },
   { id: 'r7', productId: 'p2', author: 'Jake Miller', rating: 4, title: 'Solid tracking, comfy band', body: 'HR matches my chest strap within a beat or two. Band is soft. GPS locks in about 20 seconds.', date: '2026-06-29', verified: true, status: 'approved' },
   { id: 'r8', productId: 'p4', author: 'Nadia Hassan', rating: 5, title: 'Perfect daily trainer', body: 'Light, breathable, and the white colorway stays surprisingly clean.', date: '2026-05-15', verified: true, status: 'approved' },
-  { id: 'r9', productId: 'p12', author: 'George Whitfield', rating: 4, title: 'Beautiful warm light', body: 'The oak looks premium on my desk. Dimmer is very smooth. Slightly heavier than expected — that’s a plus.', date: '2026-03-30', verified: true, status: 'approved' },
+  { id: 'r9', productId: 'p12', author: 'George Whitfield', rating: 4, title: 'Beautiful warm light', body: 'The oak looks premium on my desk. Dimmer is very smooth. Slightly heavier than expected. That’s a plus.', date: '2026-03-30', verified: true, status: 'approved' },
   { id: 'r10', productId: 'p1', author: 'Anonymous', rating: 3, title: 'Good but heavy', body: 'Sound is great but they get heavy on my ears after a few hours. Returned for a lighter pair.', date: '2026-08-01', verified: false, status: 'pending' }
 ]
 

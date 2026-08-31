@@ -435,7 +435,7 @@ function placeOrder() {
                   <div class="min-w-0 flex-1">
                     <p class="truncate font-semibold text-ink">{{ item.title }}</p>
                     <p class="text-xs text-gray-500">
-                      Qty {{ item.quantity }} · {{ item.variant?.attributes ? item.variant.attributes.map((a) => a.value).join(', ') : '—' }}
+                      Qty {{ item.quantity }} · {{ item.variant?.attributes ? item.variant.attributes.map((a) => a.value).join(', ') : '' }}
                     </p>
                   </div>
                   <p class="shrink-0 font-medium text-ink">{{ formatPrice(item.unitPrice * item.quantity) }}</p>

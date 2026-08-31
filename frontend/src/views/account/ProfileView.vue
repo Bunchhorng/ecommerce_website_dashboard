@@ -73,6 +73,6 @@ function saveProfile() {
       Profile updated successfully.
     </p>
 
-    <p class="text-xs text-gray-400">This is a demo — data is not persisted.</p>
+    <p class="text-xs text-gray-400">This is a demo. Data is not persisted.</p>
   </div>
 </template>

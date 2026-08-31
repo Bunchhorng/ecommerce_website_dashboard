@@ -22,7 +22,7 @@ function applyCoupon() {
 }
 
 function variantLine(attributes: { name: string; value: string }[] | undefined): string {
-  if (!attributes || attributes.length === 0) return '—'
+  if (!attributes || attributes.length === 0) return ''
   return attributes.map((a) => `${a.name}: ${a.value}`).join(', ')
 }
 </script>
@@ -65,7 +65,7 @@ function variantLine(attributes: { name: string; value: string }[] | undefined):
               {{ item.title }}
             </RouterLink>
             <p class="text-xs text-gray-500">
-              {{ item.variant?.attributes ? variantLine(item.variant.attributes) : '—' }}
+              {{ item.variant?.attributes ? variantLine(item.variant.attributes) : '' }}
             </p>
             <p class="mt-1 text-xs text-gray-500">{{ formatPrice(item.unitPrice) }} each</p>
           </div>
@@ -103,7 +103,7 @@ function variantLine(attributes: { name: string; value: string }[] | undefined):
         </div>
         <div v-else class="flex justify-between text-sm">
           <span class="text-gray-600">Discount</span>
-          <span class="text-gray-400">—</span>
+          <span class="text-gray-400"></span>
         </div>
         <div class="flex justify-between text-sm">
           <span class="text-gray-600">Tax (10%)</span>

@@ -1,0 +1,27 @@
+{
+  "nav": {
+    "home": "ទំព័រដើម",
+    "shop": "ហាងទំនិញ",
+    "cart": "កន្ត្រក Cart",
+    "wishlist": "បញ្ជីប្រាថ្នា",
+    "dashboard": "ផ្ទាំងគ្រប់គ្រង"
+  },
+  "actions": {
+    "add_to_cart": "បញ្ជូលទៅ Cart",
+    "buy_now": "ទិញភ្លាមៗ",
+    "checkout": "បន្តទៅ Checkout",
+    "filter": "តម្រងស្វែងរក",
+    "apply_coupon": "ប្រើប្រាស់ Coupon"
+  },
+  "product": {
+    "sku": "កូដ SKU",
+    "in_stock": "មានក្នុងស្តុក",
+    "out_of_stock": "អស់ពីស្តុក",
+    "rating": "ការវាយតម្លៃ"
+  },
+  "checkout": {
+    "shipping_address": "អាសយដ្ឋានដឹកជញ្ជូន",
+    "payment_method": "វិធីសាស្ត្រទូទាត់ប្រាក់",
+    "order_summary": "សង្ខេបបុងទូទាត់"
+  }
+}

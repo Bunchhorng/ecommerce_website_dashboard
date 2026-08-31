@@ -331,7 +331,7 @@ function showToast(msg: string) {
             >
               {{ discountPct }}%
             </span>
-            <span v-else class="text-sm text-gray-400">—</span>
+            <span v-else class="text-sm text-gray-400"></span>
           </div>
         </div>
       </div>

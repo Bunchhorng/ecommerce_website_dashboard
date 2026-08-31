@@ -36,7 +36,7 @@ function subscribe(): void {
             Shop<span class="text-primary">Verse</span>
           </RouterLink>
           <p class="mt-4 max-w-xs text-sm text-gray-400">
-            Your one-stop destination for electronics, fashion, beauty and more — delivered fast and backed by friendly support.
+            Your one-stop destination for electronics, fashion, beauty and more, delivered fast and backed by friendly support.
           </p>
           <div class="mt-6 flex items-center gap-2">
             <a

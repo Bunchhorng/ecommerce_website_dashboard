@@ -361,7 +361,7 @@ const featureList = computed(() => {
           </template>
 
           <div v-if="!hasCombination" class="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
-            Combination unavailable — please pick another option.
+            Combination unavailable. Please pick another option.
           </div>
 
           <div class="mt-6 flex flex-wrap items-center gap-3">

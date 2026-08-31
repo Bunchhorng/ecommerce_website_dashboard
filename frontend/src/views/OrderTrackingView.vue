@@ -69,7 +69,7 @@ function timestampFor(status: OrderStatus): string | null {
               {{ status }}
             </p>
             <p class="mt-1 text-center text-[10px] text-gray-500">
-              {{ timestampFor(status) ?? '—' }}
+              {{ timestampFor(status) ?? '' }}
             </p>
           </div>
           <div
@@ -107,7 +107,7 @@ function timestampFor(status: OrderStatus): string | null {
               {{ status }}
             </p>
             <p class="mt-0.5 text-xs text-gray-500">
-              {{ timestampFor(status) ?? '—' }}
+              {{ timestampFor(status) ?? '' }}
             </p>
           </div>
         </div>
@@ -132,7 +132,7 @@ function timestampFor(status: OrderStatus): string | null {
           <div class="min-w-0 flex-1">
             <p class="font-semibold text-ink">{{ item.title }}</p>
             <p class="text-xs text-gray-500">
-              {{ item.brand }} · {{ item.variant?.attributes ? item.variant.attributes.map((a) => a.value).join(', ') : '—' }}
+              {{ item.brand }} · {{ item.variant?.attributes ? item.variant.attributes.map((a) => a.value).join(', ') : '' }}
             </p>
             <p class="text-xs text-gray-500">Qty {{ item.quantity }}</p>
           </div>
