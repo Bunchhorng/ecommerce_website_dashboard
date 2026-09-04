@@ -207,4 +207,23 @@ class CheckoutTest extends TestCase
             ->getJson("/api/orders/{$otherOrder->order_number}")
             ->assertStatus(404);
     }
+
+    public function test_customer_receipt_pdf_is_scoped_to_own_orders(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $order = Order::factory()->create(['user_id' => $user->id]);
+        $otherOrder = Order::factory()->create(['user_id' => $other->id]);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->get("/api/orders/{$order->order_number}/receipt")
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf');
+
+        $this->assertStringStartsWith('%PDF', (string) $response->getContent());
+
+        $this->actingAs($user, 'sanctum')
+            ->get("/api/orders/{$otherOrder->order_number}/receipt")
+            ->assertStatus(404);
+    }
 }

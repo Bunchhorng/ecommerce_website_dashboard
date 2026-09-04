@@ -34,8 +34,8 @@ const props = withDefaults(defineProps<Props>(), {
   rows: () => [],
   bulkActions: () => [],
   rowActions: () => [],
-  searchPlaceholder: 'Search…',
-  emptyTitle: 'No results found'
+  searchPlaceholder: '',
+  emptyTitle: ''
 })
 
 const emit = defineEmits<{
@@ -167,15 +167,15 @@ function cellValue(row: TableRow, col: TableColumn): string {
     <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div class="relative w-full max-w-xs">
         <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-        <input v-model="search" type="text" class="input h-9 w-full pl-9" :placeholder="props.searchPlaceholder" />
+        <input v-model="search" type="text" class="input h-9 w-full pl-9" :placeholder="props.searchPlaceholder || $t('admin.table.search_placeholder')" />
       </div>
       <div v-if="selectedIds.length && props.bulkActions.length" class="flex items-center gap-2">
         <select v-model="bulkAction" class="select h-9 w-40">
-          <option value="" disabled>Bulk actions…</option>
+          <option value="" disabled>{{ $t('admin.table.bulk_actions') }}</option>
           <option v-for="a in props.bulkActions" :key="a.value" :value="a.value">{{ a.label }}</option>
         </select>
-        <button class="btn-primary btn-sm" @click="handleBulkApply">Apply</button>
-        <span class="text-xs text-gray-500">{{ selectedIds.length }} selected</span>
+        <button class="btn-primary btn-sm" @click="handleBulkApply">{{ $t('actions.apply') }}</button>
+        <span class="text-xs text-gray-500">{{ $t('admin.table.selected_count', { count: selectedIds.length }) }}</span>
       </div>
     </div>
 
@@ -274,7 +274,7 @@ function cellValue(row: TableRow, col: TableColumn): string {
       </div>
 
       <div class="flex items-center justify-between gap-3 border-t border-border-gray p-4">
-        <span class="text-xs text-gray-500">Showing {{ rangeStart }}–{{ rangeEnd }} of {{ filtered.length }}</span>
+        <span class="text-xs text-gray-500">{{ $t('admin.table.showing_range', { from: rangeStart, to: rangeEnd, total: filtered.length }) }}</span>
         <BasePagination
           :page="currentPage"
           :page-count="pageCount"
@@ -285,7 +285,7 @@ function cellValue(row: TableRow, col: TableColumn): string {
       </div>
     </template>
 
-    <EmptyState v-else :title="props.emptyTitle" :description="props.emptyDescription" cta-label="">
+    <EmptyState v-else :title="props.emptyTitle || $t('admin.table.no_results')" :description="props.emptyDescription" cta-label="">
       <template #icon>
         <SearchX class="h-10 w-10 text-gray-300" />
       </template>

@@ -51,8 +51,8 @@ function handleView(): void {
 </script>
 
 <template>
-  <div class="card group flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-lg">
-    <div class="relative aspect-square overflow-hidden bg-canvas">
+  <div class="card group flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-lg dark:bg-gray-800">
+    <div class="relative aspect-square overflow-hidden bg-canvas dark:bg-gray-700/50">
       <RouterLink :to="`/product/${props.product.slug}`" class="block h-full w-full" @click="handleView">
         <img
           v-if="coverImage"
@@ -66,15 +66,15 @@ function handleView(): void {
         <span v-if="discountPercent > 0" class="rounded-md bg-accent px-2 py-1 text-xs font-bold text-ink">
           -{{ discountPercent }}%
         </span>
-        <span v-if="props.product.isNew" class="rounded-md bg-primary px-2 py-1 text-xs font-bold text-white">
-          NEW
+        <span v-if="props.product.isNew" class="rounded-md bg-primary px-2 py-1 text-xs font-bold text-white dark:bg-blue-500">
+          {{ $t('product.new') }}
         </span>
       </div>
       <button
         type="button"
-        class="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-md transition-colors"
-        :class="isWishlisted ? 'text-red-500' : 'text-gray-400 hover:text-red-500'"
-        :aria-label="isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'"
+        class="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-md transition-colors dark:bg-gray-700 dark:shadow-gray-900/40"
+        :class="isWishlisted ? 'text-red-500' : 'text-gray-400 hover:text-red-500 dark:text-gray-300'"
+        :aria-label="isWishlisted ? $t('product.remove_from_wishlist') : $t('product.add_to_wishlist')"
         @click="handleWishlistToggle"
       >
         <Heart :size="16" :fill="isWishlisted ? 'currentColor' : 'none'" />
@@ -87,18 +87,18 @@ function handleView(): void {
       </p>
       <RouterLink
         :to="`/product/${props.product.slug}`"
-        class="mt-1 line-clamp-2 text-sm font-semibold text-ink transition-colors hover:text-primary"
+        class="mt-1 line-clamp-2 text-sm font-semibold text-ink transition-colors hover:text-primary dark:text-gray-100"
         @click="handleView"
       >
         {{ props.product.title }}
       </RouterLink>
       <div class="mt-1.5 flex items-center gap-1.5">
         <StarRating :value="props.product.rating" :size="12" />
-        <span class="text-xs text-gray-500">({{ props.product.reviewCount }})</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400">({{ props.product.reviewCount }})</span>
       </div>
       <div class="mt-2 flex items-baseline gap-2">
-        <span class="text-base font-bold text-ink">{{ formatPrice(props.product.price) }}</span>
-        <span v-if="props.product.compareAtPrice" class="text-sm text-gray-400 line-through">
+        <span class="text-base font-bold text-ink dark:text-gray-50">{{ formatPrice(props.product.price) }}</span>
+        <span v-if="props.product.compareAtPrice" class="text-sm text-gray-400 line-through dark:text-gray-500">
           {{ formatPrice(props.product.compareAtPrice) }}
         </span>
       </div>
@@ -106,19 +106,19 @@ function handleView(): void {
         <li
           v-for="color in props.product.colors"
           :key="color"
-          class="h-3 w-3 rounded-full ring-1 ring-gray-300"
+          class="h-3 w-3 rounded-full ring-1 ring-gray-300 dark:ring-gray-600"
           :style="{ backgroundColor: color }"
         ></li>
       </ul>
       <button
         v-if="showActions"
         type="button"
-        class="btn-primary btn-sm mt-3 w-full"
+        class="btn-primary btn-sm mt-3 w-full dark:bg-blue-500 dark:hover:bg-blue-600"
         :disabled="!props.product.isInStock"
         @click="handleAddToCart"
       >
         <ShoppingCart :size="15" />
-        {{ props.product.isInStock ? 'Add to Cart' : 'Out of Stock' }}
+        {{ props.product.isInStock ? $t('actions.add_to_cart') : $t('product.out_of_stock') }}
       </button>
     </div>
   </div>

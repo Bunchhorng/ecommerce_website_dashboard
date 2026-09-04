@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Package, Check } from 'lucide-vue-next'
-import type { OrderStatus } from '@/types'
-import { getOrderById } from '@/data/mock'
+import type { OrderStatus, Order, OrderItem, TrackingEvent } from '@/types'
+import { ordersApi } from '@/api/orders'
+import type { ApiOrder } from '@/api/checkout'
 import StatusTag from '@/components/StatusTag.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { formatDate, formatDateTime, formatPrice } from '@/utils/format'
@@ -11,10 +12,98 @@ import { formatDate, formatDateTime, formatPrice } from '@/utils/format'
 const route = useRoute()
 const router = useRouter()
 
-const orderId = route.params.orderId as string
-const order = computed(() => getOrderById(orderId))
+const order = ref<Order | null>(null)
+const loading = ref(true)
 
 const FLOW: OrderStatus[] = ['Pending', 'Confirmed', 'Processing', 'Shipped', 'Delivered']
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+function mapOrderFromApi(raw: ApiOrder): Order {
+  const items: OrderItem[] = raw.items.map((item) => ({
+    id: String(item.id),
+    productId: String(item.product_id),
+    title: item.product_name,
+    brand: '',
+    image: item.image_path ?? '',
+    unitPrice: item.unit_price,
+    quantity: item.quantity,
+    variant: item.variant_label
+      ? { variantId: String(item.product_variant_id), attributes: [], sku: item.sku }
+      : null
+  }))
+
+  const status = capitalize(raw.status) as OrderStatus
+
+  const trackingEvents: TrackingEvent[] = []
+  if (raw.placed_at) {
+    trackingEvents.push({ status: 'Pending', at: raw.placed_at })
+  }
+  const flowIndex = FLOW.indexOf(status)
+  if (flowIndex >= 1 && raw.placed_at) {
+    trackingEvents.push({ status: 'Confirmed', at: raw.placed_at })
+  }
+  if (flowIndex >= 2 && raw.placed_at) {
+    const d = new Date(raw.placed_at)
+    d.setHours(d.getHours() + 2)
+    trackingEvents.push({ status: 'Processing', at: d.toISOString() })
+  }
+  if (flowIndex >= 3 && raw.shipment?.shipped_at) {
+    trackingEvents.push({ status: 'Shipped', at: raw.shipment.shipped_at })
+  } else if (flowIndex >= 3 && raw.placed_at) {
+    const d = new Date(raw.placed_at)
+    d.setDate(d.getDate() + 2)
+    trackingEvents.push({ status: 'Shipped', at: d.toISOString() })
+  }
+  if (flowIndex >= 4 && raw.shipment?.delivered_at) {
+    trackingEvents.push({ status: 'Delivered', at: raw.shipment.delivered_at })
+  } else if (flowIndex >= 4 && raw.placed_at) {
+    const d = new Date(raw.placed_at)
+    d.setDate(d.getDate() + 5)
+    trackingEvents.push({ status: 'Delivered', at: d.toISOString() })
+  }
+
+  const estimatedDelivery = (() => {
+    if (raw.shipment?.delivered_at) return raw.shipment.delivered_at
+    if (raw.placed_at) {
+      const d = new Date(raw.placed_at)
+      d.setDate(d.getDate() + 5)
+      return d.toISOString()
+    }
+    return ''
+  })()
+
+  return {
+    id: raw.order_number,
+    number: raw.order_number,
+    items,
+    subtotal: raw.subtotal,
+    discount: raw.discount_amount,
+    shipping: raw.shipping_amount,
+    tax: raw.tax_amount,
+    total: raw.total,
+    status,
+    placedAt: raw.placed_at ?? '',
+    estimatedDelivery,
+    trackingEvents,
+    shippingAddress: {
+      id: '0',
+      label: 'Shipping',
+      fullName: raw.customer_name ?? '',
+      line1: '',
+      line2: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: '',
+      phone: raw.phone ?? '',
+      isDefault: false
+    },
+    paymentMethod: (raw.payment?.method ?? 'cod') as import('@/types').PaymentMethod
+  }
+}
 
 const currentIndex = computed(() =>
   order.value ? FLOW.indexOf(order.value.status) : -1
@@ -25,16 +114,36 @@ function timestampFor(status: OrderStatus): string | null {
   const event = order.value.trackingEvents.find((e) => e.status === status)
   return event ? formatDateTime(event.at) : null
 }
+
+onMounted(async () => {
+  const orderNumber = route.params.orderId as string
+  if (!orderNumber) {
+    loading.value = false
+    return
+  }
+  try {
+    const { data } = await ordersApi.get(orderNumber)
+    order.value = mapOrderFromApi(data.data)
+  } catch {
+    order.value = null
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <template>
-  <div v-if="order" class="container-app mx-auto max-w-3xl py-10">
+  <div v-if="loading" class="container-app mx-auto max-w-md py-16 text-center text-sm text-gray-500">
+    Loading order details...
+  </div>
+
+  <div v-else-if="order" class="container-app mx-auto max-w-3xl py-10">
     <div class="card p-6">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-ink">Order {{ order.number }}</h1>
-          <p class="mt-1 text-sm text-gray-500">
-            Placed {{ formatDate(order.placedAt) }} · Arrives {{ formatDate(order.estimatedDelivery) }}
+          <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('order.track_title', { number: order.number }) }}</h1>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
+            {{ $t('order.track_subtitle', { placed: formatDate(order.placedAt), arrives: formatDate(order.estimatedDelivery) }) }}
           </p>
         </div>
         <StatusTag :status="order.status" />
@@ -43,11 +152,11 @@ function timestampFor(status: OrderStatus): string | null {
 
     <div v-if="order.status === 'Delivered'" class="mt-6 flex items-center gap-2 rounded-xl bg-emerald-100 p-4 text-sm font-medium text-emerald-700">
       <Check class="h-5 w-5" />
-      Delivered on {{ formatDate(order.estimatedDelivery) }}
+      {{ $t('order.delivered_on', { date: formatDate(order.estimatedDelivery) }) }}
     </div>
 
     <div class="card mt-6 p-6">
-      <h2 class="mb-6 text-lg font-bold text-ink">Order Progress</h2>
+      <h2 class="mb-6 text-lg font-bold text-ink dark:text-gray-100">{{ $t('order.order_progress') }}</h2>
 
       <div class="hidden sm:flex sm:items-start">
         <template v-for="(status, i) in FLOW" :key="status">
@@ -59,16 +168,16 @@ function timestampFor(status: OrderStatus): string | null {
                   ? 'bg-emerald-500 text-white'
                   : i === currentIndex
                     ? 'bg-primary text-white'
-                    : 'bg-gray-200 text-gray-500'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
               "
             >
               <Check v-if="i < currentIndex" class="h-5 w-5" />
               <span v-else>{{ i + 1 }}</span>
             </div>
-            <p class="mt-2 text-xs font-semibold" :class="i === currentIndex ? 'text-primary' : i < currentIndex ? 'text-ink' : 'text-gray-400'">
-              {{ status }}
+            <p class="mt-2 text-xs font-semibold" :class="i === currentIndex ? 'text-primary' : i < currentIndex ? 'text-ink' : 'text-gray-400 dark:text-gray-500'">
+              {{ $t('status.' + status.toLowerCase()) }}
             </p>
-            <p class="mt-1 text-center text-[10px] text-gray-500">
+            <p class="mt-1 text-center text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500">
               {{ timestampFor(status) ?? '' }}
             </p>
           </div>
@@ -90,7 +199,7 @@ function timestampFor(status: OrderStatus): string | null {
                   ? 'bg-emerald-500 text-white'
                   : i === currentIndex
                     ? 'bg-primary text-white'
-                    : 'bg-gray-200 text-gray-500'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
               "
             >
               <Check v-if="i < currentIndex" class="h-5 w-5" />
@@ -99,14 +208,14 @@ function timestampFor(status: OrderStatus): string | null {
             <div
               v-if="i < FLOW.length - 1"
               class="mt-1 w-0.5 flex-1"
-              :class="i < currentIndex ? 'bg-emerald-500' : 'bg-gray-200'"
+              :class="i < currentIndex ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-gray-700'"
             ></div>
           </div>
           <div class="pb-8">
-            <p class="text-sm font-semibold" :class="i === currentIndex ? 'text-primary' : i < currentIndex ? 'text-ink' : 'text-gray-400'">
-              {{ status }}
+            <p class="text-sm font-semibold" :class="i === currentIndex ? 'text-primary' : i < currentIndex ? 'text-ink' : 'text-gray-400 dark:text-gray-500'">
+              {{ $t('status.' + status.toLowerCase()) }}
             </p>
-            <p class="mt-0.5 text-xs text-gray-500">
+            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
               {{ timestampFor(status) ?? '' }}
             </p>
           </div>
@@ -119,24 +228,24 @@ function timestampFor(status: OrderStatus): string | null {
         <Package class="h-6 w-6" />
       </div>
       <div>
-        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Estimated delivery</p>
-        <p class="font-semibold text-ink">{{ formatDate(order.estimatedDelivery) }}</p>
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">{{ $t('order.estimated_delivery') }}</p>
+        <p class="font-semibold text-ink dark:text-gray-100">{{ formatDate(order.estimatedDelivery) }}</p>
       </div>
     </div>
 
     <div class="card mt-6 p-6">
-      <h2 class="mb-4 text-lg font-bold text-ink">Items</h2>
-      <div class="divide-y divide-border-gray">
+      <h2 class="mb-4 text-lg font-bold text-ink dark:text-gray-100">{{ $t('order.items') }}</h2>
+      <div class="divide-y divide-border-gray dark:divide-gray-700">
         <div v-for="item in order.items" :key="item.id" class="flex items-center gap-4 py-4">
           <img :src="item.image" :alt="item.title" class="h-16 w-14 rounded-lg object-cover" />
           <div class="min-w-0 flex-1">
-            <p class="font-semibold text-ink">{{ item.title }}</p>
-            <p class="text-xs text-gray-500">
+            <p class="font-semibold text-ink dark:text-gray-100">{{ item.title }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
               {{ item.brand }} · {{ item.variant?.attributes ? item.variant.attributes.map((a) => a.value).join(', ') : '' }}
             </p>
-            <p class="text-xs text-gray-500">Qty {{ item.quantity }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{{ $t('order.qty', { qty: item.quantity }) }}</p>
           </div>
-          <p class="shrink-0 font-medium text-ink">{{ formatPrice(item.unitPrice * item.quantity) }}</p>
+          <p class="shrink-0 font-medium text-ink dark:text-gray-100">{{ formatPrice(item.unitPrice * item.quantity) }}</p>
         </div>
       </div>
     </div>
@@ -144,9 +253,9 @@ function timestampFor(status: OrderStatus): string | null {
 
   <div v-else class="container-app mx-auto max-w-md py-16">
     <EmptyState
-      title="Order not found"
-      description="We couldn't find that order, but you can keep browsing the shop."
-      ctaLabel="Go to shop"
+      :title="$t('order.not_found_title')"
+      :description="$t('order.not_found_description')"
+      :cta-label="$t('order.go_to_shop')"
       @cta="router.push('/shop')"
     />
   </div>

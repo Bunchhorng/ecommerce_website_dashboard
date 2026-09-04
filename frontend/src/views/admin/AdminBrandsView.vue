@@ -1,66 +1,79 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { Plus, Pencil, Trash2 } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import BaseModal from '@/components/BaseModal.vue'
-import type { Brand } from '@/types'
-import { BRANDS, PRODUCTS } from '@/data/mock'
-import { randomId } from '@/utils/format'
+import { adminApi } from '@/api/admin'
+import type { AdminBrand } from '@/api/admin'
 
-type LocalBrand = Brand & { website?: string }
+const { t } = useI18n()
 
-const brands = ref<LocalBrand[]>([...BRANDS])
-
-const productsPerBrand = computed(() => {
-  const map = new Map<string, number>()
-  for (const b of brands.value) {
-    map.set(b.name, PRODUCTS.filter((p) => p.brand.name === b.name).length)
-  }
-  return map
-})
+const loading = ref(true)
+const brands = ref<AdminBrand[]>([])
 
 const modalOpen = ref(false)
-const editingId = ref('')
+const editingId = ref<number | null>(null)
 const form = reactive({ name: '', website: '' })
 
 function openAdd() {
-  editingId.value = ''
+  editingId.value = null
   form.name = ''
   form.website = ''
   modalOpen.value = true
 }
 
-function openEdit(b: LocalBrand) {
+function openEdit(b: AdminBrand) {
   editingId.value = b.id
   form.name = b.name
-  form.website = b.website ?? ''
+  form.website = b.description ?? ''
   modalOpen.value = true
 }
 
-function saveBrand() {
+async function loadBrands() {
+  loading.value = true
+  try {
+    const { data: resp } = await adminApi.listBrands()
+    brands.value = resp.data
+  } catch {
+    showToast(t('admin.brands.toast_load_error'))
+  } finally {
+    loading.value = false
+  }
+}
+
+async function saveBrand() {
   if (!form.name.trim()) {
-    showToast('Please enter a brand name')
+    showToast(t('admin.brands.toast_enter_name'))
     return
   }
   const name = form.name.trim()
-  if (editingId.value) {
-    const b = brands.value.find((x) => x.id === editingId.value)
-    if (b) {
-      b.name = name
-      b.website = form.website.trim() || undefined
-      showToast(`Updated brand "${name}"`)
+  const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+
+  try {
+    if (editingId.value != null) {
+      await adminApi.updateBrand(editingId.value, { name, description: form.website.trim() || null })
+      await loadBrands()
+      showToast(t('admin.brands.toast_updated', { name }))
+    } else {
+      await adminApi.createBrand({ name, slug, description: form.website.trim() || null })
+      await loadBrands()
+      showToast(t('admin.brands.toast_added', { name }))
     }
-  } else {
-    const slug = name.toLowerCase().replace(/\s+/g, '-')
-    brands.value.push({ id: randomId('br'), name, slug, website: form.website.trim() || undefined })
-    showToast(`Added brand "${name}"`)
+    modalOpen.value = false
+  } catch {
+    showToast(t('admin.brands.toast_save_error'))
   }
-  modalOpen.value = false
 }
 
-function removeBrand(id: string) {
+async function removeBrand(id: number) {
   const b = brands.value.find((x) => x.id === id)
-  brands.value = brands.value.filter((x) => x.id !== id)
-  showToast(`Deleted brand "${b ? b.name : ''}"`)
+  try {
+    await adminApi.deleteBrand(id)
+    brands.value = brands.value.filter((x) => x.id !== id)
+    showToast(t('admin.brands.toast_deleted', { name: b ? b.name : '' }))
+  } catch {
+    showToast(t('admin.brands.toast_delete_error'))
+  }
 }
 
 function initials(name: string): string {
@@ -82,18 +95,20 @@ function showToast(msg: string) {
     toast.value = ''
   }, 2500)
 }
+
+onMounted(loadBrands)
 </script>
 
 <template>
   <div class="space-y-6">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div class="flex items-center gap-3">
-        <h1 class="text-2xl font-bold text-ink">Brands</h1>
-        <span class="chip">{{ brands.length }} total</span>
+        <h1 class="text-2xl font-bold text-ink">{{ $t('admin.brands.title') }}</h1>
+        <span class="chip">{{ $t('admin.brands.total_count', { count: brands.length }) }}</span>
       </div>
       <button class="btn-primary btn-sm" @click="openAdd()">
         <Plus class="h-4 w-4" />
-        Add Brand
+        {{ $t('admin.brands.add_brand') }}
       </button>
     </div>
 
@@ -106,22 +121,22 @@ function showToast(msg: string) {
           <div class="min-w-0 flex-1">
             <div class="truncate text-base font-semibold text-ink">{{ b.name }}</div>
             <div class="mt-1 flex flex-wrap items-center gap-2">
-              <span class="chip">/{{ b.slug ?? b.name.toLowerCase().replace(/\s+/g, '-') }}</span>
+              <span class="chip">/{{ b.slug }}</span>
               <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600">
-                Active
+                {{ b.is_active ? $t('status.active') : $t('status.inactive') }}
               </span>
             </div>
           </div>
         </div>
         <div class="mt-4 flex items-center justify-between border-t border-border-gray pt-4">
           <span class="text-sm text-gray-500">
-            {{ productsPerBrand.get(b.name) ?? 0 }} products
+            {{ $t('admin.brands.products_count', { count: b.products_count ?? 0 }) }}
           </span>
           <div class="flex gap-1">
-            <button class="btn-icon h-9 w-9" type="button" title="Edit" @click="openEdit(b)">
+            <button class="btn-icon h-9 w-9" type="button" :title="$t('actions.edit')" @click="openEdit(b)">
               <Pencil class="h-4 w-4" />
             </button>
-            <button class="btn-icon h-9 w-9 hover:text-red-600" type="button" title="Delete" @click="removeBrand(b.id)">
+            <button class="btn-icon h-9 w-9 hover:text-red-600" type="button" :title="$t('actions.delete')" @click="removeBrand(b.id)">
               <Trash2 class="h-4 w-4" />
             </button>
           </div>
@@ -129,20 +144,20 @@ function showToast(msg: string) {
       </div>
     </div>
 
-    <BaseModal v-model="modalOpen" :title="editingId ? 'Edit Brand' : 'Add Brand'" size="md">
+    <BaseModal v-model="modalOpen" :title="editingId ? $t('admin.brands.edit_brand') : $t('admin.brands.add_brand')" size="md">
       <div class="space-y-4">
         <div>
-          <label class="label" for="brand-name">Name</label>
-          <input id="brand-name" v-model="form.name" class="input" placeholder="Brand name" />
+          <label class="label" for="brand-name">{{ $t('admin.brands.name_label') }}</label>
+          <input id="brand-name" v-model="form.name" class="input" :placeholder="$t('admin.brands.name_placeholder')" />
         </div>
         <div>
-          <label class="label" for="brand-website">Website</label>
-          <input id="brand-website" v-model="form.website" class="input" placeholder="https://example.com" />
+          <label class="label" for="brand-website">{{ $t('admin.brands.website_label') }}</label>
+          <input id="brand-website" v-model="form.website" class="input" :placeholder="$t('admin.brands.website_placeholder')" />
         </div>
       </div>
       <template #footer>
-        <button class="btn-secondary btn-sm" type="button" @click="modalOpen = false">Cancel</button>
-        <button class="btn-primary btn-sm" type="button" @click="saveBrand()">Save</button>
+        <button class="btn-secondary btn-sm" type="button" @click="modalOpen = false">{{ $t('actions.cancel') }}</button>
+        <button class="btn-primary btn-sm" type="button" @click="saveBrand()">{{ $t('admin.brands.save') }}</button>
       </template>
     </BaseModal>
 

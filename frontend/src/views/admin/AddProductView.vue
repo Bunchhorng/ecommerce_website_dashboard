@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   Plus,
   X,
@@ -12,11 +12,20 @@ import {
   Check,
   AlertTriangle
 } from 'lucide-vue-next'
-import { BRANDS, CATEGORIES } from '@/data/mock'
+import { useI18n } from 'vue-i18n'
+import { adminApi } from '@/api/admin'
+import type { AdminBrand, AdminCategory, AdminProduct } from '@/api/admin'
 import { formatPrice } from '@/utils/format'
+
+const { t } = useI18n()
+
+const router = useRouter()
+const route = useRoute()
+const isEdit = computed(() => Boolean(route.params.id))
 
 interface GeneratedVariant {
   id: string
+  backendId?: number
   attributes: { name: string; value: string }[]
   sku: string
   price: number | null
@@ -35,8 +44,6 @@ interface ImageItem {
   name: string
   isMain: boolean
 }
-
-const router = useRouter()
 
 const form = reactive({
   title: '',
@@ -57,11 +64,11 @@ const attributes = ref<AttrRow[]>([{ name: 'Color', values: ['Black', 'White'] }
 const variants = ref<GeneratedVariant[]>([])
 const images = ref<ImageItem[]>([])
 
-function requiredBrandNames(): string[] {
-  return BRANDS.map((b) => b.name)
-}
+const brands = ref<AdminBrand[]>([])
+const categories = ref<AdminCategory[]>([])
 
-const categoryNames = computed(() => CATEGORIES.map((c) => c.name))
+const brandNames = computed(() => brands.value.map((b) => b.name))
+const categoryNames = computed(() => categories.value.map((c) => c.name))
 
 const discountPct = computed(() => {
   const price = Number(form.price)
@@ -96,7 +103,7 @@ function generateVariants() {
   const usable = attributes.value.filter((a) => a.name.trim() !== '' && a.values.length > 0)
   const incomplete = attributes.value.length > 0 && usable.length !== attributes.value.length
   if (incomplete) {
-    showToast('Define names and values for each attribute')
+    showToast(t('admin.products.define_attr_values'))
     return
   }
   if (attributes.value.length === 0) {
@@ -120,7 +127,7 @@ function generateVariants() {
     stock: 0,
     enabled: true
   }))
-  showToast(`${variants.value.length} variants generated`)
+  showToast(t('admin.products.toast_variants_generated', { count: variants.value.length }))
 }
 
 function removeVariant(index: number) {
@@ -184,16 +191,16 @@ function scrollToId(id: string) {
 }
 
 function validate(): boolean {
-  errors.title = form.title.trim() ? '' : 'Title is required'
-  errors.price = form.price > 0 ? '' : 'Price must be greater than 0'
-  errors.brand = form.brand ? '' : 'Select a brand'
-  errors.category = form.category ? '' : 'Select a category'
-  errors.images = images.value.length ? '' : 'Add at least one image'
+  errors.title = form.title.trim() ? '' : t('admin.products.error_title_required')
+  errors.price = form.price > 0 ? '' : t('admin.products.error_price_required')
+  errors.brand = form.brand ? '' : t('admin.products.error_brand_required')
+  errors.category = form.category ? '' : t('admin.products.error_category_required')
+  errors.images = images.value.length ? '' : t('admin.products.error_images_required')
 
   if (variants.value.length) {
     const bad = variants.value.filter((v) => v.enabled && (v.sku.trim() === '' || v.stock < 0))
     errors.variants = bad.length
-      ? `${bad.length} ${bad.length === 1 ? 'enabled variant needs' : 'enabled variants need'} a SKU and stock >= 0`
+      ? t('admin.products.error_variants', { count: bad.length })
       : ''
   } else {
     errors.variants = ''
@@ -202,22 +209,111 @@ function validate(): boolean {
   return Object.values(errors).every((v) => v === '')
 }
 
-function save() {
+function loadForEdit(product: AdminProduct): void {
+  form.title = product.name
+  form.brand = product.brand?.name ?? ''
+  form.category = product.category?.name ?? ''
+  form.sku = product.sku
+  form.status = product.is_active ? 'Active' : 'Draft'
+  form.description = product.description ?? ''
+  form.price = product.price
+  form.compareAt = product.compare_at_price ?? 0
+  form.baseStock = product.variants.reduce((sum, v) => sum + (v.available_quantity || 0), 0)
+
+  attributes.value = product.attributes.length
+    ? product.attributes.map((a) => ({ name: a.name, values: a.values.map((v) => v.value) }))
+    : [{ name: '', values: [] }]
+
+  variants.value = product.variants.map((v, i) => ({
+    id: `v-${Date.now()}-${i}`,
+    backendId: v.id,
+    attributes: v.attributes.map((a) => ({ name: a.name, value: a.value })),
+    sku: v.sku ?? '',
+    price: v.price,
+    stock: v.available_quantity,
+    enabled: v.is_active
+  }))
+
+  images.value = product.gallery.map((g, i) => ({
+    id: g.id,
+    url: g.image_path,
+    name: `Image ${i + 1}`,
+    isMain: i === 0
+  }))
+}
+
+async function save() {
   const ok = validate()
   if (!ok) {
     if (errors.images) scrollToId('images')
     else if (errors.variants) scrollToId('variants')
     else scrollToId('basic')
-    showToast('Please fix the highlighted fields')
+    showToast(t('admin.products.fix_fields'))
     return
   }
-  const variantLabel = variants.value.length ? `${variants.value.length} variants · ` : ''
-  showToast(`Product "${form.title}" saved (${variantLabel}${formatPrice(form.price)})`)
-  router.push({ name: 'admin-products' })
+
+  const selectedBrand = brands.value.find((b) => b.name === form.brand)
+  const selectedCategory = categories.value.find((c) => c.name === form.category)
+  const productId = Number(route.params.id)
+
+  const payload: Record<string, unknown> = {
+    name: form.title,
+    description: form.description || null,
+    price: form.price,
+    compare_at_price: form.compareAt || null,
+    sku: form.sku || null,
+    is_active: form.status === 'Active',
+    brand_id: selectedBrand?.id ?? null,
+    category_id: selectedCategory?.id ?? null
+  }
+
+  try {
+    if (isEdit.value) {
+      const variantsPayload = variants.value
+        .filter((x) => x.enabled)
+        .map((v) => ({
+          ...(v.backendId ? { id: v.backendId } : {}),
+          name: v.attributes.map((a) => `${a.name}: ${a.value}`).join(', '),
+          sku: v.sku,
+          price: v.price ?? form.price,
+          compare_at_price: form.compareAt || null,
+          quantity: v.stock,
+          is_active: true,
+          ...(v.backendId
+            ? {}
+            : { attributes: v.attributes.map((a) => ({ attribute: a.name, value: a.value })) })
+        }))
+
+      await adminApi.updateProduct(productId, { ...payload, variants: variantsPayload })
+      showToast(t('admin.products.toast_updated', { title: form.title, price: formatPrice(form.price) }))
+      router.push({ name: 'admin-products' })
+      return
+    }
+
+    const { data: resp } = await adminApi.createProduct(payload)
+    const createdId = resp.data.id
+
+    for (const v of variants.value.filter((x) => x.enabled)) {
+      const variantPayload: Record<string, unknown> = {
+        name: v.attributes.map((a) => `${a.name}: ${a.value}`).join(', '),
+        sku: v.sku,
+        price: v.price ?? form.price,
+        compare_at_price: form.compareAt || null,
+        quantity: v.stock,
+        attributes: v.attributes.map((a) => ({ attribute: a.name, value: a.value }))
+      }
+      await adminApi.updateProduct(createdId, { variants: [variantPayload] })
+    }
+
+    showToast(t('admin.products.toast_saved', { title: form.title, price: formatPrice(form.price) }))
+    router.push({ name: 'admin-products' })
+  } catch {
+    showToast(t('admin.products.toast_save_error'))
+  }
 }
 
 function saveDraft() {
-  showToast('Draft saved locally')
+  showToast(t('admin.products.toast_draft_saved'))
 }
 
 const toast = ref('')
@@ -229,101 +325,127 @@ function showToast(msg: string) {
     toast.value = ''
   }, 2500)
 }
+
+onMounted(async () => {
+  try {
+    const [brandsResp, catsResp] = await Promise.all([
+      adminApi.listBrands(),
+      adminApi.listCategories()
+    ])
+    brands.value = brandsResp.data.data
+    categories.value = catsResp.data.data
+
+    if (isEdit.value) {
+      const id = Number(route.params.id)
+      if (!id) {
+        router.replace({ name: 'admin-products' })
+        return
+      }
+      const { data: productResp } = await adminApi.getProduct(id)
+      loadForEdit(productResp.data)
+    }
+  } catch {
+    if (isEdit.value) {
+      showToast(t('admin.products.toast_load_error'))
+      router.replace({ name: 'admin-products' })
+    }
+  }
+})
 </script>
 
 <template>
   <form class="mx-auto max-w-5xl space-y-6 pb-16" @submit.prevent="save()">
     <div class="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <div class="section-eyebrow">Catalog</div>
-        <h1 class="text-xl font-bold text-ink">Add New Product</h1>
+        <div class="section-eyebrow">{{ $t('admin.products.catalog') }}</div>
+        <h1 class="text-xl font-bold text-ink">{{ isEdit ? $t('admin.products.edit_product') : $t('admin.products.add_new_product') }}</h1>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button class="btn-secondary btn-sm" type="button" @click="router.push({ name: 'admin-products' })">Cancel</button>
-        <button class="btn-ghost btn-sm" type="button" @click="saveDraft()">Save Draft</button>
+        <button class="btn-secondary btn-sm" type="button" @click="router.push({ name: 'admin-products' })">{{ $t('actions.cancel') }}</button>
+        <button class="btn-ghost btn-sm" type="button" @click="saveDraft()">{{ $t('admin.products.save_draft') }}</button>
         <button class="btn-primary btn-sm" type="submit">
           <Save class="h-4 w-4" />
-          Save Product
+          {{ $t('admin.products.save_product') }}
         </button>
       </div>
     </div>
 
     <div id="basic" class="card p-6">
-      <div class="section-eyebrow">Step 1</div>
-      <h2 class="mt-2 text-lg font-semibold">Basic Information</h2>
+      <div class="section-eyebrow">{{ $t('admin.products.step_1') }}</div>
+      <h2 class="mt-2 text-lg font-semibold">{{ $t('admin.products.basic_information') }}</h2>
       <div class="mt-5 grid gap-4 sm:grid-cols-2">
         <div class="sm:col-span-2">
-          <label class="label" for="p-title">Title</label>
+          <label class="label" for="p-title">{{ $t('admin.products.title_label') }}</label>
           <input
             id="p-title"
             v-model="form.title"
             class="input"
             :class="{ 'input-error': errors.title }"
-            placeholder="Product name"
+            :placeholder="$t('admin.products.title_placeholder')"
           />
           <p v-if="errors.title" class="mt-1 text-xs text-red-600">{{ errors.title }}</p>
         </div>
 
         <div>
-          <label class="label" for="p-brand">Brand</label>
+          <label class="label" for="p-brand">{{ $t('admin.products.brand_label') }}</label>
           <select id="p-brand" v-model="form.brand" class="select" :class="{ 'input-error': errors.brand }">
-            <option value="" disabled>Select brand</option>
-            <option v-for="b in requiredBrandNames()" :key="b" :value="b">{{ b }}</option>
+            <option value="" disabled>{{ $t('admin.products.select_brand') }}</option>
+            <option v-for="b in brandNames" :key="b" :value="b">{{ b }}</option>
           </select>
           <p v-if="errors.brand" class="mt-1 text-xs text-red-600">{{ errors.brand }}</p>
         </div>
 
         <div>
-          <label class="label" for="p-category">Category</label>
+          <label class="label" for="p-category">{{ $t('admin.products.category_label') }}</label>
           <select id="p-category" v-model="form.category" class="select" :class="{ 'input-error': errors.category }">
-            <option value="" disabled>Select category</option>
+            <option value="" disabled>{{ $t('admin.products.select_category') }}</option>
             <option v-for="c in categoryNames" :key="c" :value="c">{{ c }}</option>
           </select>
           <p v-if="errors.category" class="mt-1 text-xs text-red-600">{{ errors.category }}</p>
         </div>
 
         <div>
-          <label class="label" for="p-sku">SKU</label>
+          <label class="label" for="p-sku">{{ $t('product.sku') }}</label>
           <input id="p-sku" v-model="form.sku" class="input" placeholder="AUTOGEN-001" />
         </div>
 
         <div>
-          <label class="label" for="p-status">Status</label>
+          <label class="label" for="p-status">{{ $t('admin.products.status_label') }}</label>
           <select id="p-status" v-model="form.status" class="select">
-            <option>Active</option>
-            <option>Draft</option>
-            <option>Archived</option>
+            <option value="Active">{{ $t('status.active') }}</option>
+            <option value="Draft">{{ $t('status.draft') }}</option>
+            <option value="Archived">{{ $t('admin.products.status_archived') }}</option>
           </select>
         </div>
 
         <div class="sm:col-span-2">
-          <label class="label" for="p-description">Description</label>
+          <label class="label" for="p-description">{{ $t('product.description') }}</label>
           <textarea
             id="p-description"
             v-model="form.description"
             class="textarea"
             rows="4"
-            placeholder="Describe the product…"
+            :placeholder="$t('admin.products.description_placeholder')"
           ></textarea>
         </div>
       </div>
     </div>
 
     <div id="pricing" class="card p-6">
-      <div class="section-eyebrow">Step 2</div>
-      <h2 class="mt-2 text-lg font-semibold">Pricing &amp; Discount</h2>
+      <div class="section-eyebrow">{{ $t('admin.products.step_2') }}</div>
+      <h2 class="mt-2 text-lg font-semibold">{{ $t('admin.products.pricing_discount') }}</h2>
       <div class="mt-5 grid gap-4 sm:grid-cols-3">
         <div>
-          <label class="label" for="p-price">Price</label>
+          <label class="label" for="p-price">{{ $t('admin.products.price_label') }}</label>
           <input id="p-price" v-model.number="form.price" class="input" type="number" min="0" step="0.01" placeholder="0.00" />
           <p v-if="errors.price" class="mt-1 text-xs text-red-600">{{ errors.price }}</p>
         </div>
         <div>
-          <label class="label" for="p-compare">Compare-at Price</label>
+          <label class="label" for="p-compare">{{ $t('admin.products.compare_at_price') }}</label>
           <input id="p-compare" v-model.number="form.compareAt" class="input" type="number" min="0" step="0.01" placeholder="0.00" />
         </div>
         <div>
-          <label class="label">Discount</label>
+          <label class="label">{{ $t('admin.products.discount_label') }}</label>
           <div class="flex h-[42px] items-center">
             <span
               v-if="discountPct < 0"
@@ -340,65 +462,65 @@ function showToast(msg: string) {
         <div class="flex items-baseline gap-3">
           <span class="text-2xl font-bold text-ink">{{ formatPrice(form.price) }}</span>
           <span v-if="discountPct < 0" class="text-sm text-gray-400 line-through">{{ formatPrice(Number(form.compareAt)) }}</span>
-          <span v-if="discountPct < 0" class="text-sm font-semibold text-red-600">{{ discountPct }}% off</span>
+          <span v-if="discountPct < 0" class="text-sm font-semibold text-red-600">{{ $t('admin.products.percent_off', { percent: discountPct }) }}</span>
         </div>
       </div>
     </div>
 
     <div id="variants" class="card p-6">
-      <div class="section-eyebrow">Step 3</div>
-      <h2 class="mt-2 text-lg font-semibold">Variant Attributes</h2>
+      <div class="section-eyebrow">{{ $t('admin.products.step_3') }}</div>
+      <h2 class="mt-2 text-lg font-semibold">{{ $t('admin.products.variant_attributes') }}</h2>
       <p class="mt-1 text-sm text-gray-500">
-        Define attributes like Color and Size to auto-generate SKU combinations.
+        {{ $t('admin.products.variant_description') }}
       </p>
 
       <div class="mt-5 space-y-4">
         <div v-for="(attr, i) in attributes" :key="i" class="grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
           <div>
-            <label class="label" :for="`attr-name-${i}`">Attribute name</label>
-            <input :id="`attr-name-${i}`" v-model="attr.name" class="input" placeholder="e.g. Color" />
+            <label class="label" :for="`attr-name-${i}`">{{ $t('admin.products.attribute_name') }}</label>
+            <input :id="`attr-name-${i}`" v-model="attr.name" class="input" :placeholder="$t('admin.products.attribute_name_placeholder')" />
           </div>
           <div>
-            <label class="label" :for="`attr-values-${i}`">Values (comma-separated)</label>
+            <label class="label" :for="`attr-values-${i}`">{{ $t('admin.products.attribute_values_label') }}</label>
             <input
               :id="`attr-values-${i}`"
               class="input"
-              placeholder="e.g. Black, White"
+              :placeholder="$t('admin.products.attribute_values_placeholder')"
               :value="attr.values.join(', ')"
               @input="setAttrValues(attr, ($event.target as HTMLInputElement).value)"
             />
           </div>
-          <button class="btn-icon h-10 w-10 hover:text-red-600" type="button" title="Remove attribute" @click="removeAttribute(i)">
+          <button class="btn-icon h-10 w-10 hover:text-red-600" type="button" :title="$t('admin.products.remove_attribute')" @click="removeAttribute(i)">
             <X class="h-4 w-4" />
           </button>
         </div>
 
         <button type="button" class="btn-secondary btn-sm mt-3" @click="addAttribute()">
           <Plus class="h-4 w-4" />
-          Add attribute
+          {{ $t('admin.products.add_attribute') }}
         </button>
       </div>
 
       <div class="mt-6">
         <button type="button" class="btn-primary" @click="generateVariants()">
           <RefreshCw class="h-4 w-4" />
-          Generate Variants
+          {{ $t('admin.products.generate_variants') }}
         </button>
       </div>
 
       <div v-if="variants.length" class="mt-6">
         <div class="mb-3 flex items-center justify-between">
-          <h3 class="text-sm font-semibold text-ink">{{ variants.length }} variants generated</h3>
+          <h3 class="text-sm font-semibold text-ink">{{ $t('admin.products.variants_generated', { count: variants.length }) }}</h3>
         </div>
         <div class="overflow-x-auto rounded-lg border border-border-gray">
           <table class="w-full text-sm">
             <thead class="bg-canvas text-left text-xs uppercase tracking-wide text-gray-500">
               <tr>
                 <th class="px-3 py-2"></th>
-                <th class="px-3 py-2">Attribute combination</th>
-                <th class="px-3 py-2">SKU</th>
-                <th class="px-3 py-2">Price</th>
-                <th class="px-3 py-2">Stock</th>
+                <th class="px-3 py-2">{{ $t('admin.products.attribute_combination') }}</th>
+                <th class="px-3 py-2">{{ $t('product.sku') }}</th>
+                <th class="px-3 py-2">{{ $t('admin.products.price_label') }}</th>
+                <th class="px-3 py-2">{{ $t('admin.products.column_stock') }}</th>
                 <th class="px-3 py-2"></th>
               </tr>
             </thead>
@@ -420,7 +542,7 @@ function showToast(msg: string) {
                   <input v-model.number="v.stock" class="input px-2 py-1 text-xs" type="number" min="0" />
                 </td>
                 <td class="px-3 py-2">
-                  <button class="btn-icon h-8 w-8 hover:text-red-600" type="button" title="Remove variant" @click="removeVariant(i)">
+                  <button class="btn-icon h-8 w-8 hover:text-red-600" type="button" :title="$t('admin.products.remove_variant')" @click="removeVariant(i)">
                     <X class="h-4 w-4" />
                   </button>
                 </td>
@@ -436,15 +558,15 @@ function showToast(msg: string) {
     </div>
 
     <div id="inventory" class="card p-6">
-      <div class="section-eyebrow">Step 4</div>
-      <h2 class="mt-2 text-lg font-semibold">Inventory &amp; Stock</h2>
+      <div class="section-eyebrow">{{ $t('admin.products.step_4') }}</div>
+      <h2 class="mt-2 text-lg font-semibold">{{ $t('admin.products.inventory_stock') }}</h2>
       <div class="mt-5 grid gap-4 sm:grid-cols-2">
         <div>
-          <label class="label" for="p-stock">Base stock (products without variants)</label>
+          <label class="label" for="p-stock">{{ $t('admin.products.base_stock_label') }}</label>
           <input id="p-stock" v-model.number="form.baseStock" class="input" type="number" min="0" placeholder="0" />
         </div>
         <div>
-          <label class="label">Track inventory</label>
+          <label class="label">{{ $t('admin.products.track_inventory') }}</label>
           <button
             type="button"
             role="switch"
@@ -462,13 +584,13 @@ function showToast(msg: string) {
       </div>
       <p class="mt-3 flex items-center gap-1 text-xs text-gray-500">
         <Check class="h-3.5 w-3.5 text-emerald-500" />
-        Per-variant stock is managed in the variant matrix above.
+        {{ $t('admin.products.per_variant_stock_note') }}
       </p>
     </div>
 
     <div id="images" class="card p-6">
-      <div class="section-eyebrow">Step 5</div>
-      <h2 class="mt-2 text-lg font-semibold">Images</h2>
+      <div class="section-eyebrow">{{ $t('admin.products.step_5') }}</div>
+      <h2 class="mt-2 text-lg font-semibold">{{ $t('admin.products.images_title') }}</h2>
 
       <div
         class="mt-5 rounded-xl border-2 border-dashed p-10 text-center transition"
@@ -478,15 +600,15 @@ function showToast(msg: string) {
         @drop.prevent="onDrop"
       >
         <UploadCloud class="mx-auto h-10 w-10 text-gray-400" />
-        <p class="mt-3 text-sm font-medium text-ink">Drag &amp; drop images here, or click to browse</p>
-        <p class="mt-1 text-xs text-gray-400">PNG, JPG, WEBP up to 5MB</p>
+        <p class="mt-3 text-sm font-medium text-ink">{{ $t('admin.products.drag_drop_images') }}</p>
+        <p class="mt-1 text-xs text-gray-400">{{ $t('admin.products.image_format_note') }}</p>
         <input id="image-input" type="file" accept="image/*" multiple class="hidden" @change="onFiles" />
         <div class="mt-4 flex flex-wrap justify-center gap-2">
           <button class="btn-secondary btn-sm" type="button" @click="pickFiles()">
             <ImagePlus class="h-4 w-4" />
-            Browse files
+            {{ $t('admin.products.browse_files') }}
           </button>
-          <button class="btn-ghost btn-sm" type="button" @click="addSamples()">Add sample images</button>
+          <button class="btn-ghost btn-sm" type="button" @click="addSamples()">{{ $t('admin.products.add_sample_images') }}</button>
         </div>
       </div>
       <p v-if="errors.images" class="mt-2 text-xs text-red-600">{{ errors.images }}</p>
@@ -497,7 +619,7 @@ function showToast(msg: string) {
           <button
             class="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow hover:text-red-600"
             type="button"
-            title="Remove"
+            :title="$t('admin.products.remove_image')"
             @click="removeImage(img.id)"
           >
             <X class="h-3.5 w-3.5" />
@@ -510,17 +632,17 @@ function showToast(msg: string) {
           >
             <Star v-if="img.isMain" class="h-3 w-3 fill-current" />
             <Star v-else class="h-3 w-3" />
-            {{ img.isMain ? 'Main' : 'Set main' }}
+            {{ img.isMain ? $t('admin.products.main') : $t('admin.products.set_main') }}
           </button>
         </div>
       </div>
     </div>
 
     <div class="flex flex-wrap items-center justify-end gap-2">
-      <button class="btn-secondary" type="button" @click="router.push({ name: 'admin-products' })">Cancel</button>
+      <button class="btn-secondary" type="button" @click="router.push({ name: 'admin-products' })">{{ $t('actions.cancel') }}</button>
       <button class="btn-primary" type="submit">
         <Save class="h-4 w-4" />
-        Save Product
+        {{ $t('admin.products.save_product') }}
       </button>
     </div>
 

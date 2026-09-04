@@ -13,6 +13,7 @@ use App\Models\ProductVariant;
 use App\Models\Shipment;
 use App\Models\ShippingMethod;
 use App\Models\User;
+use App\Notifications\OrderPlacedNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -181,7 +182,9 @@ class CheckoutService
             $order->save();
 
             if ($order->user_id !== null) {
-                $this->cart->clear($this->cart->forUser($order->user()->first(), null));
+                $user = $order->user()->first();
+                $user->notify(new OrderPlacedNotification($order));
+                $this->cart->clear($this->cart->forUser($user, null));
             }
 
             return $order->load(['items', 'payment', 'shipments']);

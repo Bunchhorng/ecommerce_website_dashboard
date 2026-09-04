@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive, watch } from 'vue'
+import { ref, computed, reactive, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   ArrowRight,
@@ -12,12 +12,15 @@ import {
   Landmark,
   Wallet
 } from 'lucide-vue-next'
-import type { Address, ShippingMethod, PaymentMethod, Order, OrderStatus } from '@/types'
-import { ADDRESSES, SHIPPING_METHODS, ORDERS } from '@/data/mock'
+import type { Address, ShippingMethod, PaymentMethod, OrderStatus } from '@/types'
+import { addressesApi, type ApiAddress } from '@/api/addresses'
+import { shippingApi, type ApiShippingMethod } from '@/api/shipping'
+import { checkoutApi } from '@/api/checkout'
+import { cartApi } from '@/api/cart'
 import { useCartStore } from '@/stores/cart'
 import BaseModal from '@/components/BaseModal.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import { formatPrice, randomId } from '@/utils/format'
+import { formatPrice } from '@/utils/format'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -30,9 +33,10 @@ const steps = [
   { id: 4, label: 'Review' }
 ]
 
-const addresses = ref<Address[]>([...ADDRESSES])
-const selectedAddressId = ref(ADDRESSES[0].id)
+const addresses = ref<Address[]>([])
+const selectedAddressId = ref<number | null>(null)
 const addressModalOpen = ref(false)
+const loadingAddresses = ref(true)
 const newAddress = reactive<Omit<Address, 'id' | 'isDefault'>>({
   label: '',
   fullName: '',
@@ -45,11 +49,13 @@ const newAddress = reactive<Omit<Address, 'id' | 'isDefault'>>({
   phone: ''
 })
 
-const shipping = ref<ShippingMethod[]>(SHIPPING_METHODS)
-const selectedShippingId = ref(SHIPPING_METHODS[0].id)
-const selectedShipping = ref<ShippingMethod>(SHIPPING_METHODS[0])
+const shipping = ref<ShippingMethod[]>([])
+const selectedShippingId = ref<number | null>(null)
+const selectedShipping = ref<ShippingMethod | null>(null)
+const loadingShipping = ref(true)
 watch(selectedShippingId, (id) => {
-  selectedShipping.value = shipping.value.find((s) => s.id === id) ?? shipping.value[0]
+  const found = shipping.value.find((s) => s.id === id)
+  if (found) selectedShipping.value = found
 })
 
 const paymentOptions = [
@@ -63,7 +69,7 @@ const paymentMethod = ref<PaymentMethod>('cod')
 const selectedAddress = computed(
   () => addresses.value.find((a) => a.id === selectedAddressId.value) ?? addresses.value[0]
 )
-const shippingPrice = computed(() => (step.value > 1 ? selectedShipping.value.price : 0))
+const shippingPrice = computed(() => (step.value > 1 && selectedShipping.value ? selectedShipping.value.price : 0))
 const totalWithShipping = computed(() => cartStore.totalAmount + shippingPrice.value)
 
 const paymentLabel = computed(() => {
@@ -71,8 +77,72 @@ const paymentLabel = computed(() => {
   return option ? option.label : paymentMethod.value
 })
 
+function mapAddressFromApi(a: ApiAddress): Address {
+  return {
+    id: a.id,
+    label: a.label ?? 'Address',
+    fullName: a.full_name,
+    line1: a.address_line1,
+    line2: a.address_line2 ?? '',
+    city: a.city,
+    state: a.state,
+    postalCode: a.postal_code,
+    country: a.country,
+    phone: a.phone ?? '',
+    isDefault: a.is_default
+  }
+}
+
+function mapShippingFromApi(s: ApiShippingMethod): ShippingMethod {
+  return {
+    id: s.id,
+    name: s.name,
+    description: s.description ?? '',
+    etaDays: s.estimated_days_min ?? 1,
+    price: s.price
+  }
+}
+
+async function fetchAddresses() {
+  loadingAddresses.value = true
+  try {
+    const { data } = await addressesApi.list()
+    addresses.value = data.data.map(mapAddressFromApi)
+    if (addresses.value.length > 0 && selectedAddressId.value === null) {
+      const def = addresses.value.find((a) => a.isDefault)
+      selectedAddressId.value = def ? def.id : addresses.value[0].id
+    }
+  } catch {
+    addresses.value = []
+  } finally {
+    loadingAddresses.value = false
+  }
+}
+
+async function fetchShipping() {
+  loadingShipping.value = true
+  try {
+    const { data } = await shippingApi.getActive()
+    shipping.value = data.data.map(mapShippingFromApi)
+    if (shipping.value.length > 0 && selectedShippingId.value === null) {
+      selectedShippingId.value = shipping.value[0].id
+      selectedShipping.value = shipping.value[0]
+    }
+  } catch {
+    shipping.value = []
+  } finally {
+    loadingShipping.value = false
+  }
+}
+
+onMounted(() => {
+  fetchAddresses()
+  fetchShipping()
+})
+
 function stepAllowed(): boolean {
   if (step.value === 1) {
+    if (!selectedAddress.value) return false
     return Boolean(
       selectedAddress.value.fullName.trim() &&
         selectedAddress.value.line1.trim() &&
@@ -82,62 +152,52 @@ function stepAllowed(): boolean {
   return true
 }
 
-function saveAddress() {
+async function saveAddress() {
   if (!newAddress.fullName.trim() || !newAddress.line1.trim() || !newAddress.city.trim()) return
-  addresses.value.push({
-    ...newAddress,
-    id: randomId('ad'),
-    isDefault: false
-  })
-  selectedAddressId.value = addresses.value[addresses.value.length - 1].id
-  newAddress.label = ''
-  newAddress.fullName = ''
-  newAddress.line1 = ''
-  newAddress.line2 = ''
-  newAddress.city = ''
-  newAddress.state = ''
-  newAddress.postalCode = ''
-  newAddress.country = ''
-  newAddress.phone = ''
-  addressModalOpen.value = false
-}
-
-function addDaysIso(days: number): string {
-  return new Date(Date.now() + days * 864e5).toISOString()
-}
-
-function placeOrder() {
-  const orderId = randomId('o')
-  const number = `SV-2026-${String(1000 + Math.floor(Math.random() * 900)).padStart(4, '0')}`
-  const nowIso = new Date().toISOString()
-  const order: Order = {
-    id: orderId,
-    number,
-    items: cartStore.items.map((item) => ({
-      id: item.id,
-      productId: item.productId,
-      title: item.title,
-      brand: item.brand,
-      image: item.image,
-      unitPrice: item.unitPrice,
-      quantity: item.quantity,
-      variant: item.variant
-    })),
-    subtotal: cartStore.subtotal,
-    discount: cartStore.discountAmount,
-    shipping: shippingPrice.value,
-    tax: cartStore.taxAmount,
-    total: totalWithShipping.value,
-    status: 'Pending' as OrderStatus,
-    placedAt: nowIso,
-    estimatedDelivery: addDaysIso(selectedShipping.value.etaDays),
-    trackingEvents: [{ status: 'Pending' as OrderStatus, at: nowIso }],
-    shippingAddress: selectedAddress.value,
-    paymentMethod: paymentMethod.value
+  try {
+    const { data } = await addressesApi.create({
+      full_name: newAddress.fullName,
+      address_line1: newAddress.line1,
+      address_line2: newAddress.line2 || undefined,
+      city: newAddress.city,
+      state: newAddress.state,
+      postal_code: newAddress.postalCode,
+      country: newAddress.country || undefined,
+      phone: newAddress.phone || undefined,
+      label: newAddress.label || undefined
+    })
+    const mapped = mapAddressFromApi(data.data)
+    addresses.value.push(mapped)
+    selectedAddressId.value = mapped.id
+    newAddress.label = ''
+    newAddress.fullName = ''
+    newAddress.line1 = ''
+    newAddress.line2 = ''
+    newAddress.city = ''
+    newAddress.state = ''
+    newAddress.postalCode = ''
+    newAddress.country = ''
+    newAddress.phone = ''
+    addressModalOpen.value = false
+  } catch {
+    /* handle silently */
   }
-  ORDERS.unshift(order)
-  cartStore.clearCart()
-  router.push({ name: 'order-success', params: { orderId: order.id } })
+}
+
+async function placeOrder() {
+  if (!selectedAddress.value || !selectedShipping.value) return
+  try {
+    const { data } = await checkoutApi.begin({
+      shipping_method_id: selectedShipping.value.id,
+      payment_method: paymentMethod.value,
+      address_id: selectedAddress.value.id
+    })
+    await cartApi.clear()
+    cartStore.clearCart()
+    router.push({ name: 'order-success', params: { orderId: data.data.order_number } })
+  } catch {
+    /* handle silently */
+  }
 }
 </script>
 
@@ -153,7 +213,7 @@ function placeOrder() {
     </div>
 
     <template v-else>
-      <h1 class="mb-6 text-2xl font-bold text-ink sm:text-3xl">Checkout</h1>
+      <h1 class="mb-6 text-2xl font-bold text-ink dark:text-gray-100 sm:text-3xl">{{ $t('nav.checkout') }}</h1>
 
       <div class="mb-8 flex items-center">
         <template v-for="(s, i) in steps" :key="s.id">
@@ -165,20 +225,20 @@ function placeOrder() {
                   ? 'bg-primary text-white'
                   : step > s.id
                     ? 'bg-emerald-500 text-white'
-                    : 'bg-gray-200 text-gray-500'
+                    : 'bg-gray-200 text-gray-500 dark:text-gray-400 dark:bg-gray-700'
               "
             >
               <Check v-if="step > s.id" class="h-4 w-4" />
               <span v-else>{{ s.id }}</span>
             </div>
-            <span class="hidden text-sm font-medium sm:block" :class="step >= s.id ? 'text-ink' : 'text-gray-400'">
+            <span class="hidden text-sm font-medium sm:block" :class="step >= s.id ? 'text-ink' : 'text-gray-400 dark:text-gray-500 dark:text-gray-400'">
               {{ s.label }}
             </span>
           </div>
           <div
             v-if="i < steps.length - 1"
             class="mx-3 h-0.5 flex-1 rounded"
-            :class="step > s.id ? 'bg-emerald-500' : 'bg-gray-200'"
+            :class="step > s.id ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-gray-700'"
           ></div>
         </template>
       </div>
@@ -187,11 +247,13 @@ function placeOrder() {
         <div class="card space-y-6 p-6">
           <template v-if="step === 1">
             <div>
-              <h2 class="text-lg font-bold text-ink">Shipping Address</h2>
-              <p class="mt-1 text-sm text-gray-500">Where should we deliver your order?</p>
+              <h2 class="text-lg font-bold text-ink dark:text-gray-100">{{ $t('checkout.shipping_address') }}</h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Where should we deliver your order?</p>
             </div>
 
-            <div class="grid gap-4 sm:grid-cols-2">
+            <div v-if="loadingAddresses" class="text-sm text-gray-500 dark:text-gray-400">Loading addresses...</div>
+
+            <div v-else class="grid gap-4 sm:grid-cols-2">
               <label
                 v-for="address in addresses"
                 :key="address.id"
@@ -205,7 +267,7 @@ function placeOrder() {
                   class="peer sr-only"
                 />
                 <div
-                  class="rounded-xl border-2 border-border-gray p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5"
+                  class="rounded-xl border-2 border-border-gray dark:border-gray-700 p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5"
                 >
                   <div class="mb-1 flex items-center gap-2">
                     <span class="chip">{{ address.label }}</span>
@@ -216,18 +278,18 @@ function placeOrder() {
                       Default
                     </span>
                   </div>
-                  <p class="font-semibold text-ink">{{ address.fullName }}</p>
-                  <p class="text-sm text-gray-600">{{ address.line1 }}</p>
-                  <p class="text-sm text-gray-600">
+                  <p class="font-semibold text-ink dark:text-gray-100">{{ address.fullName }}</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">{{ address.line1 }}</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
                     {{ address.city }}, {{ address.state }} {{ address.postalCode }}
                   </p>
-                  <p class="mt-1 text-sm text-gray-500">{{ address.phone }}</p>
+                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ address.phone }}</p>
                 </div>
               </label>
 
               <button
                 type="button"
-                class="flex min-h-[120px] items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border-gray p-4 text-sm font-medium text-gray-500 transition-colors hover:border-primary hover:text-primary"
+                class="flex min-h-[120px] items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border-gray dark:border-gray-700 p-4 text-sm font-medium text-gray-500 dark:text-gray-400 transition-colors hover:border-primary hover:text-primary"
                 @click="addressModalOpen = true"
               >
                 <Plus class="h-4 w-4" />
@@ -250,11 +312,13 @@ function placeOrder() {
 
           <template v-else-if="step === 2">
             <div>
-              <h2 class="text-lg font-bold text-ink">Shipping Method</h2>
-              <p class="mt-1 text-sm text-gray-500">Choose a delivery speed that works for you.</p>
+              <h2 class="text-lg font-bold text-ink dark:text-gray-100">{{ $t('checkout.shipping_method') }}</h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Choose a delivery speed that works for you.</p>
             </div>
 
-            <div class="space-y-3">
+            <div v-if="loadingShipping" class="text-sm text-gray-500 dark:text-gray-400">Loading shipping methods...</div>
+
+            <div v-else class="space-y-3">
               <label
                 v-for="method in shipping"
                 :key="method.id"
@@ -268,24 +332,24 @@ function placeOrder() {
                   class="peer sr-only"
                 />
                 <div
-                  class="flex items-center justify-between gap-4 rounded-xl border-2 border-border-gray p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5"
+                  class="flex items-center justify-between gap-4 rounded-xl border-2 border-border-gray dark:border-gray-700 p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5"
                 >
                   <div class="flex items-center gap-3">
                     <span
-                      class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-gray-300"
+                      class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-gray-300 dark:border-gray-600"
                       :class="{ 'border-primary': selectedShippingId === method.id }"
                     >
                       <span v-if="selectedShippingId === method.id" class="h-2.5 w-2.5 rounded-full bg-primary"></span>
                     </span>
                     <div>
-                      <p class="font-semibold text-ink">{{ method.name }}</p>
-                      <p class="text-sm text-gray-600">{{ method.description }}</p>
+                      <p class="font-semibold text-ink dark:text-gray-100">{{ method.name }}</p>
+                      <p class="text-sm text-gray-600 dark:text-gray-300">{{ method.description }}</p>
                       <span class="chip mt-1">{{ method.etaDays }}–{{ method.etaDays + 1 }} days</span>
                     </div>
                   </div>
                   <div class="text-right">
-                    <span v-if="method.price === 0" class="chip bg-accent !text-ink">Free</span>
-                    <span v-else class="font-semibold text-ink">{{ formatPrice(method.price) }}</span>
+                    <span v-if="method.price === 0" class="chip bg-accent !text-ink dark:text-gray-100">Free</span>
+                    <span v-else class="font-semibold text-ink dark:text-gray-100">{{ formatPrice(method.price) }}</span>
                   </div>
                 </div>
               </label>
@@ -305,8 +369,8 @@ function placeOrder() {
 
           <template v-else-if="step === 3">
             <div>
-              <h2 class="text-lg font-bold text-ink">Payment Method</h2>
-              <p class="mt-1 text-sm text-gray-500">How would you like to pay?</p>
+              <h2 class="text-lg font-bold text-ink dark:text-gray-100">{{ $t('checkout.payment_method') }}</h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">How would you like to pay?</p>
             </div>
 
             <div class="space-y-3">
@@ -323,26 +387,26 @@ function placeOrder() {
                   class="peer sr-only"
                 />
                 <div
-                  class="flex items-center justify-between gap-4 rounded-xl border-2 border-border-gray p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5"
+                  class="flex items-center justify-between gap-4 rounded-xl border-2 border-border-gray dark:border-gray-700 p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5"
                 >
                   <div class="flex items-center gap-3">
                     <span
-                      class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-gray-300"
+                      class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-gray-300 dark:border-gray-600"
                       :class="{ 'border-primary': paymentMethod === option.id }"
                     >
                       <span v-if="paymentMethod === option.id" class="h-2.5 w-2.5 rounded-full bg-primary"></span>
                     </span>
-                    <component :is="option.icon" class="h-5 w-5 text-gray-500" />
+                    <component :is="option.icon" class="h-5 w-5 text-gray-500 dark:text-gray-400" />
                     <div>
-                      <p class="font-semibold text-ink">{{ option.label }}</p>
-                      <p class="text-sm text-gray-600">{{ option.desc }}</p>
+                      <p class="font-semibold text-ink dark:text-gray-100">{{ option.label }}</p>
+                      <p class="text-sm text-gray-600 dark:text-gray-300">{{ option.desc }}</p>
                     </div>
                   </div>
                 </div>
               </label>
             </div>
 
-            <div v-if="paymentMethod === 'card'" class="space-y-4 rounded-xl bg-canvas p-4">
+            <div v-if="paymentMethod === 'card'" class="space-y-4 rounded-xl bg-canvas p-4 dark:bg-gray-900">
               <div>
                 <label class="label" for="card-name">Name on card</label>
                 <input id="card-name" type="text" class="input" placeholder="Alex Morgan" />
@@ -363,11 +427,11 @@ function placeOrder() {
               </div>
             </div>
 
-            <div v-else-if="paymentMethod === 'bank'" class="rounded-xl bg-canvas p-4 text-sm text-gray-600">
+            <div v-else-if="paymentMethod === 'bank'" class="rounded-xl bg-canvas p-4 text-sm text-gray-600 dark:text-gray-300 dark:bg-gray-900">
               After placing your order, transfer to: A/C 1234-5678-90 · ShopVerse Inc. · Swift code SVUS33
             </div>
 
-            <div v-else-if="paymentMethod === 'gateway'" class="rounded-xl bg-canvas p-4 text-sm text-gray-600">
+            <div v-else-if="paymentMethod === 'gateway'" class="rounded-xl bg-canvas p-4 text-sm text-gray-600 dark:text-gray-300 dark:bg-gray-900">
               You'll be redirected to our secure payment partner to complete checkout.
             </div>
 
@@ -382,7 +446,7 @@ function placeOrder() {
               </button>
             </div>
 
-            <p class="flex items-center gap-1.5 text-xs text-gray-500">
+            <p class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
               <Lock class="h-3.5 w-3.5" />
               Payments are encrypted and securely processed.
             </p>
@@ -390,55 +454,55 @@ function placeOrder() {
 
           <template v-else>
             <div>
-              <h2 class="text-lg font-bold text-ink">Review &amp; Place Order</h2>
-              <p class="mt-1 text-sm text-gray-500">Confirm your details before placing the order.</p>
+              <h2 class="text-lg font-bold text-ink dark:text-gray-100">Review &amp; Place Order</h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Confirm your details before placing the order.</p>
             </div>
 
             <div class="space-y-4">
-              <div class="flex items-start justify-between gap-4 rounded-xl border border-border-gray p-4">
+              <div v-if="selectedAddress" class="flex items-start justify-between gap-4 rounded-xl border border-border-gray dark:border-gray-700 p-4">
                 <div class="flex items-start gap-3">
                   <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Ship to</p>
-                    <p class="font-semibold text-ink">{{ selectedAddress.fullName }}</p>
-                    <p class="text-sm text-gray-600">{{ selectedAddress.line1 }}</p>
-                    <p class="text-sm text-gray-600">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 dark:text-gray-400">Ship to</p>
+                    <p class="font-semibold text-ink dark:text-gray-100">{{ selectedAddress.fullName }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">{{ selectedAddress.line1 }}</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
                       {{ selectedAddress.city }}, {{ selectedAddress.state }} {{ selectedAddress.postalCode }}
                     </p>
-                    <p class="text-sm text-gray-500">{{ selectedAddress.phone }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ selectedAddress.phone }}</p>
                   </div>
                 </div>
                 <button type="button" class="btn-ghost btn-sm shrink-0" @click="step = 1">Edit</button>
               </div>
 
-              <div class="flex items-center justify-between rounded-xl border border-border-gray p-4">
+              <div v-if="selectedShipping" class="flex items-center justify-between rounded-xl border border-border-gray dark:border-gray-700 p-4">
                 <div>
-                  <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Delivery</p>
-                  <p class="font-semibold text-ink">{{ selectedShipping.name }}</p>
-                  <p class="text-sm text-gray-600">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 dark:text-gray-400">Delivery</p>
+                  <p class="font-semibold text-ink dark:text-gray-100">{{ selectedShipping.name }}</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-300">
                     {{ selectedShipping.price === 0 ? 'Free' : formatPrice(selectedShipping.price) }}
                   </p>
                 </div>
                 <button type="button" class="btn-ghost btn-sm shrink-0" @click="step = 2">Edit</button>
               </div>
 
-              <div class="flex items-center justify-between rounded-xl border border-border-gray p-4">
+              <div class="flex items-center justify-between rounded-xl border border-border-gray dark:border-gray-700 p-4">
                 <div>
-                  <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Payment</p>
-                  <p class="font-semibold text-ink">{{ paymentLabel }}</p>
+                  <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 dark:text-gray-400">Payment</p>
+                  <p class="font-semibold text-ink dark:text-gray-100">{{ paymentLabel }}</p>
                 </div>
                 <button type="button" class="btn-ghost btn-sm shrink-0" @click="step = 3">Edit</button>
               </div>
 
-              <div class="divide-y divide-border-gray rounded-xl border border-border-gray">
+              <div class="divide-y divide-border-gray rounded-xl border border-border-gray dark:divide-gray-700 dark:border-gray-700">
                 <div v-for="item in cartStore.items" :key="item.id" class="flex items-center gap-3 p-4">
                   <img :src="item.image" :alt="item.title" class="h-14 w-12 rounded-lg object-cover" />
                   <div class="min-w-0 flex-1">
-                    <p class="truncate font-semibold text-ink">{{ item.title }}</p>
-                    <p class="text-xs text-gray-500">
+                    <p class="truncate font-semibold text-ink dark:text-gray-100">{{ item.title }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
                       Qty {{ item.quantity }} · {{ item.variant?.attributes ? item.variant.attributes.map((a) => a.value).join(', ') : '' }}
                     </p>
                   </div>
-                  <p class="shrink-0 font-medium text-ink">{{ formatPrice(item.unitPrice * item.quantity) }}</p>
+                  <p class="shrink-0 font-medium text-ink dark:text-gray-100">{{ formatPrice(item.unitPrice * item.quantity) }}</p>
                 </div>
               </div>
             </div>
@@ -452,7 +516,7 @@ function placeOrder() {
 
         <div class="card h-fit p-6 lg:sticky lg:top-24">
           <div class="mb-4 flex items-center justify-between">
-            <h3 class="font-bold text-ink">Order Summary</h3>
+            <h3 class="font-bold text-ink dark:text-gray-100">{{ $t('checkout.order_summary') }}</h3>
             <RouterLink to="/cart" class="text-sm font-medium text-primary hover:text-primary-dark">
               Edit
             </RouterLink>
@@ -460,35 +524,35 @@ function placeOrder() {
 
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">
-              <span class="text-gray-600">Subtotal</span>
-              <span class="font-medium text-ink">{{ formatPrice(cartStore.subtotal) }}</span>
+              <span class="text-gray-600 dark:text-gray-300">{{ $t('checkout.subtotal') }}</span>
+              <span class="font-medium text-ink dark:text-gray-100">{{ formatPrice(cartStore.subtotal) }}</span>
             </div>
             <div v-if="cartStore.discountAmount > 0" class="flex justify-between">
-              <span class="text-gray-600">Discount</span>
+              <span class="text-gray-600 dark:text-gray-300">{{ $t('checkout.discount') }}</span>
               <span class="font-medium text-red-500">−{{ formatPrice(cartStore.discountAmount) }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-600">Tax (10%)</span>
-              <span class="font-medium text-ink">{{ formatPrice(cartStore.taxAmount) }}</span>
+              <span class="text-gray-600 dark:text-gray-300">{{ $t('checkout.tax') }}</span>
+              <span class="font-medium text-ink dark:text-gray-100">{{ formatPrice(cartStore.taxAmount) }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-600">Shipping</span>
-              <span v-if="step === 1" class="text-gray-400">Calculated later</span>
+              <span class="text-gray-600 dark:text-gray-300">{{ $t('checkout.shipping') }}</span>
+              <span v-if="step === 1" class="text-gray-400 dark:text-gray-500 dark:text-gray-400">Calculated later</span>
               <span v-else-if="shippingPrice === 0" class="font-medium text-emerald-600">Free</span>
-              <span v-else class="font-medium text-ink">{{ formatPrice(shippingPrice) }}</span>
+              <span v-else class="font-medium text-ink dark:text-gray-100">{{ formatPrice(shippingPrice) }}</span>
             </div>
           </div>
 
-          <div class="my-4 border-t border-border-gray"></div>
+          <div class="my-4 border-t border-border-gray dark:border-gray-700"></div>
 
           <div class="flex justify-between">
-            <span class="font-semibold text-ink">Total</span>
-            <span class="text-xl font-bold text-ink">
+            <span class="font-semibold text-ink dark:text-gray-100">{{ $t('checkout.total') }}</span>
+            <span class="text-xl font-bold text-ink dark:text-gray-100">
               {{ step === 1 ? formatPrice(cartStore.totalAmount) : formatPrice(totalWithShipping) }}
             </span>
           </div>
 
-          <p class="mt-4 text-xs text-gray-500">
+          <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
             {{ cartStore.totalItemCount }} {{ cartStore.totalItemCount === 1 ? 'item' : 'items' }} · Free shipping on orders over $100
           </p>
         </div>

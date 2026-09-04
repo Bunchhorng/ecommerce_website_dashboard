@@ -1,20 +1,27 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler } from 'chart.js'
 import type { ChartData, ChartOptions, TooltipItem } from 'chart.js'
 import { Line } from 'vue-chartjs'
-import { REVENUE_TREND } from '@/data/mock'
+import { useI18n } from 'vue-i18n'
 import { formatPrice } from '@/utils/format'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler)
 ChartJS.defaults.font.family = 'Inter, sans-serif'
 ChartJS.defaults.color = '#6B7280'
 
-const chartData: ChartData<'line'> = {
-  labels: REVENUE_TREND.map((p) => p.label),
+const props = defineProps<{
+  data: { label: string; revenue: number }[]
+}>()
+
+const { t } = useI18n()
+
+const chartData = computed<ChartData<'line'>>(() => ({
+  labels: props.data.map((p) => p.label),
   datasets: [
     {
-      label: 'Revenue',
-      data: REVENUE_TREND.map((p) => p.revenue),
+      label: t('admin.chart.revenue'),
+      data: props.data.map((p) => p.revenue),
       borderColor: '#2563EB',
       backgroundColor: 'rgba(37, 99, 235, 0.08)',
       pointBackgroundColor: '#2563EB',
@@ -25,7 +32,7 @@ const chartData: ChartData<'line'> = {
       pointHoverRadius: 5
     }
   ]
-}
+}))
 
 const chartOptions: ChartOptions<'line'> = {
   responsive: true,

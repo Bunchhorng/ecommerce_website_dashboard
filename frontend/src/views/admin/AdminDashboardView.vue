@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
   DollarSign,
@@ -11,12 +11,13 @@ import {
   TrendingDown,
   ArrowUpRight
 } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import RevenueChart from '@/components/admin/charts/RevenueChart.vue'
 import OrderStatusChart from '@/components/admin/charts/OrderStatusChart.vue'
 import SalesCategoryChart from '@/components/admin/charts/SalesCategoryChart.vue'
 import StatusTag from '@/components/StatusTag.vue'
-import { ADMIN_METRICS, LOW_STOCK_PRODUCTS, ORDERS } from '@/data/mock'
-import type { Product } from '@/types'
+import { adminApi } from '@/api/admin'
+import type { AdminOrderItem } from '@/api/admin'
 import { formatCompactNumber, formatDate, formatPrice } from '@/utils/format'
 
 interface Kpi {
@@ -27,24 +28,89 @@ interface Kpi {
   danger?: boolean
 }
 
-const recentOrders = computed(() => ORDERS.slice(0, 5))
+const { t } = useI18n()
+
+const loading = ref(true)
+
+const metrics = ref({
+  total_revenue: 0,
+  orders_count: 0,
+  customers_count: 0,
+  pending_orders: 0,
+  low_stock_products: 0
+})
+
+const revenueTrend = ref<{ label: string; revenue: number }[]>([])
+const statusDistribution = ref<{ status: string; count: number }[]>([])
+const salesByCategory = ref<{ category: string; sales: number }[]>([])
+const recentOrders = ref<AdminOrderItem[]>([])
+
+const totalOrders = computed(() => metrics.value.orders_count)
 
 const kpis = computed<Kpi[]>(() => [
-  { label: 'Total Revenue', value: formatPrice(ADMIN_METRICS.totalRevenue), delta: ADMIN_METRICS.revenueDelta, icon: DollarSign },
-  { label: 'Total Orders', value: String(ADMIN_METRICS.totalOrders), delta: ADMIN_METRICS.ordersDelta, icon: ShoppingCart },
-  { label: 'Total Customers', value: formatCompactNumber(ADMIN_METRICS.totalCustomers), delta: ADMIN_METRICS.customersDelta, icon: Users },
-  { label: 'Low Stock Alerts', value: String(ADMIN_METRICS.lowStockAlert), delta: null, icon: AlertTriangle, danger: true }
+  { label: t('admin.dashboard.total_revenue'), value: formatPrice(metrics.value.total_revenue), delta: null, icon: DollarSign },
+  { label: t('admin.dashboard.total_orders'), value: String(metrics.value.orders_count), delta: null, icon: ShoppingCart },
+  { label: t('admin.dashboard.total_customers'), value: formatCompactNumber(metrics.value.customers_count), delta: null, icon: Users },
+  { label: t('admin.dashboard.low_stock_alerts'), value: String(metrics.value.low_stock_products), delta: null, icon: AlertTriangle, danger: true }
 ])
 
-function deltaLabel(delta: number): string {
-  return `${delta >= 0 ? '+' : ''}${delta}%`
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
-function lowStockTone(p: Product): string {
-  if (p.stockQuantity <= 5) return 'bg-red-50 text-red-600'
-  if (p.stockQuantity <= 10) return 'bg-amber-50 text-amber-600'
+function aggregateByMonth(raw: { date: string; revenue: number }[]): { label: string; revenue: number }[] {
+  const monthMap = new Map<string, number>()
+  for (const entry of raw) {
+    const monthKey = entry.date.slice(0, 7)
+    monthMap.set(monthKey, (monthMap.get(monthKey) ?? 0) + entry.revenue)
+  }
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  return Array.from(monthMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, revenue]) => {
+      const monthIndex = parseInt(key.slice(5, 7), 10) - 1
+      return { label: months[monthIndex] ?? key, revenue }
+    })
+}
+
+function lowStockTone(count: number): string {
+  if (count <= 5) return 'bg-red-50 text-red-600'
+  if (count <= 10) return 'bg-amber-50 text-amber-600'
   return 'bg-gray-100 text-gray-600'
 }
+
+async function loadDashboard() {
+  loading.value = true
+  try {
+    const { data: resp } = await adminApi.getDashboard()
+    const dashboard = resp.data
+    metrics.value = dashboard.metrics
+    revenueTrend.value = aggregateByMonth(dashboard.revenue_trend)
+    statusDistribution.value = dashboard.status_distribution
+    salesByCategory.value = dashboard.sales_by_category.map((c) => ({
+      category: c.name,
+      sales: c.revenue
+    }))
+  } catch {
+    // Silently handle errors - UI shows defaults
+  } finally {
+    loading.value = false
+  }
+}
+
+async function loadRecentOrders() {
+  try {
+    const { data: resp } = await adminApi.listOrders()
+    recentOrders.value = resp.data.slice(0, 5)
+  } catch {
+    // Silently handle
+  }
+}
+
+onMounted(() => {
+  loadDashboard()
+  loadRecentOrders()
+})
 </script>
 
 <template>
@@ -61,9 +127,9 @@ function lowStockTone(p: Product): string {
                 :class="kpi.delta >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'"
               >
                 <component :is="kpi.delta >= 0 ? TrendingUp : TrendingDown" class="h-3.5 w-3.5" />
-                {{ deltaLabel(kpi.delta) }}
+                {{ kpi.delta >= 0 ? '+' : '' }}{{ kpi.delta }}%
               </span>
-              <span class="text-xs text-gray-400">vs last month</span>
+              <span class="text-xs text-gray-400">{{ $t('admin.dashboard.vs_last_month') }}</span>
             </div>
           </div>
           <div
@@ -79,34 +145,34 @@ function lowStockTone(p: Product): string {
     <div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
       <div class="card p-5 xl:col-span-2">
         <div class="mb-5 flex items-center justify-between">
-          <h2 class="text-base font-semibold text-ink">Revenue Trend</h2>
-          <span class="chip">Last 12 months</span>
+          <h2 class="text-base font-semibold text-ink">{{ $t('admin.chart.revenue_trend') }}</h2>
+          <span class="chip">{{ $t('admin.dashboard.last_12_months') }}</span>
         </div>
-        <RevenueChart />
+        <RevenueChart :data="revenueTrend" />
       </div>
 
       <div class="card p-5">
         <div class="mb-5 flex items-center justify-between">
-          <h2 class="text-base font-semibold text-ink">Orders by Status</h2>
-          <span class="chip">Total {{ ADMIN_METRICS.totalOrders }}</span>
+          <h2 class="text-base font-semibold text-ink">{{ $t('admin.chart.orders_by_status') }}</h2>
+          <span class="chip">{{ $t('admin.dashboard.total_count', { count: totalOrders }) }}</span>
         </div>
-        <OrderStatusChart />
+        <OrderStatusChart :data="statusDistribution" />
       </div>
 
       <div class="grid gap-5 xl:col-span-3 xl:grid-cols-3">
         <div class="card p-5 xl:col-span-1">
           <div class="mb-5 flex items-center justify-between">
-            <h2 class="text-base font-semibold text-ink">Sales by Category</h2>
-            <span class="chip">This year</span>
+            <h2 class="text-base font-semibold text-ink">{{ $t('admin.chart.sales_by_category') }}</h2>
+            <span class="chip">{{ $t('admin.dashboard.this_year') }}</span>
           </div>
-          <SalesCategoryChart />
+          <SalesCategoryChart :data="salesByCategory" />
         </div>
 
         <div class="card overflow-hidden xl:col-span-2">
           <div class="flex flex-wrap items-center justify-between gap-2 px-5 pb-4 pt-5">
-            <h2 class="text-base font-semibold text-ink">Recent Orders</h2>
+            <h2 class="text-base font-semibold text-ink">{{ $t('admin.dashboard.recent_orders') }}</h2>
             <RouterLink to="/admin/orders" class="inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary-dark">
-              View all
+              {{ $t('actions.view_all') }}
               <ArrowUpRight class="h-4 w-4" />
             </RouterLink>
           </div>
@@ -114,22 +180,22 @@ function lowStockTone(p: Product): string {
             <table class="w-full min-w-[640px] text-sm">
               <thead>
                 <tr class="border-y border-border-gray bg-gray-50">
-                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Order</th>
-                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Customer</th>
-                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Total</th>
-                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
-                  <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Date</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t('admin.table.col_order') }}</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t('admin.table.col_customer') }}</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t('admin.table.col_total') }}</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t('admin.table.col_status') }}</th>
+                  <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t('admin.table.col_date') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-border-gray">
-                <tr v-for="order in recentOrders" :key="order.id" class="transition-colors hover:bg-canvas/50">
-                  <td class="px-5 py-3.5 font-semibold text-ink">{{ order.number }}</td>
-                  <td class="px-5 py-3.5 text-gray-600">{{ order.shippingAddress.fullName }}</td>
+                <tr v-for="order in recentOrders" :key="order.order_number" class="transition-colors hover:bg-canvas/50">
+                  <td class="px-5 py-3.5 font-semibold text-ink">{{ order.order_number }}</td>
+                  <td class="px-5 py-3.5 text-gray-600">{{ order.user?.name ?? '—' }}</td>
                   <td class="px-5 py-3.5 font-medium text-gray-700">{{ formatPrice(order.total) }}</td>
                   <td class="px-5 py-3.5">
-                    <StatusTag :status="order.status" />
+                    <StatusTag :status="capitalize(order.status)" />
                   </td>
-                  <td class="px-5 py-3.5 text-right text-gray-500">{{ formatDate(order.placedAt) }}</td>
+                  <td class="px-5 py-3.5 text-right text-gray-500">{{ formatDate(order.placed_at) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -141,26 +207,20 @@ function lowStockTone(p: Product): string {
     <div class="card overflow-hidden">
       <div class="flex flex-wrap items-center justify-between gap-2 p-5 pb-4">
         <div>
-          <h2 class="text-base font-semibold text-ink">Low Stock Alerts</h2>
-          <p class="mt-0.5 text-sm text-gray-500">Products that need restocking soon.</p>
+          <h2 class="text-base font-semibold text-ink">{{ $t('admin.dashboard.low_stock_alerts') }}</h2>
+          <p class="mt-0.5 text-sm text-gray-500">{{ $t('admin.dashboard.low_stock_description') }}</p>
         </div>
         <RouterLink to="/admin/products" class="inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary-dark">
-          View all products
+          {{ $t('admin.dashboard.view_all_products') }}
           <ArrowUpRight class="h-4 w-4" />
         </RouterLink>
       </div>
       <ul class="divide-y divide-border-gray border-t border-border-gray">
-        <li v-for="p in LOW_STOCK_PRODUCTS" :key="p.id" class="flex items-center justify-between gap-3 px-5 py-3 transition-colors hover:bg-canvas/50">
-          <div class="flex min-w-0 items-center gap-3">
-            <img :src="p.images[0]?.url" :alt="p.title" class="h-9 w-9 shrink-0 rounded-lg object-cover" />
-            <div class="min-w-0">
-              <div class="truncate text-sm font-medium text-ink">{{ p.title }}</div>
-              <div class="text-xs text-gray-500">{{ p.sku }}</div>
-            </div>
-          </div>
-          <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold" :class="lowStockTone(p)">
-            {{ p.stockQuantity }} left
-          </span>
+        <li v-if="metrics.low_stock_products === 0" class="px-5 py-6 text-center text-sm text-gray-400">
+          {{ $t('admin.dashboard.no_low_stock') }}
+        </li>
+        <li v-else class="px-5 py-3.5 text-center text-sm text-gray-500">
+          {{ $t('admin.dashboard.low_stock_count', { count: metrics.low_stock_products }) }}
         </li>
       </ul>
     </div>

@@ -14,6 +14,7 @@ class OrderListResource extends JsonResource
             : ($this->order_items_count ?? null);
 
         return [
+            'id' => (int) $this->id,
             'order_number' => $this->order_number,
             'status' => $this->status,
             'payment_status' => $this->payment_status,

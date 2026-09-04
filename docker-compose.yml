@@ -19,6 +19,25 @@ services:
       - ecommerce
 
   # ==========================================
+  # Laravel Scheduler (php artisan schedule:work)
+  # ==========================================
+  scheduler:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: ecommerce_scheduler
+    restart: unless-stopped
+    working_dir: /var/www
+    command: php artisan schedule:work
+    volumes:
+      - ./backend:/var/www
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - ecommerce
+
+  # ==========================================
   # Nginx
   # ==========================================
   nginx:
@@ -95,6 +114,10 @@ services:
     working_dir: /app
     ports:
       - "5173:5173"
+    environment:
+      # Proxy /api calls to the nginx container (backend) on the internal network.
+      # localhost:8000 would point to the frontend container itself and fail.
+      VITE_PROXY_TARGET: http://nginx
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules

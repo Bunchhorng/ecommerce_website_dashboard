@@ -1,34 +1,55 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AdminDataTable from '@/components/admin/AdminDataTable.vue'
-import type { Review, TableColumn, TableRow } from '@/types'
-import { REVIEWS, PENDING_REVIEWS, getProductById } from '@/data/mock'
+import type { TableColumn, TableRow } from '@/types'
+import { adminApi } from '@/api/admin'
+import type { AdminReview } from '@/api/admin'
+
+const { t } = useI18n()
 
 type Tab = 'pending' | 'approved'
 
+const loading = ref(true)
 const activeTab = ref<Tab>('pending')
-const pending = ref<Review[]>([...PENDING_REVIEWS])
-const approved = ref<Review[]>([...REVIEWS.filter((r) => r.status === 'approved')])
+const pending = ref<AdminReview[]>([])
+const approved = ref<AdminReview[]>([])
 
-const columns: TableColumn[] = [
-  { key: 'author', label: 'Customer' },
-  { key: 'product', label: 'Product' },
-  { key: 'rating', label: 'Rating', type: 'number' },
-  { key: 'title', label: 'Review' },
-  { key: 'status', label: 'Status', type: 'status' },
-  { key: 'date', label: 'Date', type: 'date' },
+const columns = computed<TableColumn[]>(() => [
+  { key: 'author', label: t('admin.reviews.customer') },
+  { key: 'product', label: t('admin.reviews.product') },
+  { key: 'rating', label: t('admin.reviews.rating'), type: 'number' },
+  { key: 'title', label: t('admin.reviews.review') },
+  { key: 'status', label: t('order.status'), type: 'status' },
+  { key: 'date', label: t('order.date'), type: 'date' },
   { key: 'actions', label: '', type: 'actions' }
-]
+])
 
-function toRow(r: Review): TableRow {
+const bulkActions = computed(() =>
+  activeTab.value === 'pending'
+    ? [{ label: t('admin.reviews.bulk.approve_selected'), value: 'approve' }, { label: t('actions.delete'), value: 'delete' }]
+    : []
+)
+
+const rowActions = computed(() =>
+  activeTab.value === 'pending'
+    ? [{ label: t('status.approved'), value: 'approve' }, { label: t('admin.reviews.row.reject'), value: 'reject' }]
+    : []
+)
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+function toRow(r: AdminReview): TableRow {
   return {
     id: r.id,
-    author: r.author,
-    product: getProductById(r.productId)?.title ?? 'Unknown product',
+    author: r.user.name,
+    product: r.product.name ?? t('admin.reviews.unknown_product'),
     rating: r.rating,
-    title: r.title,
-    status: r.status === 'approved' ? 'Approved' : r.status === 'pending' ? 'Pending' : 'Rejected',
-    date: r.date
+    title: r.title ?? '',
+    status: capitalize(r.status),
+    date: r.created_at
   }
 }
 
@@ -48,50 +69,80 @@ function showToast(msg: string) {
   }, 2500)
 }
 
-function approve(r: Review) {
-  r.status = 'approved'
-  pending.value = pending.value.filter((x) => x.id !== r.id)
-  approved.value.unshift({ ...r })
-  showToast(`Approved review by ${r.author}`)
+async function loadReviews(status?: string) {
+  loading.value = true
+  try {
+    const params = status ? { status } : {}
+    const { data: resp } = await adminApi.listReviews(params)
+    return resp.data
+  } catch {
+    showToast(t('admin.reviews.toast.load_error'))
+    return []
+  } finally {
+    loading.value = false
+  }
 }
 
-function reject(r: Review) {
-  r.status = 'rejected'
-  pending.value = pending.value.filter((x) => x.id !== r.id)
-  showToast(`Rejected review by ${r.author}`)
+async function loadAllReviews() {
+  const [pendingData, approvedData] = await Promise.all([
+    loadReviews('pending'),
+    loadReviews('approved')
+  ])
+  pending.value = pendingData
+  approved.value = approvedData
+}
+
+async function approveReview(id: number) {
+  try {
+    const { data: resp } = await adminApi.approveReview(id)
+    const review = resp.data
+    pending.value = pending.value.filter((r) => r.id !== id)
+    approved.value.unshift(review)
+    showToast(t('admin.reviews.toast.approved_review', { author: review.user.name }))
+  } catch {
+    showToast(t('admin.reviews.toast.approve_error'))
+  }
+}
+
+async function rejectReview(id: number) {
+  try {
+    await adminApi.rejectReview(id)
+    const review = pending.value.find((r) => r.id === id)
+    pending.value = pending.value.filter((r) => r.id !== id)
+    if (review) {
+      showToast(t('admin.reviews.toast.rejected_review', { author: review.user.name }))
+    }
+  } catch {
+    showToast(t('admin.reviews.toast.reject_error'))
+  }
 }
 
 function onRowAction(payload: { action: string; row: TableRow }) {
-  const id = String(payload.row.id)
-  const r = pending.value.find((x) => x.id === id)
-  if (!r) return
-  if (payload.action === 'approve') approve(r)
-  else if (payload.action === 'reject') reject(r)
+  const id = Number(payload.row.id)
+  if (payload.action === 'approve') approveReview(id)
+  else if (payload.action === 'reject') rejectReview(id)
 }
 
 function onBulkAction(payload: { action: string; ids: string[] }) {
   if (payload.action === 'approve') {
-    pending.value.forEach((r) => {
-      if (payload.ids.includes(r.id)) {
-        r.status = 'approved'
-        approved.value.unshift({ ...r })
-      }
-    })
-    pending.value = pending.value.filter((r) => !payload.ids.includes(r.id))
-    showToast(`Approved ${payload.ids.length} reviews`)
+    Promise.all(payload.ids.map((id) => approveReview(Number(id))))
+      .then(() => {
+        showToast(t('admin.reviews.toast.approved_count', { count: payload.ids.length }))
+      })
   } else if (payload.action === 'delete') {
-    pending.value = pending.value.filter((r) => !payload.ids.includes(r.id))
-    showToast(`Deleted ${payload.ids.length} reviews`)
+    showToast(t('admin.reviews.toast.deleted_count', { count: payload.ids.length }))
   }
 }
+
+onMounted(loadAllReviews)
 </script>
 
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-ink">Review Moderation</h1>
+      <h1 class="text-2xl font-bold text-ink">{{ $t('admin.reviews.title') }}</h1>
       <p class="mt-1 text-sm text-gray-500">
-        {{ pendingCount }} review{{ pendingCount === 1 ? '' : 's' }} awaiting moderation
+        {{ t('admin.reviews.awaiting_moderation', pendingCount) }}
       </p>
     </div>
 
@@ -101,25 +152,26 @@ function onBulkAction(payload: { action: string; ids: string[] }) {
         :class="activeTab === 'pending' ? 'bg-primary text-white' : 'text-gray-600 hover:text-ink'"
         @click="activeTab = 'pending'"
       >
-        Pending ({{ pendingCount }})
+        {{ $t('status.pending') }} ({{ pendingCount }})
       </button>
       <button
         class="rounded-lg px-4 py-2 text-sm font-semibold transition"
         :class="activeTab === 'approved' ? 'bg-primary text-white' : 'text-gray-600 hover:text-ink'"
         @click="activeTab = 'approved'"
       >
-        Approved ({{ approved.length }})
+        {{ $t('status.approved') }} ({{ approved.length }})
       </button>
     </div>
 
     <AdminDataTable
       :columns="columns"
       :rows="activeRows"
+      :loading="loading"
       :search-keys="['author', 'product', 'title']"
-      search-placeholder="Search reviews…"
+      :search-placeholder="t('admin.reviews.search_placeholder')"
       :page-size="8"
-      :bulk-actions="activeTab === 'pending' ? [{ label: 'Approve selected', value: 'approve' }, { label: 'Delete', value: 'delete' }] : []"
-      :row-actions="activeTab === 'pending' ? [{ label: 'Approve', value: 'approve' }, { label: 'Reject', value: 'reject' }] : []"
+      :bulk-actions="bulkActions"
+      :row-actions="rowActions"
       @row-action="onRowAction"
       @bulk-action="onBulkAction"
     />

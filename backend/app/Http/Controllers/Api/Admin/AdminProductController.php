@@ -12,11 +12,16 @@ use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\VariantAttributeValue;
+use App\Services\InventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class AdminProductController extends Controller
 {
+    public function __construct(private InventoryService $inventoryService)
+    {
+    }
+
     public function index(Request $request)
     {
         $query = Product::with(['brand', 'category', 'images', 'variants.inventory']);
@@ -91,7 +96,7 @@ class AdminProductController extends Controller
         $product->update($data);
 
         if ($request->has('variants')) {
-            $this->syncVariants($product, $request->input('variants') ?? []);
+            $this->syncVariants($product, $request->input('variants') ?? [], $request->user()?->id);
         }
 
         return new ProductDetailResource($this->loadDetail($product));
@@ -154,7 +159,7 @@ class AdminProductController extends Controller
         }
     }
 
-    protected function syncVariants(Product $product, array $variants): void
+    protected function syncVariants(Product $product, array $variants, ?int $userId = null): void
     {
         $existing = $product->variants()->get();
         $referencedIds = [];
@@ -193,10 +198,17 @@ class AdminProductController extends Controller
                 ]);
 
                 if (array_key_exists('quantity', $variantData)) {
-                    Inventory::updateOrCreate(
-                        ['product_variant_id' => $variant->id],
-                        ['quantity' => (int) $variantData['quantity']],
-                    );
+                    $newQuantity = max((int) $variantData['quantity'], 0);
+                    $currentQuantity = (int) Inventory::where('product_variant_id', $variant->id)->value('quantity');
+
+                    if ($newQuantity !== $currentQuantity) {
+                        $this->inventoryService->adjust($variant->id, $newQuantity, $userId);
+                    } else {
+                        Inventory::updateOrCreate(
+                            ['product_variant_id' => $variant->id],
+                            ['quantity' => $newQuantity],
+                        );
+                    }
                 }
             }
 

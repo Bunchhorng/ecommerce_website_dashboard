@@ -1,61 +1,44 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { Plus, Pencil, Trash2, ChevronRight, FolderTree } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import BaseModal from '@/components/BaseModal.vue'
-import type { Category } from '@/types'
-import { CATEGORIES, PRODUCTS } from '@/data/mock'
-import { randomId } from '@/utils/format'
+import { adminApi } from '@/api/admin'
+import type { AdminCategory } from '@/api/admin'
 
-const categoryCount = (slug: string) => PRODUCTS.filter((p) => p.category.slug === slug).length
+const { t } = useI18n()
 
-function slugify(v: string): string {
-  return v
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-}
+const loading = ref(true)
 
-const customChildren: Record<string, Category[]> = {
-  'cat-electronics': [{ id: 'c-e-audio', name: 'Headphones & Audio', slug: 'headphones-audio' }],
-  'cat-fashion': [
-    { id: 'c-f-men', name: 'Men', slug: 'fashion-men' },
-    { id: 'c-f-women', name: 'Women', slug: 'fashion-women' }
-  ],
-  'cat-home': [{ id: 'c-h-lighting', name: 'Lighting', slug: 'home-lighting' }]
-}
-
-const tree = reactive<Category[]>(
-  CATEGORIES.map((c) => (customChildren[c.id] ? { ...c, children: customChildren[c.id] } : c))
-)
+const tree = ref<AdminCategory[]>([])
 
 const totalCategories = computed(() => {
-  const children = tree.reduce((acc, c) => acc + (c.children ? c.children.length : 0), 0)
-  return `${tree.length + children} total`
+  const children = tree.value.reduce((acc, c) => acc + (c.children ? c.children.length : 0), 0)
+  return t('admin.categories.total_count', { count: tree.value.length + children })
 })
 
 const open = ref<Record<string, boolean>>({})
 
 const modalOpen = ref(false)
 const modalMode = ref<'root' | 'child' | 'edit'>('root')
-const targetId = ref('')
+const targetId = ref<number | null>(null)
 const form = reactive({ name: '', slug: '' })
 
 const modalTitle = computed(() => {
-  if (modalMode.value === 'edit') return 'Edit Category'
-  if (modalMode.value === 'child') return 'Add Child Category'
-  return 'Add Category'
+  if (modalMode.value === 'edit') return t('admin.categories.edit_category')
+  if (modalMode.value === 'child') return t('admin.categories.add_child_category')
+  return t('admin.categories.add_category')
 })
 
 function openAddRoot() {
   modalMode.value = 'root'
-  targetId.value = ''
+  targetId.value = null
   form.name = ''
   form.slug = ''
   modalOpen.value = true
 }
 
-function openAddChild(parent: Category) {
+function openAddChild(parent: AdminCategory) {
   modalMode.value = 'child'
   targetId.value = parent.id
   form.name = ''
@@ -63,7 +46,7 @@ function openAddChild(parent: Category) {
   modalOpen.value = true
 }
 
-function openEdit(node: Category) {
+function openEdit(node: AdminCategory) {
   modalMode.value = 'edit'
   targetId.value = node.id
   form.name = node.name
@@ -71,7 +54,7 @@ function openEdit(node: Category) {
   modalOpen.value = true
 }
 
-function findNode(list: Category[], id: string): Category | undefined {
+function findNode(list: AdminCategory[], id: number): AdminCategory | undefined {
   for (const c of list) {
     if (c.id === id) return c
     if (c.children) {
@@ -82,7 +65,7 @@ function findNode(list: Category[], id: string): Category | undefined {
   return undefined
 }
 
-function removeById(list: Category[], id: string): boolean {
+function removeById(list: AdminCategory[], id: number): boolean {
   for (let i = 0; i < list.length; i++) {
     if (list[i].id === id) {
       list.splice(i, 1)
@@ -94,40 +77,59 @@ function removeById(list: Category[], id: string): boolean {
   return false
 }
 
-function saveNode() {
-  if (!form.name.trim()) {
-    showToast('Please enter a category name')
-    return
+async function loadCategories() {
+  loading.value = true
+  try {
+    const { data: resp } = await adminApi.listCategories()
+    tree.value = resp.data
+  } catch {
+    showToast(t('admin.categories.toast_load_error'))
+  } finally {
+    loading.value = false
   }
-  const slug = form.slug.trim() || slugify(form.name)
-  const name = form.name.trim()
-  if (modalMode.value === 'edit') {
-    const node = findNode(tree, targetId.value)
-    if (node) {
-      node.name = name
-      node.slug = slug
-      showToast(`Updated category "${name}"`)
-    }
-  } else if (modalMode.value === 'child') {
-    const parent = findNode(tree, targetId.value)
-    if (parent) {
-      if (!parent.children) parent.children = []
-      parent.children.push({ id: randomId('cat'), name, slug })
-      showToast(`Added child "${name}"`)
-    }
-  } else {
-    const node = { id: randomId('cat'), name, slug }
-    tree.push(node)
-    showToast(`Added category "${name}"`)
-  }
-  modalOpen.value = false
 }
 
-function removeNode(id: string) {
-  const node = findNode(tree, id)
-  if (node) {
-    removeById(tree, id)
-    showToast(`Deleted category "${node.name}"`)
+async function saveNode() {
+  if (!form.name.trim()) {
+    showToast(t('admin.categories.toast_enter_name'))
+    return
+  }
+  const name = form.name.trim()
+  const slug = form.slug.trim() || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+
+  try {
+    if (modalMode.value === 'edit' && targetId.value != null) {
+      await adminApi.updateCategory(targetId.value, { name, slug })
+      const node = findNode(tree.value, targetId.value)
+      if (node) {
+        node.name = name
+        node.slug = slug
+      }
+      showToast(t('admin.categories.toast_updated', { name }))
+    } else if (modalMode.value === 'child' && targetId.value != null) {
+      await adminApi.createCategory({ name, slug, parent_id: targetId.value })
+      await loadCategories()
+      showToast(t('admin.categories.toast_added_child', { name }))
+    } else {
+      await adminApi.createCategory({ name, slug })
+      await loadCategories()
+      showToast(t('admin.categories.toast_added', { name }))
+    }
+    modalOpen.value = false
+  } catch {
+    showToast(t('admin.categories.toast_save_error'))
+  }
+}
+
+async function removeNode(id: number) {
+  const node = findNode(tree.value, id)
+  if (!node) return
+  try {
+    await adminApi.deleteCategory(id)
+    removeById(tree.value, id)
+    showToast(t('admin.categories.toast_deleted', { name: node.name }))
+  } catch {
+    showToast(t('admin.categories.toast_delete_error'))
   }
 }
 
@@ -144,18 +146,20 @@ function showToast(msg: string) {
 function toggleOpen(id: string) {
   open.value[id] = !open.value[id]
 }
+
+onMounted(loadCategories)
 </script>
 
 <template>
   <div class="space-y-6">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div class="flex items-center gap-3">
-        <h1 class="text-2xl font-bold text-ink">Categories</h1>
+        <h1 class="text-2xl font-bold text-ink">{{ $t('admin.categories.title') }}</h1>
         <span class="chip">{{ totalCategories }}</span>
       </div>
       <button class="btn-primary btn-sm" @click="openAddRoot()">
         <Plus class="h-4 w-4" />
-        Add Root
+        {{ $t('admin.categories.add_root') }}
       </button>
     </div>
 
@@ -168,21 +172,21 @@ function toggleOpen(id: string) {
               class="btn-icon h-8 w-8 rotate-0"
               :class="{ 'rotate-90': open[root.id] }"
               type="button"
-              @click="toggleOpen(root.id)"
+              @click="toggleOpen(String(root.id))"
             >
               <ChevronRight class="h-4 w-4" />
             </button>
             <span v-else class="h-8 w-8"></span>
             <FolderTree class="h-4 w-4 shrink-0 text-primary" />
             <span class="flex-1 text-sm font-medium text-ink">{{ root.name }}</span>
-            <span class="chip">{{ categoryCount(root.slug) }}</span>
-            <button class="btn-icon h-8 w-8" type="button" title="Add child" @click="openAddChild(root)">
+            <span class="chip">{{ root.products_count ?? 0 }}</span>
+            <button class="btn-icon h-8 w-8" type="button" :title="$t('admin.categories.add_child')" @click="openAddChild(root)">
               <Plus class="h-4 w-4" />
             </button>
-            <button class="btn-icon h-8 w-8" type="button" title="Edit" @click="openEdit(root)">
+            <button class="btn-icon h-8 w-8" type="button" :title="$t('actions.edit')" @click="openEdit(root)">
               <Pencil class="h-4 w-4" />
             </button>
-            <button class="btn-icon h-8 w-8 hover:text-red-600" type="button" title="Delete" @click="removeNode(root.id)">
+            <button class="btn-icon h-8 w-8 hover:text-red-600" type="button" :title="$t('actions.delete')" @click="removeNode(root.id)">
               <Trash2 class="h-4 w-4" />
             </button>
           </div>
@@ -196,11 +200,11 @@ function toggleOpen(id: string) {
               <ChevronRight class="h-4 w-4 shrink-0 text-gray-400" />
               <FolderTree class="h-4 w-4 shrink-0 text-gray-400" />
               <span class="flex-1 text-sm text-gray-700">{{ child.name }}</span>
-              <span class="chip">{{ categoryCount(child.slug) }}</span>
-              <button class="btn-icon h-8 w-8" type="button" title="Edit" @click="openEdit(child)">
+              <span class="chip">{{ child.products_count ?? 0 }}</span>
+              <button class="btn-icon h-8 w-8" type="button" :title="$t('actions.edit')" @click="openEdit(child)">
                 <Pencil class="h-4 w-4" />
               </button>
-              <button class="btn-icon h-8 w-8 hover:text-red-600" type="button" title="Delete" @click="removeNode(child.id)">
+              <button class="btn-icon h-8 w-8 hover:text-red-600" type="button" :title="$t('actions.delete')" @click="removeNode(child.id)">
                 <Trash2 class="h-4 w-4" />
               </button>
             </div>
@@ -212,17 +216,17 @@ function toggleOpen(id: string) {
     <BaseModal v-model="modalOpen" :title="modalTitle" size="md">
       <div class="space-y-4">
         <div>
-          <label class="label" for="cat-name">Name</label>
-          <input id="cat-name" v-model="form.name" class="input" placeholder="Category name" />
+          <label class="label" for="cat-name">{{ $t('admin.categories.name_label') }}</label>
+          <input id="cat-name" v-model="form.name" class="input" :placeholder="$t('admin.categories.name_placeholder')" />
         </div>
         <div>
-          <label class="label" for="cat-slug">Slug</label>
-          <input id="cat-slug" v-model="form.slug" class="input" placeholder="auto-generated if empty" />
+          <label class="label" for="cat-slug">{{ $t('admin.categories.slug_label') }}</label>
+          <input id="cat-slug" v-model="form.slug" class="input" :placeholder="$t('admin.categories.slug_placeholder')" />
         </div>
       </div>
       <template #footer>
-        <button class="btn-secondary btn-sm" type="button" @click="modalOpen = false">Cancel</button>
-        <button class="btn-primary btn-sm" type="button" @click="saveNode()">Save</button>
+        <button class="btn-secondary btn-sm" type="button" @click="modalOpen = false">{{ $t('actions.cancel') }}</button>
+        <button class="btn-primary btn-sm" type="button" @click="saveNode()">{{ $t('admin.categories.save') }}</button>
       </template>
     </BaseModal>
 

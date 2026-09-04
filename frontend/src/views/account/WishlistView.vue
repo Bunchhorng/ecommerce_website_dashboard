@@ -27,8 +27,8 @@ function addToCart(product: Product, payload: AddToCartPayload) {
 <template>
   <div class="space-y-6">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <h1 class="text-2xl font-bold text-ink">My Wishlist ({{ count }})</h1>
-      <RouterLink to="/shop" class="btn-outline btn-sm w-fit">Add from collection</RouterLink>
+      <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('account.wishlist_count', { count }) }}</h1>
+      <RouterLink to="/shop" class="btn-outline btn-sm w-fit">{{ $t('account.add_from_collection') }}</RouterLink>
     </div>
 
     <div v-if="wishlist.products.length" class="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
@@ -43,9 +43,9 @@ function addToCart(product: Product, payload: AddToCartPayload) {
 
     <EmptyState
       v-else
-      title="Save items you love"
-      description="Tap the heart on any product to add it to your wishlist."
-      cta-label="Start Shopping"
+      :title="$t('account.wishlist_cta_title')"
+      :description="$t('account.wishlist_cta_description')"
+      :cta-label="$t('account.start_shopping')"
       @cta="router.push('/shop')"
     >
       <template #icon>

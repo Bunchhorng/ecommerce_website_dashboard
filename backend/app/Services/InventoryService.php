@@ -6,7 +6,10 @@ namespace App\Services;
 
 use App\Models\Inventory;
 use App\Models\InventoryTransaction;
+use App\Models\User;
+use App\Notifications\LowStockNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class InventoryService
 {
@@ -53,6 +56,7 @@ class InventoryService
             $inventory->save();
 
             $this->log($inventory, 'reserve', $quantity, $available, 'VARIANT:'.$variantId, 'Checkout reservation');
+            $this->checkLowStock($inventory);
 
             return true;
         });
@@ -132,6 +136,7 @@ class InventoryService
 
             $balanceAfter = (int) $inventory->quantity - (int) $inventory->reserved_quantity;
             $this->log($inventory, 'deduct', $quantity, $balanceAfter, 'VARIANT:'.$variantId, 'Order payment confirmed');
+            $this->checkLowStock($inventory);
         });
     }
 
@@ -150,9 +155,9 @@ class InventoryService
     /**
      * Adjust total stock up or down for a variant.
      */
-    public function adjust(int $variantId, int $newQuantity): void
+    public function adjust(int $variantId, int $newQuantity, ?int $userId = null): void
     {
-        DB::transaction(function () use ($variantId, $newQuantity): void {
+        DB::transaction(function () use ($variantId, $newQuantity, $userId): void {
             $inventory = Inventory::where('product_variant_id', $variantId)->lockForUpdate()->first();
 
             if ($inventory === null) {
@@ -169,19 +174,73 @@ class InventoryService
             $inventory->quantity = max($newQuantity, 0);
             $inventory->save();
 
-            $this->log($inventory, 'adjust', $delta, (int) $inventory->quantity, 'VARIANT:'.$variantId, 'Stock adjusted');
+            $this->log($inventory, 'adjust', $delta, (int) $inventory->quantity, 'VARIANT:'.$variantId, 'Stock adjusted', $userId);
+            $this->checkLowStock($inventory);
         });
     }
 
-    private function log(Inventory $inventory, string $type, int $quantity, int $balanceAfter, ?string $reference, ?string $note): void
+    private function log(Inventory $inventory, string $type, int $quantity, int $balanceAfter, ?string $reference, ?string $note, ?int $userId = null): void
     {
         InventoryTransaction::create([
             'inventory_id' => $inventory->id,
+            'created_by' => $userId,
             'type' => $type,
             'quantity' => $quantity,
             'balance_after' => $balanceAfter,
             'reference' => $reference,
             'note' => $note,
         ]);
+    }
+
+    /**
+     * Notify admins once when a variant dips to or below its low-stock
+     * threshold, and clear the flag again when stock is restored above it.
+     */
+    public function checkLowStock(Inventory $inventory): void
+    {
+        $inventory->refresh();
+
+        if ($inventory->is_low_stock && $inventory->low_stock_notified_at === null) {
+            $inventory->forceFill(['low_stock_notified_at' => now()])->save();
+
+            $admins = User::query()->where('role', User::ROLE_ADMIN)->get();
+
+            if ($admins->isEmpty()) {
+                return;
+            }
+
+            $variant = $inventory->variant()->with(['product', 'attributeValues.value.attribute'])->first();
+
+            Notification::send($admins, new LowStockNotification(
+                $inventory,
+                $variant?->product?->name ?? 'Product',
+                $variant !== null ? $this->variantLabel($variant) : '',
+                $inventory->available_quantity,
+            ));
+        } elseif (! $inventory->is_low_stock && $inventory->low_stock_notified_at !== null) {
+            $inventory->forceFill(['low_stock_notified_at' => null])->save();
+        }
+    }
+
+    private function variantLabel(\App\Models\ProductVariant $variant): string
+    {
+        $parts = [];
+
+        foreach ($variant->attributeValues as $vav) {
+            $value = $vav->value;
+            $attribute = $value?->attribute;
+
+            if ($value === null) {
+                continue;
+            }
+
+            $parts[] = ($attribute?->name ?? 'Option').': '.$value->value;
+        }
+
+        if (count($parts) === 0 && $variant->name !== null) {
+            return $variant->name;
+        }
+
+        return implode(', ', $parts);
     }
 }

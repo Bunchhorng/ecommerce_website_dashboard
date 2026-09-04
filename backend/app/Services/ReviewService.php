@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\Review;
 use App\Models\User;
+use App\Notifications\ReviewApprovedNotification;
+use App\Notifications\ReviewRejectedNotification;
 use Illuminate\Validation\ValidationException;
 
 class ReviewService
@@ -68,6 +70,9 @@ class ReviewService
     {
         $review->update(['status' => Review::STATUS_APPROVED]);
         $this->recalculateProductRating($review->product_id);
+
+        $review->load(['user', 'product']);
+        $review->user?->notify(new ReviewApprovedNotification($review));
     }
 
     protected function recalculateProductRating(int $productId): void
@@ -91,5 +96,8 @@ class ReviewService
     public function reject(Review $review): void
     {
         $review->update(['status' => Review::STATUS_REJECTED]);
+
+        $review->load(['user', 'product']);
+        $review->user?->notify(new ReviewRejectedNotification($review));
     }
 }

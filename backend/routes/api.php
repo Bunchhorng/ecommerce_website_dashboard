@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\Admin\AdminReportController;
 use App\Http\Controllers\Api\Admin\AdminReviewController;
 use App\Http\Controllers\Api\Admin\AdminShippingMethodController;
 use App\Http\Controllers\Api\Admin\DashboardController;
+use App\Http\Controllers\Api\Admin\AdminInventoryController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,6 +35,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
+Route::post('auth/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('auth/reset-password', [AuthController::class, 'resetPassword']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
@@ -76,6 +79,8 @@ Route::prefix('checkout')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('orders', [OrderController::class, 'index']);
     Route::get('orders/{orderNumber}', [OrderController::class, 'show'])
+        ->where('orderNumber', '[A-Za-z0-9-]+');
+    Route::get('orders/{orderNumber}/receipt', [OrderController::class, 'receipt'])
         ->where('orderNumber', '[A-Za-z0-9-]+');
     Route::post('orders/{orderNumber}/cancel', [OrderController::class, 'cancel'])
         ->where('orderNumber', '[A-Za-z0-9-]+');
@@ -128,7 +133,12 @@ Route::prefix('admin')
 
         Route::get('orders', [AdminOrderController::class, 'index']);
         Route::get('orders/{order}', [AdminOrderController::class, 'show']);
+        Route::get('orders/{order}/receipt', [AdminOrderController::class, 'receipt']);
         Route::put('orders/{order}/transition', [AdminOrderController::class, 'transition']);
+
+        Route::get('inventory', [AdminInventoryController::class, 'index']);
+        Route::get('inventory/{inventory}/transactions', [AdminInventoryController::class, 'transactions'])
+            ->whereNumber('inventory');
 
         Route::get('coupons', [AdminCouponController::class, 'index']);
         Route::post('coupons', [AdminCouponController::class, 'store']);
@@ -143,4 +153,5 @@ Route::prefix('admin')
         Route::get('customers/{user}', [AdminCustomerController::class, 'show']);
 
         Route::get('reports/orders.csv', [AdminReportController::class, 'ordersCsv']);
+        Route::get('reports/orders.pdf', [AdminReportController::class, 'ordersPdf']);
     });

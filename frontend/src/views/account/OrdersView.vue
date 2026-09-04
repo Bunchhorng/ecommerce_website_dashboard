@@ -1,62 +1,95 @@
 <script setup lang="ts">
 import { RouterLink, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ShoppingBag } from 'lucide-vue-next'
-import { ORDERS } from '@/data/mock'
+import { ordersApi } from '@/api/orders'
 import EmptyState from '@/components/EmptyState.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { formatDate, formatPrice } from '@/utils/format'
-import type { Order } from '@/types'
+import { onMounted, ref } from 'vue'
+
+interface OrderRow {
+  id: string
+  number: string
+  placedAt: string
+  total: number
+  status: string
+  itemsCount: number
+}
 
 const router = useRouter()
+const { t } = useI18n()
 
-function itemsSummary(order: Order): string {
-  const first = order.items[0]
-  if (order.items.length === 1) return first.title
-  return `${first.title} +${order.items.length - 1} more`
+const orders = ref<OrderRow[]>([])
+const loading = ref(true)
+
+function capitalizeStatus(status: string): string {
+  return status.charAt(0).toUpperCase() + status.slice(1)
 }
+
+onMounted(async () => {
+  loading.value = true
+  try {
+    const res = await ordersApi.list()
+    orders.value = (res.data.data ?? []).map((o) => ({
+      id: o.order_number,
+      number: o.order_number,
+      placedAt: o.placed_at,
+      total: o.total,
+      status: capitalizeStatus(o.status),
+      itemsCount: o.items_count
+    }))
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <template>
   <div class="space-y-6">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <h1 class="text-2xl font-bold text-ink">My Orders</h1>
-      <span class="chip w-fit">{{ ORDERS.length }} orders</span>
+      <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('nav.my_orders') }}</h1>
+      <span v-if="!loading" class="chip w-fit">{{ $t('order.count_orders', { count: orders.length }) }}</span>
     </div>
 
-    <div v-if="ORDERS.length" class="card overflow-x-auto p-0">
+    <div v-if="loading" class="card p-10 text-center">
+      <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('common.loading') }}</p>
+    </div>
+
+    <div v-else-if="orders.length" class="card overflow-x-auto p-0">
       <table class="w-full min-w-[720px] text-sm">
         <thead>
-          <tr class="border-b border-border-gray text-left text-xs uppercase tracking-wide text-gray-500">
-            <th class="px-4 py-3 font-semibold">Order</th>
-            <th class="px-4 py-3 font-semibold">Placed</th>
-            <th class="px-4 py-3 font-semibold">Items</th>
-            <th class="px-4 py-3 font-semibold">Total</th>
-            <th class="px-4 py-3 font-semibold">Status</th>
-            <th class="px-4 py-3 font-semibold">Action</th>
+          <tr class="border-b border-border-gray dark:border-gray-700 text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <th class="px-4 py-3 font-semibold">{{ $t('order.order') }}</th>
+            <th class="px-4 py-3 font-semibold">{{ $t('order.placed') }}</th>
+            <th class="px-4 py-3 font-semibold">{{ $t('order.items') }}</th>
+            <th class="px-4 py-3 font-semibold">{{ $t('order.total') }}</th>
+            <th class="px-4 py-3 font-semibold">{{ $t('order.status') }}</th>
+            <th class="px-4 py-3 font-semibold">{{ $t('order.action') }}</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-border-gray">
-          <tr v-for="o in ORDERS" :key="o.id">
+        <tbody class="divide-y divide-border-gray dark:divide-gray-700">
+          <tr v-for="o in orders" :key="o.id">
             <td class="px-4 py-3">
               <RouterLink
-                :to="`/order/tracking/${o.id}`"
+                :to="{ name: 'account-order-detail', params: { orderNumber: o.number } }"
                 class="font-semibold text-primary hover:underline"
               >
                 {{ o.number }}
               </RouterLink>
             </td>
-            <td class="px-4 py-3 text-gray-600">{{ formatDate(o.placedAt) }}</td>
-            <td class="px-4 py-3 text-gray-600">{{ itemsSummary(o) }}</td>
-            <td class="px-4 py-3 font-medium text-ink">{{ formatPrice(o.total) }}</td>
+            <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ formatDate(o.placedAt) }}</td>
+            <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ o.itemsCount }} {{ t('order.items') }}</td>
+            <td class="px-4 py-3 font-medium text-ink dark:text-gray-100">{{ formatPrice(o.total) }}</td>
             <td class="px-4 py-3">
               <StatusTag :status="o.status" />
             </td>
             <td class="px-4 py-3">
               <RouterLink
-                :to="`/order/tracking/${o.id}`"
+                :to="`/order/tracking/${o.number}`"
                 class="btn-secondary btn-sm"
               >
-                Track
+                {{ $t('order.track') }}
               </RouterLink>
             </td>
           </tr>
@@ -66,9 +99,9 @@ function itemsSummary(order: Order): string {
 
     <EmptyState
       v-else
-      title="No orders yet"
-      description="Your placed orders will be listed here."
-      cta-label="Start shopping"
+      :title="$t('account.no_orders_title')"
+      :description="$t('account.no_orders_description')"
+      :cta-label="$t('account.start_shopping')"
       @cta="router.push('/shop')"
     >
       <template #icon>

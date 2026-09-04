@@ -4,15 +4,14 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
 class AdminReportController extends Controller
 {
-    public function ordersCsv(Request $request)
+    protected function applyFilters(Request $request, $query)
     {
-        $query = Order::query()->orderByDesc('placed_at');
-
         if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
         }
@@ -24,6 +23,13 @@ class AdminReportController extends Controller
         if ($request->filled('to')) {
             $query->where('placed_at', '<=', Carbon::parse($request->to)->endOfDay());
         }
+
+        return $query;
+    }
+
+    public function ordersCsv(Request $request)
+    {
+        $query = $this->applyFilters($request, Order::query()->orderByDesc('placed_at'));
 
         $orders = $query->get();
 
@@ -58,5 +64,19 @@ class AdminReportController extends Controller
         }, 'orders-' . now()->format('Y-m-d') . '.csv', [
             'Content-Type' => 'text/csv',
         ]);
+    }
+
+    public function ordersPdf(Request $request)
+    {
+        $query = $this->applyFilters($request, Order::query()->orderByDesc('placed_at'));
+
+        $orders = $query->get();
+
+        $pdf = Pdf::loadView('reports.orders', [
+            'orders' => $orders,
+            'status' => $request->filled('status') ? $request->status : 'all',
+        ]);
+
+        return $pdf->download('orders-' . now()->format('Y-m-d') . '.pdf');
     }
 }

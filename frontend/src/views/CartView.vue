@@ -15,9 +15,9 @@ const couponInput = ref('')
 const subtotal = computed(() => cartStore.subtotal)
 const discount = computed(() => cartStore.discountAmount)
 
-function applyCoupon() {
+async function applyCoupon() {
   if (!couponInput.value.trim()) return
-  const ok = cartStore.applyCoupon(couponInput.value)
+  const ok = await cartStore.applyCoupon(couponInput.value)
   if (ok) couponInput.value = ''
 }
 
@@ -30,7 +30,7 @@ function variantLine(attributes: { name: string; value: string }[] | undefined):
 <template>
   <div class="container-app py-8">
     <div class="flex flex-wrap items-center justify-between gap-4">
-      <h1 class="text-2xl font-bold text-ink sm:text-3xl">Shopping Cart</h1>
+      <h1 class="text-2xl font-bold text-ink dark:text-gray-100 sm:text-3xl">Shopping Cart</h1>
       <RouterLink to="/shop" class="text-sm font-medium text-primary hover:text-primary-dark">
         Continue shopping
       </RouterLink>
@@ -50,7 +50,7 @@ function variantLine(attributes: { name: string; value: string }[] | undefined):
     </div>
 
     <div v-else class="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]">
-      <div class="card divide-y divide-border-gray p-5">
+      <div class="card divide-y divide-border-gray p-5 dark:divide-gray-700">
         <div v-for="item in cartStore.items" :key="item.id" class="flex gap-4 py-4">
           <RouterLink :to="`/product/${item.slug}`" class="shrink-0">
             <img :src="item.image" :alt="item.title" class="h-24 w-20 rounded-lg object-cover" />
@@ -60,14 +60,14 @@ function variantLine(attributes: { name: string; value: string }[] | undefined):
             <p class="text-xs font-bold uppercase tracking-wide text-primary">{{ item.brand }}</p>
             <RouterLink
               :to="`/product/${item.slug}`"
-              class="line-clamp-1 font-semibold text-ink hover:text-primary"
+              class="line-clamp-1 font-semibold text-ink dark:text-gray-100 hover:text-primary"
             >
               {{ item.title }}
             </RouterLink>
-            <p class="text-xs text-gray-500">
+            <p class="text-xs text-gray-500 dark:text-gray-400">
               {{ item.variant?.attributes ? variantLine(item.variant.attributes) : '' }}
             </p>
-            <p class="mt-1 text-xs text-gray-500">{{ formatPrice(item.unitPrice) }} each</p>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ formatPrice(item.unitPrice) }} each</p>
           </div>
 
           <div class="flex shrink-0 flex-col items-end gap-2">
@@ -79,7 +79,7 @@ function variantLine(attributes: { name: string; value: string }[] | undefined):
                 @update:model-value="cartStore.updateQuantity(item.id, $event)"
               />
             </div>
-            <p class="font-semibold text-ink">{{ formatPrice(item.unitPrice * item.quantity) }}</p>
+            <p class="font-semibold text-ink dark:text-gray-100">{{ formatPrice(item.unitPrice * item.quantity) }}</p>
             <button
               type="button"
               class="btn-icon btn-sm text-red-500 hover:bg-red-50 hover:text-red-600"
@@ -94,27 +94,27 @@ function variantLine(attributes: { name: string; value: string }[] | undefined):
 
       <div class="card h-fit space-y-3 p-6 lg:sticky lg:top-24">
         <div class="flex justify-between text-sm">
-          <span class="text-gray-600">Subtotal</span>
-          <span class="font-medium text-ink">{{ formatPrice(subtotal) }}</span>
+          <span class="text-gray-600 dark:text-gray-300">{{ $t('checkout.subtotal') }}</span>
+          <span class="font-medium text-ink dark:text-gray-100">{{ formatPrice(subtotal) }}</span>
         </div>
         <div v-if="discount > 0" class="flex justify-between text-sm">
-          <span class="text-gray-600">Discount</span>
+          <span class="text-gray-600 dark:text-gray-300">{{ $t('checkout.discount') }}</span>
           <span class="font-medium text-red-500">−{{ formatPrice(discount) }}</span>
         </div>
         <div v-else class="flex justify-between text-sm">
-          <span class="text-gray-600">Discount</span>
-          <span class="text-gray-400"></span>
+          <span class="text-gray-600 dark:text-gray-300">{{ $t('checkout.discount') }}</span>
+          <span class="text-gray-400 dark:text-gray-500"></span>
         </div>
         <div class="flex justify-between text-sm">
-          <span class="text-gray-600">Tax (10%)</span>
-          <span class="font-medium text-ink">{{ formatPrice(cartStore.taxAmount) }}</span>
+          <span class="text-gray-600 dark:text-gray-300">{{ $t('checkout.tax') }}</span>
+          <span class="font-medium text-ink dark:text-gray-100">{{ formatPrice(cartStore.taxAmount) }}</span>
         </div>
 
-        <div class="border-t border-border-gray !my-2 pt-3"></div>
+        <div class="border-t border-border-gray !my-2 pt-3 dark:border-gray-700"></div>
 
         <div class="flex justify-between">
-          <span class="font-semibold text-ink">Total</span>
-          <span class="text-xl font-bold text-ink">{{ formatPrice(cartStore.totalAmount) }}</span>
+          <span class="font-semibold text-ink dark:text-gray-100">{{ $t('checkout.total') }}</span>
+          <span class="text-xl font-bold text-ink dark:text-gray-100">{{ formatPrice(cartStore.totalAmount) }}</span>
         </div>
 
         <div class="space-y-2 pt-2">
@@ -123,11 +123,11 @@ function variantLine(attributes: { name: string; value: string }[] | undefined):
               v-model="couponInput"
               type="text"
               class="input"
-              placeholder="Coupon code"
+              :placeholder="$t('checkout.coupon_code')"
               @keyup.enter="applyCoupon"
             />
             <button type="button" class="btn-primary btn-sm shrink-0" @click="applyCoupon">
-              Apply
+              {{ $t('checkout.apply_coupon') }}
             </button>
           </div>
           <p v-if="cartStore.couponError" class="text-xs text-red-500">
@@ -160,7 +160,7 @@ function variantLine(attributes: { name: string; value: string }[] | undefined):
           Proceed to Checkout
         </RouterLink>
 
-        <p class="flex items-center justify-center gap-1.5 pt-1 text-xs text-gray-500">
+        <p class="flex items-center justify-center gap-1.5 pt-1 text-xs text-gray-500 dark:text-gray-400">
           <Lock class="h-3.5 w-3.5" />
           Secure checkout · SSL encrypted
         </p>

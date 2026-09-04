@@ -1,35 +1,46 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
 import AdminDataTable from '@/components/admin/AdminDataTable.vue'
 import type { TableColumn, TableRow } from '@/types'
-import { PRODUCTS } from '@/data/mock'
+import { adminApi } from '@/api/admin'
+import type { AdminProduct } from '@/api/admin'
 
+const { t } = useI18n()
 const router = useRouter()
 
-const columns: TableColumn[] = [
-  { key: 'image', label: 'Product', type: 'image', sortable: true },
+const loading = ref(true)
+const products = ref<AdminProduct[]>([])
+const totalCount = ref(0)
+
+const columns = computed<TableColumn[]>(() => [
+  { key: 'image', label: t('admin.products.column_image'), type: 'image', sortable: true },
   { key: 'title', label: '', sortable: true },
-  { key: 'brand', label: 'Brand' },
-  { key: 'sku', label: 'SKU' },
-  { key: 'price', label: 'Price', type: 'currency', sortable: true },
-  { key: 'stock', label: 'Stock', type: 'number', sortable: true },
-  { key: 'status', label: 'Status', type: 'status' },
+  { key: 'brand', label: t('admin.products.column_brand') },
+  { key: 'sku', label: t('product.sku') },
+  { key: 'price', label: t('admin.products.column_price'), type: 'currency', sortable: true },
+  { key: 'stock', label: t('admin.products.column_stock'), type: 'number', sortable: true },
+  { key: 'status', label: t('admin.products.column_status'), type: 'status' },
   { key: 'actions', label: '', type: 'actions' }
-]
+])
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
 
 const rows = computed<TableRow[]>(() =>
-  PRODUCTS.map((p) => ({
+  products.value.map((p) => ({
     id: p.id,
-    image: p.images[0].url,
-    title: p.title,
-    brand: p.brand.name,
-    category: p.category.name,
+    image: p.cover_image ?? '',
+    title: p.name,
+    brand: p.brand?.name ?? '—',
+    category: p.category?.name ?? '—',
     sku: p.sku,
     price: p.price,
-    stock: p.stockQuantity,
-    status: p.isInStock ? (p.stockQuantity <= 5 ? 'Low Stock' : 'In Stock') : 'Out of Stock'
+    stock: p.variants?.reduce((sum, v) => sum + v.available_quantity, 0) ?? 0,
+    status: p.in_stock ? (p.variants?.some((v) => v.available_quantity <= 5) ? 'Low Stock' : 'In Stock') : 'Out of Stock'
   }))
 )
 
@@ -43,46 +54,80 @@ function showToast(msg: string) {
   }, 2500)
 }
 
+async function loadProducts() {
+  loading.value = true
+  try {
+    const { data: resp } = await adminApi.listProducts()
+    products.value = resp.data
+    totalCount.value = resp.meta.total
+  } catch {
+    showToast(t('admin.products.toast_load_error'))
+  } finally {
+    loading.value = false
+  }
+}
+
 function onRowAction(payload: { action: string; row: TableRow }) {
   if (payload.action === 'edit') {
-    router.push({ name: 'admin-product-create' })
+    const id = Number(payload.row.id)
+    if (id) {
+      router.push({ name: 'admin-product-edit', params: { id } })
+    }
   } else if (payload.action === 'duplicate') {
-    showToast(`Duplicated "${String(payload.row.title)}"`)
+    showToast(t('admin.products.toast_duplicated', { name: String(payload.row.title) }))
   } else if (payload.action === 'delete') {
-    showToast(`Deleted "${String(payload.row.title)}"`)
+    const id = Number(payload.row.id)
+    adminApi.deleteProduct(id).then(() => {
+      products.value = products.value.filter((p) => p.id !== id)
+      totalCount.value--
+      showToast(t('admin.products.toast_deleted', { name: String(payload.row.title) }))
+    }).catch(() => {
+      showToast(t('admin.products.toast_delete_error'))
+    })
   }
 }
 
 function onBulkAction(payload: { action: string; ids: string[] }) {
   if (payload.action === 'delete') {
-    showToast(`Deleted ${payload.ids.length} products`)
+    Promise.all(payload.ids.map((id) => adminApi.deleteProduct(Number(id))))
+      .then(() => {
+        products.value = products.value.filter((p) => !payload.ids.includes(String(p.id)))
+        totalCount.value -= payload.ids.length
+        showToast(t('admin.products.toast_deleted_count', { count: payload.ids.length }))
+      })
+      .catch(() => {
+        showToast(t('admin.products.toast_delete_error'))
+      })
   } else if (payload.action === 'export') {
-    showToast(`Exported ${payload.ids.length} products to CSV`)
+    showToast(t('admin.products.toast_exported_csv', { count: payload.ids.length }))
   }
 }
+
+onMounted(loadProducts)
 </script>
 
 <template>
   <div class="space-y-6">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div class="flex items-center gap-3">
-        <h1 class="text-2xl font-bold text-ink">Products</h1>
-        <span class="chip">{{ PRODUCTS.length }} total</span>
+        <h1 class="text-2xl font-bold text-ink">{{ $t('admin.products.title') }}</h1>
+        <span class="chip">{{ $t('admin.products.total_count', { count: totalCount }) }}</span>
       </div>
       <router-link :to="{ name: 'admin-product-create' }" class="btn-primary btn-sm">
         <Plus class="h-4 w-4" />
-        Add Product
+        {{ $t('admin.products.add_product') }}
       </router-link>
     </div>
 
     <AdminDataTable
       :columns="columns"
       :rows="rows"
+      :loading="loading"
       :search-keys="['title', 'brand', 'sku']"
-      search-placeholder="Search products…"
+      :search-placeholder="$t('admin.products.search_placeholder')"
       :page-size="8"
-      :bulk-actions="[{ label: 'Delete', value: 'delete' }, { label: 'Export CSV', value: 'export' }]"
-      :row-actions="[{ label: 'Edit', value: 'edit' }, { label: 'Duplicate', value: 'duplicate' }, { label: 'Delete', value: 'delete' }]"
+      :bulk-actions="[{ label: $t('actions.delete'), value: 'delete' }, { label: $t('admin.products.export_csv'), value: 'export' }]"
+      :row-actions="[{ label: $t('actions.edit'), value: 'edit' }, { label: $t('admin.products.duplicate'), value: 'duplicate' }, { label: $t('actions.delete'), value: 'delete' }]"
       @row-action="onRowAction"
       @bulk-action="onBulkAction"
     />

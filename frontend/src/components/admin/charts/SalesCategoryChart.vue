@@ -1,27 +1,31 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import type { ChartData, ChartOptions, TooltipItem } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
-import { SALES_BY_CATEGORY } from '@/data/mock'
 import { formatCompactNumber } from '@/utils/format'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 ChartJS.defaults.font.family = 'Inter, sans-serif'
 ChartJS.defaults.color = '#6B7280'
 
+const props = defineProps<{
+  data: { category: string; sales: number }[]
+}>()
+
 const palette = ['#2563EB', '#10B981', '#FBBF24', '#8B5CF6', '#EC4899', '#64748B']
 
-const chartData: ChartData<'doughnut'> = {
-  labels: SALES_BY_CATEGORY.map((c) => c.category),
+const chartData = computed<ChartData<'doughnut'>>(() => ({
+  labels: props.data.map((c) => c.category),
   datasets: [
     {
-      data: SALES_BY_CATEGORY.map((c) => c.sales),
+      data: props.data.map((c) => c.sales),
       backgroundColor: palette,
       borderColor: '#FFFFFF',
       borderWidth: 2
     }
   ]
-}
+}))
 
 const chartOptions: ChartOptions<'doughnut'> = {
   responsive: true,

@@ -8,6 +8,7 @@ use App\Http\Resources\OrderListResource;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Services\OrderService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class AdminOrderController extends Controller
@@ -56,5 +57,13 @@ class AdminOrderController extends Controller
         $order = $this->orders->transition($order, $request->status);
 
         return new OrderResource($order);
+    }
+
+    public function receipt(Order $order)
+    {
+        $order->load(['items', 'payment']);
+
+        return Pdf::loadView('reports.receipt', ['order' => $order])
+            ->download('receipt-' . $order->order_number . '.pdf');
     }
 }

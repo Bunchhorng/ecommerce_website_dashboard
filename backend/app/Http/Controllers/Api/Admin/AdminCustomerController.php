@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\OrderListResource;
 use App\Http\Resources\UserResource;
 use App\Models\Order;
 use App\Models\User;
@@ -43,10 +44,18 @@ class AdminCustomerController extends Controller
             ->where('payment_status', Order::PAYMENT_PAID)
             ->sum('total');
 
+        $recentOrders = $user->orders()
+            ->with('items')
+            ->withCount('items')
+            ->latest('placed_at')
+            ->limit(5)
+            ->get();
+
         return [
             'user' => new UserResource($user),
             'orders_count' => $ordersCount,
             'lifetime_spend' => round($lifetimeSpend, 2),
+            'recent_orders' => OrderListResource::collection($recentOrders),
         ];
     }
 }

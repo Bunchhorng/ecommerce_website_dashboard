@@ -74,13 +74,22 @@ class AccountController extends Controller
         return [
             'data' => $notifications->map(fn ($n) => [
                 'id' => $n->id,
-                'type' => $n->type,
+                'type' => $this->friendlyType($n->type),
                 'title' => $n->data['title'] ?? null,
                 'message' => $n->data['message'] ?? null,
                 'read_at' => $n->read_at?->toISOString(),
                 'created_at' => $n->created_at?->toISOString(),
             ])->values(),
         ];
+    }
+
+    private function friendlyType(string $notificationClass): string
+    {
+        return match (true) {
+            str_contains($notificationClass, 'Order') => 'order',
+            str_contains($notificationClass, 'Promo') => 'promo',
+            default => 'system',
+        };
     }
 
     public function markRead(Request $request, $notificationId)

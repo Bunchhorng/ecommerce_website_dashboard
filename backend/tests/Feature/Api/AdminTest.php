@@ -113,6 +113,75 @@ class AdminTest extends TestCase
             ->assertJsonCount(1, 'data');
     }
 
+    public function test_admin_order_list_includes_numeric_id(): void
+    {
+        $order = Order::factory()->create(['status' => 'pending']);
+
+        $this->actingAs($this->admin(), 'sanctum')
+            ->getJson('/api/admin/orders')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $order->id)
+            ->assertJsonPath('data.0.order_number', $order->order_number);
+    }
+
+    public function test_admin_customer_show_includes_recent_orders(): void
+    {
+        $customer = User::factory()->create();
+        $order = Order::factory()->create([
+            'user_id' => $customer->id,
+            'status' => 'delivered',
+            'payment_status' => 'paid',
+            'total' => 25,
+        ]);
+        $product = Product::factory()->withVariant()->create(['price' => 25]);
+        $variant = $product->variants()->first();
+        OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_variant_id' => $variant->id,
+            'product_name' => $product->name,
+            'variant_label' => $variant->name,
+            'sku' => $variant->sku,
+            'unit_price' => 25,
+            'quantity' => 1,
+            'line_total' => 25,
+        ]);
+
+        $this->actingAs($this->admin(), 'sanctum')
+            ->getJson("/api/admin/customers/{$customer->id}")
+            ->assertOk()
+            ->assertJsonPath('user.id', $customer->id)
+            ->assertJsonPath('orders_count', 1)
+            ->assertJsonPath('lifetime_spend', 25)
+            ->assertJsonCount(1, 'recent_orders')
+            ->assertJsonStructure(['recent_orders' => [['id', 'order_number', 'status']]]);
+    }
+
+    public function test_admin_orders_report_pdf_downloads(): void
+    {
+        $this->orderFixture('pending', 'unpaid');
+        $this->orderFixture('confirmed', 'paid');
+
+        $response = $this->actingAs($this->admin(), 'sanctum')
+            ->get('/api/admin/reports/orders.pdf')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf');
+
+        $this->assertStringStartsWith('%PDF', (string) $response->getContent());
+    }
+
+    public function test_admin_order_receipt_pdf_downloads(): void
+    {
+        $order = $this->orderFixture('confirmed', 'paid');
+
+        $response = $this->actingAs($this->admin(), 'sanctum')
+            ->get("/api/admin/orders/{$order->id}/receipt")
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf');
+
+        $this->assertStringStartsWith('%PDF', (string) $response->getContent());
+    }
+
     private function orderFixture(string $status, string $paymentStatus): Order
     {
         $user = User::factory()->create();

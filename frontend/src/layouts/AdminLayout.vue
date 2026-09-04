@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import {
   LayoutDashboard,
@@ -9,7 +9,9 @@ import {
   FolderTree,
   Tags,
   ShoppingCart,
+  Warehouse,
   Truck,
+  FileBarChart,
   TicketPercent,
   Users,
   MessageSquare,
@@ -22,60 +24,79 @@ import {
   LogOut,
   Settings
 } from 'lucide-vue-next'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import { useUiStore } from '@/stores/ui'
-import { NOTIFICATIONS } from '@/data/mock'
+import { useAuthStore } from '@/stores/auth'
+import { accountApi } from '@/api'
 import { formatDateTime } from '@/utils/format'
 
 interface NavItem {
-  label: string
+  labelKey: string
   route: { name: string }
   icon: Component
 }
 
 interface NavGroup {
-  title: string
+  titleKey: string
   items: NavItem[]
 }
 
 const route = useRoute()
 const router = useRouter()
 const uiStore = useUiStore()
+const auth = useAuthStore()
 
 const expanded = computed(() => !uiStore.adminSidebarCollapsed)
 const profileOpen = ref(false)
-const unreadCount = computed(() => NOTIFICATIONS.filter((n) => !n.read).length)
+const notifications = ref<{ id: number; title: string; message: string; read_at: string | null; created_at: string }[]>([])
+const unreadCount = computed(() => notifications.value.filter((n) => !n.read_at).length)
+
+onMounted(async () => {
+  try {
+    const { data } = await accountApi.getNotifications()
+    notifications.value = data.data ?? []
+  } catch {
+    notifications.value = []
+  }
+})
 
 const navGroups: NavGroup[] = [
   {
-    title: 'Overview',
-    items: [{ label: 'Dashboard', route: { name: 'admin-dashboard' }, icon: LayoutDashboard }]
+    titleKey: 'admin.nav.group_overview',
+    items: [{ labelKey: 'nav.dashboard', route: { name: 'admin-dashboard' }, icon: LayoutDashboard }]
   },
   {
-    title: 'Catalog',
+    titleKey: 'admin.nav.group_catalog',
     items: [
-      { label: 'Products', route: { name: 'admin-products' }, icon: Boxes },
-      { label: 'Add Product', route: { name: 'admin-product-create' }, icon: PackagePlus },
-      { label: 'Categories', route: { name: 'admin-categories' }, icon: FolderTree },
-      { label: 'Brands', route: { name: 'admin-brands' }, icon: Tags }
+      { labelKey: 'admin.nav.products', route: { name: 'admin-products' }, icon: Boxes },
+      { labelKey: 'admin.nav.add_product', route: { name: 'admin-product-create' }, icon: PackagePlus },
+      { labelKey: 'admin.nav.categories', route: { name: 'admin-categories' }, icon: FolderTree },
+      { labelKey: 'admin.nav.brands', route: { name: 'admin-brands' }, icon: Tags }
     ]
   },
   {
-    title: 'Fulfillment',
+    titleKey: 'admin.nav.group_fulfillment',
     items: [
-      { label: 'Orders', route: { name: 'admin-orders' }, icon: ShoppingCart },
-      { label: 'Shipping Methods', route: { name: 'admin-shipping' }, icon: Truck }
+      { labelKey: 'admin.nav.orders', route: { name: 'admin-orders' }, icon: ShoppingCart },
+      { labelKey: 'admin.nav.inventory', route: { name: 'admin-inventory' }, icon: Warehouse },
+      { labelKey: 'admin.nav.reports', route: { name: 'admin-reports' }, icon: FileBarChart },
+      { labelKey: 'admin.nav.shipping_methods', route: { name: 'admin-shipping' }, icon: Truck }
     ]
   },
   {
-    title: 'Marketing',
-    items: [{ label: 'Coupons', route: { name: 'admin-coupons' }, icon: TicketPercent }]
+    titleKey: 'admin.nav.group_marketing',
+    items: [{ labelKey: 'admin.nav.coupons', route: { name: 'admin-coupons' }, icon: TicketPercent }]
   },
   {
-    title: 'Community',
+    titleKey: 'admin.nav.group_community',
     items: [
-      { label: 'Customers', route: { name: 'admin-customers' }, icon: Users },
-      { label: 'Reviews', route: { name: 'admin-reviews' }, icon: MessageSquare }
+      { labelKey: 'admin.nav.customers', route: { name: 'admin-customers' }, icon: Users },
+      { labelKey: 'nav.reviews', route: { name: 'admin-reviews' }, icon: MessageSquare }
     ]
+  },
+  {
+    titleKey: 'admin.nav.group_system',
+    items: [{ labelKey: 'admin.nav.settings', route: { name: 'admin-settings' }, icon: Settings }]
   }
 ]
 
@@ -83,7 +104,8 @@ function isActive(item: NavItem): boolean {
   return route.name === item.route.name
 }
 
-function signOut() {
+async function signOut() {
+  await auth.logout()
   router.push('/')
 }
 </script>
@@ -99,29 +121,29 @@ function signOut() {
           <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-extrabold text-white">SV</div>
           <div class="flex flex-col items-start leading-none">
             <span class="text-base font-extrabold tracking-tight text-ink">ShopVerse</span>
-            <span class="chip mt-1 !px-2 !py-0 text-[10px] uppercase tracking-wide">Admin</span>
+            <span class="chip mt-1 !px-2 !py-0 text-[10px] uppercase tracking-wide">{{ $t('admin.nav.admin_label') }}</span>
           </div>
         </RouterLink>
-        <RouterLink v-else to="/admin" title="ShopVerse Admin">
+        <RouterLink v-else to="/admin" :title="$t('admin.nav.admin_label')">
           <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-extrabold text-white">SV</div>
         </RouterLink>
       </div>
 
       <nav class="flex-1 space-y-1 overflow-y-auto p-3">
-        <template v-for="group in navGroups" :key="group.title">
+        <template v-for="group in navGroups" :key="group.titleKey">
           <div v-if="expanded" class="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-            {{ group.title }}
+            {{ $t(group.titleKey) }}
           </div>
           <RouterLink
             v-for="item in group.items"
-            :key="item.label"
+            :key="item.labelKey"
             :to="item.route"
-            :title="expanded ? undefined : item.label"
+            :title="expanded ? undefined : $t(item.labelKey)"
             class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
             :class="[isActive(item) ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100', expanded ? '' : 'justify-center']"
           >
             <component :is="item.icon" :size="18" />
-            <span v-if="expanded">{{ item.label }}</span>
+            <span v-if="expanded">{{ $t(item.labelKey) }}</span>
           </RouterLink>
         </template>
       </nav>
@@ -133,14 +155,14 @@ function signOut() {
           @click="uiStore.toggleAdminSidebar()"
         >
           <component :is="expanded ? PanelLeftClose : PanelLeftOpen" :size="18" />
-          <span v-if="expanded">Collapse</span>
+          <span v-if="expanded">{{ $t('admin.nav.collapse') }}</span>
         </button>
       </div>
     </aside>
 
     <div class="flex flex-1 flex-col overflow-hidden">
       <header class="flex h-16 shrink-0 items-center gap-3 border-b border-border-gray bg-white px-4 sm:px-6">
-        <button class="btn-icon" title="Toggle sidebar" @click="uiStore.toggleAdminSidebar()">
+        <button class="btn-icon" :title="$t('admin.nav.toggle_sidebar')" @click="uiStore.toggleAdminSidebar()">
           <Menu class="h-5 w-5" />
         </button>
         <h1 class="text-base font-semibold text-ink sm:text-lg">{{ route.meta.title }}</h1>
@@ -148,31 +170,34 @@ function signOut() {
 
         <div class="relative hidden md:block">
           <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input type="text" class="input h-9 w-64 pl-9" placeholder="Search…" />
+          <input type="text" class="input h-9 w-64 pl-9" :placeholder="$t('admin.nav.search_placeholder')" />
         </div>
 
-        <div class="relative">
-          <button class="btn-icon relative" title="Notifications" @click="uiStore.toggleAdminNotifications()">
-            <Bell class="h-5 w-5" />
-            <span v-if="unreadCount > 0" class="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
-          </button>
+        <div class="flex items-center gap-1">
+          <ThemeToggle />
 
-          <template v-if="uiStore.adminNotificationsOpen">
-            <div class="fixed inset-0 z-40" @click="uiStore.adminNotificationsOpen = false"></div>
-            <div class="absolute right-0 top-12 z-50 w-80 overflow-hidden rounded-xl border border-border-gray bg-white shadow-popover">
+          <div class="relative">
+            <button class="btn-icon relative" :title="$t('nav.notifications')" @click="uiStore.toggleAdminNotifications()">
+              <Bell class="h-5 w-5" />
+              <span v-if="unreadCount > 0" class="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-800"></span>
+            </button>
+
+            <template v-if="uiStore.adminNotificationsOpen">
+              <div class="fixed inset-0 z-40" @click="uiStore.adminNotificationsOpen = false"></div>
+              <div class="absolute right-0 top-12 z-50 w-80 overflow-hidden rounded-xl border border-border-gray bg-white shadow-popover dark:border-gray-700 dark:bg-gray-800">
               <div class="flex items-center justify-between border-b border-border-gray px-4 py-3">
-                <span class="text-sm font-semibold text-ink">Notifications</span>
-                <span class="chip !py-0.5 text-[11px]">{{ unreadCount }} new</span>
+                <span class="text-sm font-semibold text-ink">{{ $t('nav.notifications') }}</span>
+                <span class="chip !py-0.5 text-[11px]">{{ $t('admin.dashboard.new_count', { count: unreadCount }) }}</span>
               </div>
               <div class="max-h-80 divide-y divide-border-gray overflow-y-auto">
-                <div v-for="n in NOTIFICATIONS" :key="n.id" class="flex gap-3 px-4 py-3">
+                <div v-for="n in notifications" :key="n.id" class="flex gap-3 px-4 py-3">
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center justify-between gap-2">
                       <span class="truncate text-sm font-medium text-ink">{{ n.title }}</span>
-                      <span v-if="!n.read" class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"></span>
+                      <span v-if="!n.read_at" class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"></span>
                     </div>
                     <p class="mt-0.5 truncate text-xs text-gray-500">{{ n.message }}</p>
-                    <div class="mt-1 text-[11px] text-gray-400">{{ formatDateTime(n.date) }}</div>
+                    <div class="mt-1 text-[11px] text-gray-400">{{ formatDateTime(n.created_at) }}</div>
                   </div>
                 </div>
               </div>
@@ -181,7 +206,7 @@ function signOut() {
                 class="block border-t border-border-gray px-4 py-2.5 text-center text-sm font-medium text-primary transition-colors hover:bg-canvas"
                 @click="uiStore.adminNotificationsOpen = false"
               >
-                View all
+                {{ $t('actions.view_all') }}
               </RouterLink>
             </div>
           </template>
@@ -189,8 +214,8 @@ function signOut() {
 
         <div class="relative">
           <button class="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-100" @click="profileOpen = !profileOpen">
-            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">A</div>
-            <span class="hidden text-sm font-medium text-ink sm:block">Admin</span>
+            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">{{ auth.user?.name?.charAt(0) ?? 'A' }}</div>
+            <span class="hidden text-sm font-medium text-ink sm:block">{{ auth.user?.name ?? $t('admin.nav.admin_label') }}</span>
             <ChevronDown class="h-4 w-4 text-gray-400" />
           </button>
 
@@ -198,19 +223,20 @@ function signOut() {
             <div class="fixed inset-0 z-40" @click="profileOpen = false"></div>
             <div class="absolute right-0 top-12 z-50 w-48 overflow-hidden rounded-xl border border-border-gray bg-white py-1 shadow-popover">
               <RouterLink to="/account/profile" class="flex items-center px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink" @click="profileOpen = false">
-                Profile
+                {{ $t('nav.profile') }}
               </RouterLink>
-              <a href="#" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink">
+              <RouterLink to="/admin/settings" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink" @click="profileOpen = false">
                 <Settings class="h-4 w-4" />
-                Settings
-              </a>
+                {{ $t('admin.nav.settings') }}
+              </RouterLink>
               <div class="my-1 border-t border-border-gray"></div>
               <button class="flex w-full items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50" @click="signOut">
                 <LogOut class="h-4 w-4" />
-                Sign out
+                {{ $t('nav.sign_out') }}
               </button>
             </div>
           </template>
+        </div>
         </div>
       </header>
 

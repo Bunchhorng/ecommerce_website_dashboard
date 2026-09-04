@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderListResource;
 use App\Http\Resources\OrderResource;
 use App\Services\OrderService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 
@@ -33,6 +34,15 @@ class OrderController extends Controller
     public function show(Request $request, string $orderNumber)
     {
         return $this->resolveForUser($request->user(), $orderNumber);
+    }
+
+    public function receipt(Request $request, string $orderNumber)
+    {
+        $order = $this->resolveForUser($request->user(), $orderNumber);
+        $order->load(['items', 'payment']);
+
+        return Pdf::loadView('reports.receipt', ['order' => $order])
+            ->download('receipt-' . $order->order_number . '.pdf');
     }
 
     public function cancel(Request $request, string $orderNumber)

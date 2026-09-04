@@ -39,18 +39,18 @@ function variantLabel(variant: CartVariantSelection): string {
     <Transition name="drawer">
       <div v-if="uiStore.cartDrawerOpen" class="fixed inset-0 z-50">
         <div class="fixed inset-0 bg-black/40" @click="closeCartDrawer"></div>
-        <aside class="panel fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col bg-white shadow-xl">
-          <header class="flex shrink-0 items-center justify-between border-b border-border-gray px-5 py-4">
-            <h2 class="flex items-center gap-2 text-lg font-semibold text-ink">
-              Your Cart
+        <aside class="panel fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col bg-white shadow-xl dark:bg-gray-800">
+          <header class="flex shrink-0 items-center justify-between border-b border-border-gray px-5 py-4 dark:border-gray-700">
+            <h2 class="flex items-center gap-2 text-lg font-semibold text-ink dark:text-gray-100">
+              {{ $t('cart.your_cart') }}
               <span
                 v-if="cartStore.totalItemCount > 0"
-                class="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-white"
+                class="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-white dark:bg-blue-500"
               >
                 {{ cartStore.totalItemCount }}
               </span>
             </h2>
-            <button type="button" class="btn-icon" aria-label="Close cart" @click="closeCartDrawer">
+            <button type="button" class="btn-icon" :aria-label="$t('cart.close_cart')" @click="closeCartDrawer">
               <X :size="20" />
             </button>
           </header>
@@ -58,9 +58,9 @@ function variantLabel(variant: CartVariantSelection): string {
           <div class="flex-1 overflow-y-auto p-4">
             <EmptyState
               v-if="cartStore.items.length === 0"
-              title="Your cart is empty"
-              description="Explore our collections and find something you love."
-              cta-label="Start Shopping"
+              :title="$t('cart.empty_title')"
+              :description="$t('cart.empty_description')"
+              :cta-label="$t('actions.start_shopping')"
               @cta="startShopping"
             >
               <template #icon>
@@ -68,7 +68,7 @@ function variantLabel(variant: CartVariantSelection): string {
               </template>
             </EmptyState>
 
-            <ul v-else class="divide-y divide-border-gray">
+            <ul v-else class="divide-y divide-border-gray dark:divide-gray-700">
               <li v-for="item in cartStore.items" :key="item.id" class="flex gap-3 py-4">
                 <RouterLink :to="`/product/${item.slug}`" class="shrink-0">
                   <img
@@ -81,29 +81,29 @@ function variantLabel(variant: CartVariantSelection): string {
                 <div class="min-w-0 flex-1">
                   <RouterLink
                     :to="`/product/${item.slug}`"
-                    class="line-clamp-1 text-sm font-semibold text-ink transition-colors hover:text-primary"
+                    class="line-clamp-1 text-sm font-semibold text-ink transition-colors hover:text-primary dark:text-gray-100"
                   >
                     {{ item.title }}
                   </RouterLink>
-                  <p v-if="item.variant" class="mt-0.5 line-clamp-1 text-xs text-gray-500">
+                  <p v-if="item.variant" class="mt-0.5 line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
                     {{ variantLabel(item.variant) }}
                   </p>
                   <div class="mt-2 flex items-center justify-between gap-2">
-                    <span class="text-xs text-gray-400">{{ formatPrice(item.unitPrice) }}</span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">{{ formatPrice(item.unitPrice) }}</span>
                     <QuantityCounter
                       size="sm"
                       :model-value="item.quantity"
                       @update:model-value="(qty) => updateItemQuantity(item.id, qty)"
                     />
-                    <span class="text-sm font-semibold text-ink">
+                    <span class="text-sm font-semibold text-ink dark:text-gray-100">
                       {{ formatPrice(item.unitPrice * item.quantity) }}
                     </span>
                   </div>
                 </div>
                 <button
                   type="button"
-                  class="shrink-0 self-start text-red-500 transition-colors hover:text-red-700"
-                  aria-label="Remove item"
+                  class="shrink-0 self-start text-red-500 transition-colors hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                  :aria-label="$t('cart.remove_item')"
                   @click="removeItem(item.id)"
                 >
                   <Trash2 :size="15" />
@@ -112,14 +112,14 @@ function variantLabel(variant: CartVariantSelection): string {
             </ul>
           </div>
 
-          <footer v-if="cartStore.items.length > 0" class="shrink-0 space-y-3 border-t border-border-gray p-5">
+          <footer v-if="cartStore.items.length > 0" class="shrink-0 space-y-3 border-t border-border-gray p-5 dark:border-gray-700">
             <div class="flex items-center justify-between">
-              <span class="text-sm font-medium text-gray-600">Subtotal</span>
-              <span class="text-base font-bold text-ink">{{ formatPrice(cartStore.subtotal) }}</span>
+              <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ $t('cart.subtotal') }}</span>
+              <span class="text-base font-bold text-ink dark:text-gray-50">{{ formatPrice(cartStore.subtotal) }}</span>
             </div>
-            <p class="text-xs text-gray-500">Shipping &amp; taxes calculated at checkout</p>
-            <RouterLink to="/checkout" class="btn-primary w-full" @click="closeCartDrawer">
-              Proceed to Checkout
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $t('cart.shipping_note') }}</p>
+            <RouterLink to="/checkout" class="btn-primary w-full dark:bg-blue-500 dark:hover:bg-blue-600" @click="closeCartDrawer">
+              {{ $t('actions.checkout') }}
             </RouterLink>
             <p class="text-center">
               <RouterLink
@@ -127,7 +127,7 @@ function variantLabel(variant: CartVariantSelection): string {
                 class="text-sm font-semibold text-primary transition-colors hover:text-primary-dark"
                 @click="closeCartDrawer"
               >
-                View Cart
+                {{ $t('actions.view_cart') }}
               </RouterLink>
             </p>
           </footer>

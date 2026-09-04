@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\PaymentTransaction;
 use App\Models\Shipment;
 use App\Models\User;
+use App\Notifications\OrderStatusNotification;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -111,8 +112,28 @@ class OrderService
             $order->status = $to;
             $order->save();
 
+            $this->notifyStatusChange($order, $to);
+
             return $order->load(['items', 'payment', 'shipments']);
         });
+    }
+
+    private function notifyStatusChange(Order $order, string $to): void
+    {
+        $statusesWithNotifications = [
+            Order::STATUS_CONFIRMED,
+            Order::STATUS_PROCESSING,
+            Order::STATUS_SHIPPED,
+            Order::STATUS_DELIVERED,
+            Order::STATUS_CANCELLED,
+            Order::STATUS_REFUNDED,
+        ];
+
+        if ($order->user_id === null || ! in_array($to, $statusesWithNotifications, true)) {
+            return;
+        }
+
+        $order->user()->first()?->notify(new OrderStatusNotification($order, $to));
     }
 
     /**
@@ -139,6 +160,8 @@ class OrderService
             $order->payment_status = Order::PAYMENT_UNPAID;
             $order->note = trim(($order->note ? $order->note.' ' : '').'cancelled');
             $order->save();
+
+            $this->notifyStatusChange($order, Order::STATUS_CANCELLED);
 
             return $order->load(['items', 'payment', 'shipments']);
         });

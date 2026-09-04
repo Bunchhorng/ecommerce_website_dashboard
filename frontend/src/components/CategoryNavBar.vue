@@ -1,8 +1,20 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { NAV_CATEGORIES } from '@/data/mock'
+import { categoriesApi } from '@/api'
 
 const route = useRoute()
+
+const navCategories = ref<{ id: number; name: string; slug: string }[]>([])
+
+onMounted(async () => {
+  try {
+    const { data } = await categoriesApi.getTree()
+    navCategories.value = data.data
+  } catch {
+    navCategories.value = []
+  }
+})
 
 function isActive(slug: string): boolean {
   return route.query.category === slug
@@ -20,7 +32,7 @@ function isActive(slug: string): boolean {
             All Products
           </RouterLink>
         </li>
-        <li v-for="category in NAV_CATEGORIES" :key="category.id">
+        <li v-for="category in navCategories" :key="category.id">
           <RouterLink
             :to="{ name: 'shop', query: { category: category.slug } }"
             class="nav-link"

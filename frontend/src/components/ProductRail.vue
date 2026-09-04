@@ -40,7 +40,7 @@ function handleWishlist(productId: string): void {
         :to="viewAllLink"
         class="flex shrink-0 items-center gap-1 text-sm font-semibold text-primary transition-colors hover:text-primary-dark"
       >
-        View All
+        {{ $t('actions.view_all') }}
         <ArrowRight :size="16" />
       </RouterLink>
     </div>
@@ -54,7 +54,7 @@ function handleWishlist(productId: string): void {
       />
     </div>
   </section>
-  <EmptyState v-else title="No products yet">
+  <EmptyState v-else :title="$t('account.no_products_title')">
     <template #icon>
       <PackageOpen :size="28" />
     </template>

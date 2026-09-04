@@ -1,21 +1,17 @@
 import { defineStore } from 'pinia'
-import { COUPONS } from '@/data/mock'
-import type { CartItem, Coupon, Product } from '@/types'
+import { couponsApi } from '@/api'
+import type { Coupon } from '@/types'
 
 export const TAX_RATE = 0.1
 
 export interface AddToCartInput {
-  product: Product
+  product: { id: string; slug: string; title: string; brand: { name: string }; images: { url: string }[]; price: number; stockQuantity: number; variants: { id: string; price: number; stockQuantity: number; attributes: { name: string; value: string }[]; sku: string }[] }
   variantId?: string
   quantity?: number
 }
 
 function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100
-}
-
-function toUSD(value: number): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
 }
 
 const LOCAL_STORAGE_KEY = 'shopverse_cart'
@@ -29,7 +25,7 @@ function persist(state: CartState) {
 }
 
 type CartState = {
-  items: CartItem[]
+  items: import('@/types').CartItem[]
   appliedCoupon: Coupon | null
   couponError: string
   couponSuccess: string
@@ -37,10 +33,10 @@ type CartState = {
 
 export const useCartStore = defineStore('cart', {
   state: (): CartState => {
-    let restored: { items: CartItem[]; appliedCoupon: Coupon | null } | null = null
+    let restored: { items: import('@/types').CartItem[]; appliedCoupon: Coupon | null } | null = null
     try {
       const raw = localStorage.getItem(LOCAL_STORAGE_KEY)
-      if (raw) restored = JSON.parse(raw) as { items: CartItem[]; appliedCoupon: Coupon | null }
+      if (raw) restored = JSON.parse(raw) as { items: import('@/types').CartItem[]; appliedCoupon: Coupon | null }
     } catch {
       restored = null
     }
@@ -97,7 +93,7 @@ export const useCartStore = defineStore('cart', {
           slug: product.slug,
           title: product.title,
           brand: product.brand.name,
-          image: product.images[0].url,
+          image: product.images[0]?.url ?? '',
           unitPrice,
           quantity: safeQty,
           variant: targetVariant
@@ -125,24 +121,35 @@ export const useCartStore = defineStore('cart', {
       persist(this.$state as unknown as CartState)
     },
 
-    applyCoupon(code: string): boolean {
+    async applyCoupon(code: string): Promise<boolean> {
       const normalized = code.trim().toUpperCase()
-      const coupon = COUPONS.find((c) => c.code === normalized)
-      if (!coupon) {
-        this.couponError = `Coupon "${normalized}" is not valid.`
-        this.couponSuccess = ''
-        return false
-      }
-      if (this.subtotal < coupon.minOrderAmount) {
-        this.couponError = `Coupon requires a minimum order of ${toUSD(coupon.minOrderAmount)}.`
-        this.couponSuccess = ''
-        return false
-      }
-      this.appliedCoupon = coupon
       this.couponError = ''
-      this.couponSuccess = `Coupon ${coupon.code} applied!`
-      persist(this.$state as unknown as CartState)
-      return true
+      this.couponSuccess = ''
+
+      try {
+        const { data } = await couponsApi.validate(normalized, this.subtotal)
+        const result = data.data
+
+        if (!result.valid) {
+          this.couponError = result.message || `Coupon "${normalized}" is not valid.`
+          return false
+        }
+
+        this.appliedCoupon = {
+          id: 'coupon-' + normalized,
+          code: result.code,
+          type: result.type,
+          value: result.value,
+          minOrderAmount: result.min_order_amount ?? 0,
+          description: result.message
+        }
+        this.couponSuccess = result.message || `Coupon ${result.code} applied!`
+        persist(this.$state as unknown as CartState)
+        return true
+      } catch {
+        this.couponError = `Coupon "${normalized}" is not valid.`
+        return false
+      }
     },
 
     removeCoupon() {

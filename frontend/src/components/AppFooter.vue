@@ -12,15 +12,20 @@ const socials = [
   { label: 'Youtube', href: '#', icon: Youtube }
 ]
 
-const shopLinks: Array<{ label: string; to?: string }> = [
-  { label: 'New Arrivals', to: '/shop' },
-  { label: 'Best Sellers', to: '/shop' },
-  { label: 'Sale', to: '/shop' },
-  { label: 'Men' },
-  { label: 'Women' }
+const shopLinks: Array<{ labelKey: string; to?: string }> = [
+  { labelKey: 'footer.new_arrivals', to: '/shop' },
+  { labelKey: 'footer.best_sellers', to: '/shop' },
+  { labelKey: 'footer.sale', to: '/shop' },
+  { labelKey: 'footer.help', to: undefined }
 ]
 
-const helpLinks = ['About Us', 'Contact', 'FAQ', 'Shipping & Returns', 'Privacy Policy']
+const helpLinks = [
+  { labelKey: 'footer.about_us' },
+  { labelKey: 'footer.contact' },
+  { labelKey: 'footer.faq' },
+  { labelKey: 'footer.shipping_returns' },
+  { labelKey: 'footer.privacy_policy' }
+]
 
 function subscribe(): void {
   if (email.value.includes('@')) subscribed.value = true
@@ -36,7 +41,7 @@ function subscribe(): void {
             Shop<span class="text-primary">Verse</span>
           </RouterLink>
           <p class="mt-4 max-w-xs text-sm text-gray-400">
-            Your one-stop destination for electronics, fashion, beauty and more, delivered fast and backed by friendly support.
+            {{ $t('footer.tagline') }}
           </p>
           <div class="mt-6 flex items-center gap-2">
             <a
@@ -52,53 +57,53 @@ function subscribe(): void {
         </div>
 
         <div>
-          <h3 class="text-sm font-semibold uppercase tracking-wide text-white">Shop</h3>
+          <h3 class="text-sm font-semibold uppercase tracking-wide text-white">{{ $t('footer.shop') }}</h3>
           <ul class="mt-4 space-y-2.5 text-sm">
-            <li v-for="link in shopLinks" :key="link.label">
+            <li v-for="link in shopLinks" :key="link.labelKey">
               <RouterLink v-if="link.to" :to="link.to" class="text-gray-400 transition-colors hover:text-white">
-                {{ link.label }}
+                {{ $t(link.labelKey) }}
               </RouterLink>
               <a v-else href="#" class="text-gray-400 transition-colors hover:text-white">
-                {{ link.label }}
+                {{ $t(link.labelKey) }}
               </a>
             </li>
           </ul>
         </div>
 
         <div>
-          <h3 class="text-sm font-semibold uppercase tracking-wide text-white">Help</h3>
+          <h3 class="text-sm font-semibold uppercase tracking-wide text-white">{{ $t('footer.help') }}</h3>
           <ul class="mt-4 space-y-2.5 text-sm">
-            <li v-for="link in helpLinks" :key="link">
-              <a href="#" class="text-gray-400 transition-colors hover:text-white">{{ link }}</a>
+            <li v-for="link in helpLinks" :key="link.labelKey">
+              <a href="#" class="text-gray-400 transition-colors hover:text-white">{{ $t(link.labelKey) }}</a>
             </li>
           </ul>
         </div>
 
         <div>
-          <h3 class="text-sm font-semibold uppercase tracking-wide text-white">Newsletter</h3>
+          <h3 class="text-sm font-semibold uppercase tracking-wide text-white">{{ $t('footer.newsletter') }}</h3>
           <p class="mt-4 text-sm text-gray-400">
-            Subscribe for exclusive deals, new arrivals and insider tips.
+            {{ $t('footer.newsletter_text') }}
           </p>
           <form class="mt-4 flex gap-2" @submit.prevent="subscribe">
             <input
               v-model="email"
               type="email"
               class="input !border-white/10 !bg-white/5 !text-white placeholder:!text-gray-500"
-              placeholder="you@example.com"
-              aria-label="Email address"
+              :placeholder="$t('footer.email_placeholder')"
+              :aria-label="$t('footer.email_placeholder')"
             />
-            <button type="submit" class="btn-primary shrink-0 !px-4" aria-label="Subscribe">
+            <button type="submit" class="btn-primary shrink-0 !px-4" :aria-label="$t('footer.subscribe')">
               <Send :size="15" />
             </button>
           </form>
           <p v-if="subscribed" class="mt-3 text-sm font-medium text-emerald-400">
-            Thanks for subscribing!
+            {{ $t('footer.newsletter_success') }}
           </p>
         </div>
       </div>
 
       <div class="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-6">
-        <p class="text-xs text-gray-400">© 2026 ShopVerse. All rights reserved.</p>
+        <p class="text-xs text-gray-400">{{ $t('footer.copyright') }}</p>
         <div class="flex flex-wrap gap-2">
           <span
             v-for="pay in ['VISA', 'Mastercard', 'PayPal', 'Apple Pay', 'AMEX']"

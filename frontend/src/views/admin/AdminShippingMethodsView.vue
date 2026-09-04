@@ -1,27 +1,91 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { Truck, Pencil, Save } from 'lucide-vue-next'
-import type { ShippingMethod } from '@/types'
-import { SHIPPING_METHODS } from '@/data/mock'
+import { useI18n } from 'vue-i18n'
+import { adminApi } from '@/api/admin'
+import type { AdminShippingMethod } from '@/api/admin'
 import { formatPrice } from '@/utils/format'
 
-type ShipMethod = ShippingMethod & { enabled: boolean }
+const { t } = useI18n()
 
-const methods = ref<ShipMethod[]>([...SHIPPING_METHODS].map((m) => ({ ...m, enabled: true })))
+const loading = ref(true)
+const methods = ref<AdminShippingMethod[]>([])
 
-const editingId = ref('')
+const editingId = ref<number | null>(null)
 
-function toggleEnabled(id: string) {
-  const m = methods.value.find((x) => x.id === id)
-  if (m) m.enabled = !m.enabled
+async function loadMethods() {
+  loading.value = true
+  try {
+    const { data: resp } = await adminApi.listShippingMethods()
+    methods.value = resp.data
+  } catch {
+    showToast(t('admin.shipping.toast_load_error'))
+  } finally {
+    loading.value = false
+  }
 }
 
-function startEdit(id: string) {
+function startEdit(id: number) {
   editingId.value = id
 }
 
-function saveEdit(_m: ShipMethod) {
-  editingId.value = ''
+function cancelEdit() {
+  editingId.value = null
+}
+
+async function saveEdit(m: AdminShippingMethod) {
+  try {
+    await adminApi.updateShippingMethod(m.id, {
+      name: m.name,
+      description: m.description,
+      price: m.price,
+      estimated_days_min: m.estimated_days_min,
+      estimated_days_max: m.estimated_days_max,
+      is_active: m.is_active
+    })
+    editingId.value = null
+    showToast(t('admin.shipping.toast_updated', { name: m.name }))
+  } catch {
+    showToast(t('admin.shipping.toast_update_error'))
+  }
+}
+
+async function toggleEnabled(m: AdminShippingMethod) {
+  const newState = !m.is_active
+  try {
+    await adminApi.updateShippingMethod(m.id, { is_active: newState })
+    m.is_active = newState
+  } catch {
+    showToast(t('admin.shipping.toast_update_error'))
+  }
+}
+
+async function addMethod() {
+  try {
+    await adminApi.createShippingMethod({
+      name: 'New Method',
+      code: 'new-method',
+      description: '',
+      price: 0,
+      estimated_days_min: 1,
+      estimated_days_max: 5,
+      is_active: true
+    })
+    await loadMethods()
+    showToast(t('admin.shipping.toast_added'))
+  } catch {
+    showToast(t('admin.shipping.toast_add_error'))
+  }
+}
+
+async function removeMethod(m: AdminShippingMethod) {
+  try {
+    await adminApi.deleteShippingMethod(m.id)
+    methods.value = methods.value.filter((x) => x.id !== m.id)
+    showToast(t('admin.shipping.toast_deleted', { name: m.name }))
+  } catch {
+    showToast(t('admin.shipping.toast_delete_error'))
+  }
 }
 
 const toast = ref('')
@@ -33,15 +97,21 @@ function showToast(msg: string) {
     toast.value = ''
   }, 2500)
 }
+
+onMounted(loadMethods)
 </script>
 
 <template>
   <div class="space-y-6">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div class="flex items-center gap-3">
-        <h1 class="text-2xl font-bold text-ink">Shipping Methods</h1>
-        <span class="chip">{{ methods.length }} total</span>
+        <h1 class="text-2xl font-bold text-ink">{{ $t('admin.shipping.title') }}</h1>
+        <span class="chip">{{ $t('admin.shipping.total_count', { count: methods.length }) }}</span>
       </div>
+      <button class="btn-primary btn-sm" @click="addMethod()">
+        <Truck class="h-4 w-4" />
+        {{ $t('admin.shipping.add_method') }}
+      </button>
     </div>
 
     <div class="grid gap-5 lg:grid-cols-3">
@@ -53,15 +123,15 @@ function showToast(msg: string) {
           <button
             type="button"
             role="switch"
-            :aria-checked="m.enabled"
-            aria-label="Toggle shipping method"
+            :aria-checked="m.is_active"
+            :aria-label="$t('admin.shipping.toggle_aria_label')"
             class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-            :class="m.enabled ? 'bg-emerald-500' : 'bg-gray-200'"
-            @click="toggleEnabled(m.id)"
+            :class="m.is_active ? 'bg-emerald-500' : 'bg-gray-200'"
+            @click="toggleEnabled(m)"
           >
             <span
               class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all"
-              :class="m.enabled ? 'left-[22px]' : 'left-0.5'"
+              :class="m.is_active ? 'left-[22px]' : 'left-0.5'"
             ></span>
           </button>
         </div>
@@ -69,27 +139,27 @@ function showToast(msg: string) {
         <template v-if="editingId === m.id">
           <div class="mt-4 space-y-3">
             <div>
-              <label class="label" :for="`sm-name-${m.id}`">Name</label>
+              <label class="label" :for="`sm-name-${m.id}`">{{ $t('admin.shipping.name_label') }}</label>
               <input :id="`sm-name-${m.id}`" v-model="m.name" class="input" />
             </div>
             <div>
-              <label class="label" :for="`sm-price-${m.id}`">Price</label>
+              <label class="label" :for="`sm-price-${m.id}`">{{ $t('admin.shipping.price_label') }}</label>
               <input :id="`sm-price-${m.id}`" v-model.number="m.price" class="input" type="number" min="0" step="0.01" />
             </div>
             <div>
-              <label class="label" :for="`sm-eta-${m.id}`">ETA (days)</label>
-              <input :id="`sm-eta-${m.id}`" v-model.number="m.etaDays" class="input" type="number" min="1" />
+              <label class="label" :for="`sm-eta-${m.id}`">{{ $t('admin.shipping.eta_label') }}</label>
+              <input :id="`sm-eta-${m.id}`" v-model.number="m.estimated_days_max" class="input" type="number" min="1" />
             </div>
             <div>
-              <label class="label" :for="`sm-desc-${m.id}`">Description</label>
+              <label class="label" :for="`sm-desc-${m.id}`">{{ $t('admin.shipping.description_label') }}</label>
               <input :id="`sm-desc-${m.id}`" v-model="m.description" class="input" />
             </div>
           </div>
           <div class="mt-4 flex justify-end gap-2">
-            <button class="btn-secondary btn-sm" type="button" @click="editingId = ''">Cancel</button>
-            <button class="btn-primary btn-sm" type="button" @click="saveEdit(m); showToast(`Updated ${m.name}`)">
+            <button class="btn-secondary btn-sm" type="button" @click="cancelEdit()">{{ $t('actions.cancel') }}</button>
+            <button class="btn-primary btn-sm" type="button" @click="saveEdit(m)">
               <Save class="h-4 w-4" />
-              Save
+              {{ $t('admin.shipping.save') }}
             </button>
           </div>
         </template>
@@ -99,23 +169,23 @@ function showToast(msg: string) {
           <p class="mt-1 text-sm text-gray-500">{{ m.description }}</p>
 
           <div class="mt-4 flex flex-wrap items-center gap-2">
-            <span class="chip">{{ m.etaDays }} days</span>
+            <span class="chip">{{ $t('admin.shipping.days', { count: m.estimated_days_max ?? 0 }) }}</span>
             <span
               v-if="m.price === 0"
               class="inline-flex items-center rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold text-amber-700"
             >
-              Free
+              {{ $t('admin.shipping.free') }}
             </span>
             <span v-else class="text-sm font-semibold text-ink">{{ formatPrice(m.price) }}</span>
           </div>
 
           <div class="mt-auto flex items-center justify-between border-t border-border-gray pt-4">
-            <span class="text-xs font-medium" :class="m.enabled ? 'text-emerald-600' : 'text-gray-400'">
-              {{ m.enabled ? 'Enabled' : 'Disabled' }}
+            <span class="text-xs font-medium" :class="m.is_active ? 'text-emerald-600' : 'text-gray-400'">
+              {{ m.is_active ? $t('admin.shipping.enabled') : $t('admin.shipping.disabled') }}
             </span>
             <button class="btn-secondary btn-sm" type="button" @click="startEdit(m.id)">
               <Pencil class="h-4 w-4" />
-              Edit
+              {{ $t('actions.edit') }}
             </button>
           </div>
         </template>
