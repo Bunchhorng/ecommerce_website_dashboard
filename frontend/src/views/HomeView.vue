@@ -186,7 +186,7 @@ function subscribe() {
               {{ $t('home.hero_badge') }}
             </div>
 
-            <h1 class="mt-6 text-4xl font-extrabold leading-[1.1] sm:text-5xl lg:text-[3.4rem]">
+            <h1 class="mt-6 text-4xl font-extrabold leading-tight sm:text-5xl lg:text-[3.4rem]">
               {{ $t('home.hero_title_1') }}<br />
               <span class="bg-gradient-to-r from-accent to-amber-300 bg-clip-text text-transparent">{{ $t('home.hero_title_2') }}</span>
             </h1>
@@ -333,7 +333,7 @@ function subscribe() {
               <component :is="categoryIcons['Tag'] ?? Tag" class="h-4.5 w-4.5" />
             </div>
             <div class="min-w-0">
-              <div class="truncate text-sm font-semibold text-ink dark:text-ink">{{ cat.name }}</div>
+              <div class="truncate text-sm font-semibold text-ink dark:text-ink">{{ $te(`categories.${cat.slug.replace(/-/g, '_')}`) ? $t(`categories.${cat.slug.replace(/-/g, '_')}`) : cat.name }}</div>
               <div class="text-xs text-gray-500 dark:text-muted">{{ $t('home.shop_now') }}</div>
             </div>
             <ChevronRight :size="16" class="ml-auto shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5 group-hover:text-primary dark:text-gray-500" />

@@ -119,16 +119,9 @@ async function signOut(): Promise<void> {
           <input
             v-model="searchTerm"
             type="search"
-            class="input py-2.5 pl-10 pr-14"
+            class="input py-2.5 pl-10 pr-4"
             :placeholder="$t('header.search_placeholder')"
           />
-          <button
-            type="submit"
-            class="btn-icon absolute right-1.5 top-1/2 h-8 w-8 -translate-y-1/2 rounded-md bg-primary text-white transition-colors hover:bg-primary-dark hover:text-white"
-            :aria-label="$t('header.search')"
-          >
-            <Search :size="15" />
-          </button>
         </form>
 
         <div class="ml-auto flex items-center gap-1">
@@ -267,7 +260,7 @@ async function signOut(): Promise<void> {
               class="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-canvas hover:text-primary dark:text-gray-200 dark:hover:bg-surface-hover dark:hover:text-primary"
               @click="closeMobile"
             >
-              {{ item.name }}
+              {{ $te(`categories.${item.slug.replace(/-/g, '_')}`) ? $t(`categories.${item.slug.replace(/-/g, '_')}`) : item.name }}
             </RouterLink>
           </nav>
           <div class="space-y-1 border-t border-border-gray p-4 dark:border-border-gray">

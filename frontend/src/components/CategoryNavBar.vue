@@ -29,7 +29,7 @@ function isActive(slug: string): boolean {
       >
         <li>
           <RouterLink to="/shop" class="nav-link" exact-active-class="!bg-primary/10 !text-primary dark:!bg-primary/15">
-            All Products
+            {{ $t('nav.all_products') }}
           </RouterLink>
         </li>
         <li v-for="category in navCategories" :key="category.id">
@@ -38,7 +38,7 @@ function isActive(slug: string): boolean {
             class="nav-link"
             :class="isActive(category.slug) ? '!bg-primary/10 !text-primary dark:!bg-primary/15' : ''"
           >
-            {{ category.name }}
+            {{ $te(`categories.${category.slug.replace(/-/g, '_')}`) ? $t(`categories.${category.slug.replace(/-/g, '_')}`) : category.name }}
           </RouterLink>
         </li>
       </ul>

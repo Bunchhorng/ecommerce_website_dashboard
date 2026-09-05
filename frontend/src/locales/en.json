@@ -20,7 +20,8 @@
     "sign_out": "Sign out",
     "back_to_store": "Back to store",
     "shop_by_category": "Shop by category",
-    "account": "Account"
+    "account": "Account",
+    "all_products": "All Products"
   },
   "header": {
     "announcement": "Free shipping on orders over $100 · Easy 30-day returns",
@@ -881,5 +882,13 @@
     "review_status_rejected": "Rejected",
     "no_reviews_title": "No reviews yet",
     "no_products_title": "No products yet"
+  },
+  "categories": {
+    "electronics": "Electronics",
+    "fashion": "Fashion",
+    "shoes": "Shoes",
+    "beauty": "Beauty",
+    "accessories": "Accessories",
+    "home": "Home"
   }
 }
