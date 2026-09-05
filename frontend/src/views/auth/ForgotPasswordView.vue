@@ -33,8 +33,8 @@ async function submit() {
   <div class="w-full max-w-md">
     <div class="card p-8">
       <div class="mb-6 text-center">
-        <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('auth.forgot_password_title') }}</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <h1 class="text-2xl font-bold text-ink dark:text-ink">{{ $t('auth.forgot_password_title') }}</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-muted">
           {{ $t('auth.forgot_password_subtitle') }}
         </p>
       </div>
@@ -64,13 +64,13 @@ async function submit() {
       </template>
 
       <template v-else>
-        <p class="flex items-start gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 p-3 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+        <p class="flex items-start gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 p-3 text-sm font-medium text-emerald-700 dark:text-success">
           <CheckCircle2 class="h-4 w-4 shrink-0" />
           {{ $t('auth.reset_sent', { email: form.email }) }}
         </p>
       </template>
 
-      <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+      <p class="mt-6 text-center text-sm text-gray-500 dark:text-muted">
         {{ $t('auth.have_account') }}
         <RouterLink to="/auth/login" class="font-medium text-primary hover:text-primary-dark">{{ $t('auth.back_to_sign_in') }}</RouterLink>
       </p>

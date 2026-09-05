@@ -126,7 +126,7 @@ onMounted(loadMethods)
             :aria-checked="m.is_active"
             :aria-label="$t('admin.shipping.toggle_aria_label')"
             class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-            :class="m.is_active ? 'bg-emerald-500' : 'bg-gray-200'"
+            :class="m.is_active ? 'bg-success' : 'bg-gray-200 dark:bg-surface-hover'"
             @click="toggleEnabled(m)"
           >
             <span

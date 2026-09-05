@@ -28,7 +28,7 @@ function addToCart(product: Product, payload: AddToCartPayload) {
 <template>
   <div class="space-y-6">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('account.wishlist_count', { count }) }}</h1>
+      <h1 class="text-2xl font-bold text-ink dark:text-ink">{{ $t('account.wishlist_count', { count }) }}</h1>
       <RouterLink to="/shop" class="btn-outline btn-sm w-fit">{{ $t('account.add_from_collection') }}</RouterLink>
     </div>
 

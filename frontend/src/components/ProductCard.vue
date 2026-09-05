@@ -51,8 +51,8 @@ function handleView(): void {
 </script>
 
 <template>
-  <div class="card group flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-lg dark:bg-gray-800">
-    <div class="relative aspect-square overflow-hidden bg-canvas dark:bg-gray-700/50">
+  <div class="card feature-glow group flex flex-col overflow-hidden transition-shadow duration-300 hover:shadow-lg dark:bg-surface">
+    <div class="relative aspect-square overflow-hidden bg-canvas dark:bg-surface-hover/50">
       <RouterLink :to="`/product/${props.product.slug}`" class="block h-full w-full" @click="handleView">
         <img
           v-if="coverImage"
@@ -72,8 +72,8 @@ function handleView(): void {
       </div>
       <button
         type="button"
-        class="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-md transition-colors dark:bg-gray-700 dark:shadow-gray-900/40"
-        :class="isWishlisted ? 'text-red-500' : 'text-gray-400 hover:text-red-500 dark:text-gray-300'"
+        class="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-md transition-colors dark:bg-surface-hover dark:shadow-black/40"
+        :class="isWishlisted ? 'text-red-500' : 'text-gray-400 hover:text-red-500 dark:text-muted'"
         :aria-label="isWishlisted ? $t('product.remove_from_wishlist') : $t('product.add_to_wishlist')"
         @click="handleWishlistToggle"
       >
@@ -87,14 +87,14 @@ function handleView(): void {
       </p>
       <RouterLink
         :to="`/product/${props.product.slug}`"
-        class="mt-1 line-clamp-2 text-sm font-semibold text-ink transition-colors hover:text-primary dark:text-gray-100"
+        class="mt-1 line-clamp-2 text-sm font-semibold text-ink transition-colors hover:text-primary dark:text-ink"
         @click="handleView"
       >
         {{ props.product.title }}
       </RouterLink>
       <div class="mt-1.5 flex items-center gap-1.5">
         <StarRating :value="props.product.rating" :size="12" />
-        <span class="text-xs text-gray-500 dark:text-gray-400">({{ props.product.reviewCount }})</span>
+        <span class="text-xs text-gray-500 dark:text-muted">({{ props.product.reviewCount }})</span>
       </div>
       <div class="mt-2 flex items-baseline gap-2">
         <span class="text-base font-bold text-ink dark:text-gray-50">{{ formatPrice(props.product.price) }}</span>

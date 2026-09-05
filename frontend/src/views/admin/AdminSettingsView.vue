@@ -159,7 +159,7 @@ function resetSettings() {
               <button
                 type="button"
                 class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-                :class="form.emailOrderNotifications ? 'bg-emerald-500' : 'bg-gray-200'"
+                :class="form.emailOrderNotifications ? 'bg-success' : 'bg-gray-200 dark:bg-surface-hover'"
                 :aria-checked="form.emailOrderNotifications"
                 role="switch"
                 @click="form.emailOrderNotifications = !form.emailOrderNotifications"
@@ -178,7 +178,7 @@ function resetSettings() {
               <button
                 type="button"
                 class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
-                :class="form.emailLowStockAlerts ? 'bg-emerald-500' : 'bg-gray-200'"
+                :class="form.emailLowStockAlerts ? 'bg-success' : 'bg-gray-200 dark:bg-surface-hover'"
                 :aria-checked="form.emailLowStockAlerts"
                 role="switch"
                 @click="form.emailLowStockAlerts = !form.emailLowStockAlerts"

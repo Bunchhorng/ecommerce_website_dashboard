@@ -172,7 +172,7 @@ function subscribe() {
 <template>
   <div>
     <!-- ===================== HERO ===================== -->
-    <section class="relative overflow-hidden bg-[radial-gradient(1200px_600px_at_80%_-10%,rgba(37,99,235,0.45),transparent),linear-gradient(135deg,#0B1F4B_0%,#1E40AF_55%,#2563EB_100%)] text-white">
+    <section class="hero-gradient relative overflow-hidden text-white">
       <div class="pointer-events-none absolute -left-24 -top-24 h-80 w-80 rounded-full bg-white/10 blur-3xl"></div>
       <div class="pointer-events-none absolute -bottom-28 right-4 h-96 w-96 rounded-full bg-accent/20 blur-3xl"></div>
       <div class="pointer-events-none absolute right-1/3 top-10 h-40 w-40 rounded-full bg-primary/40 blur-2xl"></div>
@@ -243,20 +243,20 @@ function subscribe() {
                 class="absolute bottom-0 left-0 h-56 w-56 -rotate-6 rounded-3xl object-cover shadow-2xl ring-1 ring-white/20"
               />
 
-              <div class="absolute left-10 top-0 flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-ink shadow-2xl dark:bg-gray-800 dark:text-gray-100">
+              <div class="absolute left-10 top-0 flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-ink shadow-2xl dark:bg-surface dark:text-ink">
                 <Truck :size="18" class="text-primary" />
                   <div class="text-xs">
                   <div class="font-bold">{{ $t('home.benefit_shipping_title') }}</div>
-                  <div class="text-gray-500 dark:text-gray-400">{{ $t('home.benefit_shipping_text') }}</div>
+                  <div class="text-gray-500 dark:text-muted">{{ $t('home.benefit_shipping_text') }}</div>
                 </div>
               </div>
 
-              <div class="absolute bottom-14 right-2 rounded-2xl bg-white p-4 text-ink shadow-2xl dark:bg-gray-800 dark:text-gray-100">
+              <div class="absolute bottom-14 right-2 rounded-2xl bg-white p-4 text-ink shadow-2xl dark:bg-surface dark:text-ink">
                 <div class="flex items-center gap-1">
                   <StarRating :value="5" :size="14" />
                 </div>
                 <div class="mt-1 text-sm font-bold">{{ heroPrimary?.name ?? 'Product' }}</div>
-                <div class="text-xs text-gray-500 dark:text-gray-400">{{ $t('home.loved_by_shoppers') }}</div>
+                <div class="text-xs text-gray-500 dark:text-muted">{{ $t('home.loved_by_shoppers') }}</div>
               </div>
 
               <div class="absolute -left-2 top-1/2 flex -translate-y-1/2 items-center gap-2 rounded-2xl bg-accent px-3.5 py-2.5 text-ink shadow-2xl dark:text-gray-900">
@@ -273,15 +273,15 @@ function subscribe() {
     </section>
 
     <!-- ===================== BENEFITS STRIP ===================== -->
-    <section class="border-b border-border-gray bg-white dark:border-gray-700 dark:bg-gray-900">
+    <section class="border-b border-border-gray bg-white dark:border-border-gray dark:bg-canvas">
       <div class="container-app grid grid-cols-2 gap-6 py-6 lg:grid-cols-4">
         <div v-for="b in benefits" :key="b.titleKey" class="flex items-center gap-3">
           <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <component :is="b.icon" :size="20" />
           </div>
           <div>
-            <div class="text-sm font-bold text-ink dark:text-gray-100">{{ $t(b.titleKey) }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">{{ $t(b.textKey) }}</div>
+            <div class="text-sm font-bold text-ink dark:text-ink">{{ $t(b.titleKey) }}</div>
+            <div class="text-xs text-gray-500 dark:text-muted">{{ $t(b.textKey) }}</div>
           </div>
         </div>
       </div>
@@ -309,7 +309,7 @@ function subscribe() {
           v-for="cat in categoriesList"
           :key="cat.id"
           :to="`/shop?category=${cat.slug}`"
-          class="group relative overflow-hidden rounded-2xl border border-border-gray bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800"
+          class="feature-glow group relative overflow-hidden rounded-2xl border border-border-gray bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-border-gray dark:bg-surface"
         >
           <div class="relative h-28 overflow-hidden bg-canvas sm:h-32">
             <img
@@ -332,8 +332,8 @@ function subscribe() {
               <component :is="categoryIcons['Tag'] ?? Tag" class="h-4.5 w-4.5" />
             </div>
             <div class="min-w-0">
-              <div class="truncate text-sm font-semibold text-ink dark:text-gray-100">{{ cat.name }}</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">{{ $t('home.shop_now') }}</div>
+              <div class="truncate text-sm font-semibold text-ink dark:text-ink">{{ cat.name }}</div>
+              <div class="text-xs text-gray-500 dark:text-muted">{{ $t('home.shop_now') }}</div>
             </div>
             <ChevronRight :size="16" class="ml-auto shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5 group-hover:text-primary dark:text-gray-500" />
           </div>
@@ -353,7 +353,7 @@ function subscribe() {
 
     <!-- ===================== DEAL OF THE DAY ===================== -->
     <section v-if="dealOfDay" class="container-app py-16">
-      <div class="overflow-hidden rounded-3xl bg-gradient-to-r from-primary-dark via-primary to-primary text-white">
+      <div class="hero-gradient overflow-hidden rounded-3xl text-white">
         <div class="grid items-center gap-8 lg:grid-cols-2">
           <div class="p-8 sm:p-12">
             <div class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider ring-1 ring-white/20">
@@ -401,11 +401,11 @@ function subscribe() {
               />
               <div class="absolute inset-0 bg-gradient-to-r from-primary/60 to-transparent"></div>
             </div>
-            <div class="absolute bottom-8 left-8 flex items-center gap-3 rounded-2xl bg-white/90 px-4 py-3 text-ink shadow-2xl backdrop-blur dark:bg-gray-800/90 dark:text-gray-100">
+            <div class="absolute bottom-8 left-8 flex items-center gap-3 rounded-2xl bg-white/90 px-4 py-3 text-ink shadow-2xl backdrop-blur dark:bg-surface/90 dark:text-ink">
               <BadgeCheck :size="20" class="text-primary" />
               <div class="text-xs">
                 <div class="font-bold">{{ $t('home.ends_tonight') }}</div>
-                <div class="text-gray-500 dark:text-gray-400">{{ $t('home.while_stock_lasts') }}</div>
+                <div class="text-gray-500 dark:text-muted">{{ $t('home.while_stock_lasts') }}</div>
               </div>
             </div>
           </div>
@@ -424,16 +424,16 @@ function subscribe() {
     </section>
 
     <!-- ===================== BRAND STRIP ===================== -->
-    <section class="border-y border-border-gray bg-white py-10 dark:border-gray-700 dark:bg-gray-900">
+    <section class="border-y border-border-gray bg-white py-10 dark:border-border-gray dark:bg-canvas">
       <div class="container-app">
         <div class="grid grid-cols-2 gap-6 sm:grid-cols-4 lg:grid-cols-7">
           <RouterLink
             v-for="brand in brandsList"
             :key="brand.id"
             :to="`/shop?brand=${brand.slug}`"
-            class="flex items-center justify-center rounded-xl border border-border-gray px-4 py-5 text-center transition-colors hover:border-primary hover:bg-primary/5 dark:border-gray-700"
+            class="flex items-center justify-center rounded-xl border border-border-gray px-4 py-5 text-center transition-colors hover:border-primary hover:bg-primary/5 dark:border-border-gray"
           >
-            <span class="text-sm font-extrabold uppercase tracking-wide text-gray-500 transition-colors hover:text-primary dark:text-gray-400">{{ brand.name }}</span>
+            <span class="text-sm font-extrabold uppercase tracking-wide text-gray-500 transition-colors hover:text-primary dark:text-muted">{{ brand.name }}</span>
           </RouterLink>
         </div>
       </div>
@@ -467,7 +467,7 @@ function subscribe() {
     </section>
 
     <!-- ===================== TESTIMONIALS ===================== -->
-    <section class="bg-canvas py-16 dark:bg-gray-900">
+    <section class="bg-canvas py-16 dark:bg-canvas">
       <div class="container-app">
         <div class="mx-auto max-w-2xl text-center">
           <div class="section-eyebrow">{{ $t('home.testimonials') }}</div>
@@ -479,19 +479,19 @@ function subscribe() {
           <div
             v-for="(t, i) in testimonials"
             :key="i"
-            class="card relative flex flex-col justify-between rounded-2xl p-6 transition-shadow duration-300 hover:shadow-lg"
+            class="card feature-glow relative flex flex-col justify-between rounded-2xl p-6 transition-shadow duration-300 hover:shadow-lg"
           >
             <div>
               <StarRating :value="t.rating" />
-              <p class="mt-4 text-gray-600 italic dark:text-gray-300">"{{ t.quote }}"</p>
+              <p class="mt-4 text-gray-600 italic dark:text-muted">"{{ t.quote }}"</p>
             </div>
             <div class="mt-6 flex items-center gap-3">
               <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
                 {{ initialsOf(t.name) }}
               </div>
               <div>
-                <div class="text-sm font-semibold text-ink dark:text-gray-100">{{ t.name }}</div>
-                <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                <div class="text-sm font-semibold text-ink dark:text-ink">{{ t.name }}</div>
+                <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-muted">
                   <BadgeCheck :size="13" class="text-primary" />
                   {{ $t('home.verified_buyer') }}
                 </div>
@@ -507,7 +507,7 @@ function subscribe() {
 
     <!-- ===================== NEWSLETTER ===================== -->
     <section class="container-app pb-16">
-      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary to-primary-dark p-8 text-center text-white sm:p-12">
+      <div class="hero-gradient relative overflow-hidden rounded-3xl p-8 text-center text-white sm:p-12">
         <div class="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-3xl"></div>
         <div class="pointer-events-none absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-accent/20 blur-3xl"></div>
 
@@ -537,7 +537,7 @@ function subscribe() {
               v-model="email"
               type="email"
               :placeholder="$t('home.email_placeholder')"
-              class="input w-full bg-white dark:bg-gray-800"
+              class="input w-full bg-white dark:bg-surface"
             />
             <button class="btn-accent !px-6" @click="subscribe">
               <Send :size="16" />

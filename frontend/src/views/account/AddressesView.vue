@@ -133,7 +133,7 @@ async function removeAddress(address: Address) {
 <template>
   <div class="space-y-6">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('account.my_addresses') }}</h1>
+      <h1 class="text-2xl font-bold text-ink dark:text-ink">{{ $t('account.my_addresses') }}</h1>
       <button type="button" class="btn-primary btn-sm w-fit" @click="openNew">
         <Plus class="h-4 w-4" />
         {{ $t('checkout.add_new_address') }}
@@ -143,7 +143,7 @@ async function removeAddress(address: Address) {
     <p v-if="deleteError" class="text-sm text-red-500">{{ deleteError }}</p>
 
     <div v-if="loading" class="card p-10 text-center">
-      <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('common.loading') }}</p>
+      <p class="text-sm text-gray-500 dark:text-muted">{{ $t('common.loading') }}</p>
     </div>
 
     <div v-else-if="addresses.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -154,15 +154,15 @@ async function removeAddress(address: Address) {
             <BaseBadge variant="success" dot>{{ $t('account.default') }}</BaseBadge>
           </span>
         </div>
-        <p class="mt-3 font-semibold text-ink dark:text-gray-100">{{ a.fullName }}</p>
-        <div class="mt-1 space-y-0.5 text-sm text-gray-600 dark:text-gray-300">
+        <p class="mt-3 font-semibold text-ink dark:text-ink">{{ a.fullName }}</p>
+        <div class="mt-1 space-y-0.5 text-sm text-gray-600 dark:text-muted">
           <p>{{ a.line1 }}</p>
           <p v-if="a.line2">{{ a.line2 }}</p>
           <p>{{ a.city }}, {{ a.state }} {{ a.postalCode }}</p>
           <p>{{ a.country }}</p>
         </div>
-        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ a.phone }}</p>
-        <div class="mt-4 flex justify-end gap-1 border-t border-border-gray dark:border-gray-700 pt-3">
+        <p class="mt-2 text-sm text-gray-500 dark:text-muted">{{ a.phone }}</p>
+        <div class="mt-4 flex justify-end gap-1 border-t border-border-gray dark:border-border-gray pt-3">
           <button type="button" class="btn-ghost btn-sm" @click="openEdit(a)">
             <Pencil class="h-4 w-4" />
             {{ $t('actions.edit') }}

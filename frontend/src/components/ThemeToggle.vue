@@ -43,7 +43,7 @@ function toggle() {
     <Transition name="dropdown">
       <div
         v-if="open"
-        class="card absolute right-0 top-12 z-50 w-44 overflow-hidden py-1.5 shadow-popover dark:border-gray-700 dark:bg-gray-800"
+        class="card absolute right-0 top-12 z-50 w-44 overflow-hidden py-1.5 shadow-popover dark:border-border-gray dark:bg-surface"
         @mouseleave="open = false"
       >
         <p class="px-4 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
@@ -54,7 +54,7 @@ function toggle() {
           :key="opt.value"
           type="button"
           class="flex w-full items-center gap-3 px-4 py-2 text-sm transition-colors"
-          :class="themeStore.currentTheme === opt.value ? 'font-semibold text-primary' : 'text-gray-600 hover:bg-gray-100 hover:text-ink dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100'"
+          :class="themeStore.currentTheme === opt.value ? 'font-semibold text-primary' : 'text-gray-600 hover:bg-gray-100 hover:text-ink dark:text-muted dark:hover:bg-surface-hover dark:hover:text-ink'"
           @click="select(opt.value)"
         >
           <component :is="opt.icon" :size="16" />

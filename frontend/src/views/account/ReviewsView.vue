@@ -7,8 +7,8 @@ import EmptyState from '@/components/EmptyState.vue'
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('nav.reviews') }}</h1>
-      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $t('account.reviews_approved_note') }}</p>
+      <h1 class="text-2xl font-bold text-ink dark:text-ink">{{ $t('nav.reviews') }}</h1>
+      <p class="mt-1 text-sm text-gray-500 dark:text-muted">{{ $t('account.reviews_approved_note') }}</p>
     </div>
 
     <EmptyState

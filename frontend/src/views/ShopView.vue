@@ -304,22 +304,22 @@ function setPage(p: number) {
 
 <template>
   <div class="container-app py-6">
-    <nav class="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+    <nav class="text-xs text-gray-500 dark:text-muted dark:text-gray-500">
       <RouterLink to="/" class="hover:text-primary">{{ $t('nav.home') }}</RouterLink>
       <span class="mx-1">/</span>
       <RouterLink to="/shop" class="hover:text-primary">{{ $t('nav.shop') }}</RouterLink>
       <span v-if="filters.category" class="mx-1">/</span>
-      <span v-if="filters.category" class="font-medium text-ink dark:text-gray-100">{{ activeCategoryName }}</span>
+      <span v-if="filters.category" class="font-medium text-ink dark:text-ink">{{ activeCategoryName }}</span>
       <template v-else-if="filters.q">
         <span class="mx-1">/</span>
-        <span class="font-medium text-ink dark:text-gray-100">{{ $t('shop.search_results') }}</span>
+        <span class="font-medium text-ink dark:text-ink">{{ $t('shop.search_results') }}</span>
       </template>
     </nav>
 
     <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-ink dark:text-gray-100 sm:text-3xl">{{ $t('shop.shop_products') }}</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
+        <h1 class="text-2xl font-bold text-ink dark:text-ink sm:text-3xl">{{ $t('shop.shop_products') }}</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-muted dark:text-gray-500">
           <template v-if="filters.q || filters.category || filters.brand || filters.colors.length || filters.sizes.length || filters.min !== undefined || filters.max !== undefined || filters.rating !== undefined || filters.inStockOnly">
             {{ $t('shop.showing_of', { shown: products.length, total: totalCount }) }}
           </template>
@@ -363,7 +363,7 @@ function setPage(p: number) {
           <div>
             <div class="label">{{ $t('shop.category') }}</div>
             <div class="space-y-2">
-              <label v-for="c in facets.categories" :key="c.slug" class="flex cursor-pointer items-center justify-between text-sm text-gray-700 dark:text-gray-300 hover:text-primary">
+              <label v-for="c in facets.categories" :key="c.slug" class="flex cursor-pointer items-center justify-between text-sm text-gray-700 dark:text-muted hover:text-primary">
                 <span class="flex items-center gap-2">
                   <input
                     type="radio"
@@ -382,7 +382,7 @@ function setPage(p: number) {
           <div>
             <div class="label">{{ $t('shop.brand') }}</div>
             <div class="space-y-2">
-              <label v-for="b in facets.brands" :key="b.slug" class="flex cursor-pointer items-center justify-between text-sm text-gray-700 dark:text-gray-300 hover:text-primary">
+              <label v-for="b in facets.brands" :key="b.slug" class="flex cursor-pointer items-center justify-between text-sm text-gray-700 dark:text-muted hover:text-primary">
                 <span class="flex items-center gap-2">
                   <input
                     type="radio"
@@ -414,22 +414,22 @@ function setPage(p: number) {
           <div>
             <div class="label">{{ $t('shop.rating') }}</div>
             <div class="space-y-2">
-              <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-muted">
                 <input type="radio" name="rating" :checked="filters.rating === 4.5" class="h-4 w-4 accent-primary" @change="setRating(filters.rating === 4.5 ? undefined : 4.5)" />
                 <StarRating :value="4.5" size="sm" />
                 <span class="text-xs text-gray-400 dark:text-gray-500">{{ $t('shop.up') }}</span>
               </label>
-              <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-muted">
                 <input type="radio" name="rating" :checked="filters.rating === 4.0" class="h-4 w-4 accent-primary" @change="setRating(filters.rating === 4.0 ? undefined : 4.0)" />
                 <StarRating :value="4.0" size="sm" />
                 <span class="text-xs text-gray-400 dark:text-gray-500">{{ $t('shop.up') }}</span>
               </label>
-              <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-muted">
                 <input type="radio" name="rating" :checked="filters.rating === 3.5" class="h-4 w-4 accent-primary" @change="setRating(filters.rating === 3.5 ? undefined : 3.5)" />
                 <StarRating :value="3.5" size="sm" />
                 <span class="text-xs text-gray-400 dark:text-gray-500">{{ $t('shop.up') }}</span>
               </label>
-              <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-muted">
                 <input type="radio" name="rating" :checked="filters.rating === undefined" class="h-4 w-4 accent-primary" @change="setRating(undefined)" />
                   <span>{{ $t('shop.any') }}</span>
               </label>
@@ -460,7 +460,7 @@ function setPage(p: number) {
                 :key="s.slug"
                 type="button"
                 class="rounded-lg border px-3 py-1.5 text-sm transition"
-                :class="filters.sizes.includes(s.slug) ? 'border-primary bg-primary/5 text-primary' : 'border-border-gray text-gray-600 hover:border-gray-300 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-500'"
+                :class="filters.sizes.includes(s.slug) ? 'border-primary bg-primary/5 text-primary' : 'border-border-gray text-gray-600 hover:border-gray-300 dark:border-border-gray dark:text-muted dark:hover:border-gray-500'"
                 @click="toggleSize(s.slug)"
               >
                 {{ s.name }}
@@ -468,7 +468,7 @@ function setPage(p: number) {
             </div>
           </div>
 
-          <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-muted">
             <input type="checkbox" :checked="filters.inStockOnly" class="h-4 w-4 accent-primary" @change="setInStock(($event.target as HTMLInputElement).checked)" />
             {{ $t('shop.in_stock_only') }}
           </label>
@@ -521,9 +521,9 @@ function setPage(p: number) {
         class="fixed inset-0 z-50 lg:hidden"
       >
         <div class="absolute inset-0 bg-black/50" @click="ui.closeMobileFilters()"></div>
-        <div class="absolute inset-y-0 right-0 w-80 max-w-[85vw] overflow-y-auto bg-white p-5 shadow-2xl dark:bg-gray-800">
+        <div class="absolute inset-y-0 right-0 w-80 max-w-[85vw] overflow-y-auto bg-white p-5 shadow-2xl dark:bg-surface">
           <div class="mb-4 flex items-center justify-between">
-            <h3 class="text-lg font-bold text-ink dark:text-gray-100">{{ $t('shop.filter') }}</h3>
+            <h3 class="text-lg font-bold text-ink dark:text-ink">{{ $t('shop.filter') }}</h3>
             <button class="btn-icon" @click="ui.closeMobileFilters()">
               <X class="h-5 w-5" />
             </button>
@@ -533,7 +533,7 @@ function setPage(p: number) {
             <div>
               <div class="label">{{ $t('shop.category') }}</div>
               <div class="space-y-2">
-                <label v-for="c in facets.categories" :key="c.slug" class="flex cursor-pointer items-center justify-between text-sm text-gray-700 dark:text-gray-300">
+                <label v-for="c in facets.categories" :key="c.slug" class="flex cursor-pointer items-center justify-between text-sm text-gray-700 dark:text-muted">
                   <span class="flex items-center gap-2">
                     <input type="radio" name="m-category" :checked="filters.category === c.slug" class="h-4 w-4 accent-primary" @change="setCategory(filters.category === c.slug ? undefined : c.slug)" />
                     {{ c.name }}
@@ -546,7 +546,7 @@ function setPage(p: number) {
             <div>
               <div class="label">{{ $t('shop.brand') }}</div>
               <div class="space-y-2">
-                <label v-for="b in facets.brands" :key="b.slug" class="flex cursor-pointer items-center justify-between text-sm text-gray-700 dark:text-gray-300">
+                <label v-for="b in facets.brands" :key="b.slug" class="flex cursor-pointer items-center justify-between text-sm text-gray-700 dark:text-muted">
                   <span class="flex items-center gap-2">
                     <input type="radio" name="m-brand" :checked="filters.brand === b.name" class="h-4 w-4 accent-primary" @change="setBrand(filters.brand === b.name ? undefined : b.name)" />
                     {{ b.name }}
@@ -560,7 +560,7 @@ function setPage(p: number) {
               <div class="label">{{ $t('shop.price_range') }}</div>
               <input type="range" min="0" :max="PRICE_MAX" step="5" :value="filters.min ?? 0" class="w-full accent-primary" @input="setMin(Number(($event.target as HTMLInputElement).value))" />
               <input type="range" min="0" :max="PRICE_MAX" step="5" :value="filters.max ?? PRICE_MAX" class="w-full accent-primary" @input="setMax(Number(($event.target as HTMLInputElement).value))" />
-            <div class="mt-2 flex items-center justify-between text-xs font-medium text-gray-600 dark:text-gray-300">
+            <div class="mt-2 flex items-center justify-between text-xs font-medium text-gray-600 dark:text-muted">
                 <span class="chip">${{ filters.min ?? 0 }}</span>
                 <span>–</span>
                 <span class="chip">${{ filters.max ?? PRICE_MAX }}</span>
@@ -570,19 +570,19 @@ function setPage(p: number) {
             <div>
               <div class="label">{{ $t('shop.rating') }}</div>
               <div class="space-y-2">
-                <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-muted">
                   <input type="radio" name="m-rating" :checked="filters.rating === 4.5" class="h-4 w-4 accent-primary" @change="setRating(filters.rating === 4.5 ? undefined : 4.5)" />
                   <StarRating :value="4.5" size="sm" /> <span class="text-xs text-gray-400 dark:text-gray-500">{{ $t('shop.up') }}</span>
                 </label>
-                <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-muted">
                   <input type="radio" name="m-rating" :checked="filters.rating === 4.0" class="h-4 w-4 accent-primary" @change="setRating(filters.rating === 4.0 ? undefined : 4.0)" />
                   <StarRating :value="4.0" size="sm" /> <span class="text-xs text-gray-400 dark:text-gray-500">{{ $t('shop.up') }}</span>
                 </label>
-                <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-muted">
                   <input type="radio" name="m-rating" :checked="filters.rating === 3.5" class="h-4 w-4 accent-primary" @change="setRating(filters.rating === 3.5 ? undefined : 3.5)" />
                   <StarRating :value="3.5" size="sm" /> <span class="text-xs text-gray-400 dark:text-gray-500">{{ $t('shop.up') }}</span>
                 </label>
-                <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-muted">
                   <input type="radio" name="m-rating" :checked="filters.rating === undefined" class="h-4 w-4 accent-primary" @change="setRating(undefined)" />
                   <span>{{ $t('shop.any') }}</span>
                 </label>
@@ -599,11 +599,11 @@ function setPage(p: number) {
             <div>
               <div class="label">{{ $t('shop.size') }}</div>
               <div class="flex flex-wrap gap-2">
-                <button v-for="s in facets.sizes" :key="s.slug" type="button" class="rounded-lg border px-3 py-1.5 text-sm" :class="filters.sizes.includes(s.slug) ? 'border-primary bg-primary/5 text-primary' : 'border-border-gray text-gray-600 dark:border-gray-700 dark:text-gray-300'" @click="toggleSize(s.slug)">{{ s.name }}</button>
+                <button v-for="s in facets.sizes" :key="s.slug" type="button" class="rounded-lg border px-3 py-1.5 text-sm" :class="filters.sizes.includes(s.slug) ? 'border-primary bg-primary/5 text-primary' : 'border-border-gray text-gray-600 dark:border-border-gray dark:text-muted'" @click="toggleSize(s.slug)">{{ s.name }}</button>
               </div>
             </div>
 
-            <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <label class="flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-muted">
               <input type="checkbox" :checked="filters.inStockOnly" class="h-4 w-4 accent-primary" @change="setInStock(($event.target as HTMLInputElement).checked)" />
               {{ $t('shop.in_stock_only') }}
             </label>

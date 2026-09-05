@@ -48,18 +48,18 @@ onMounted(async () => {
 <template>
   <div class="space-y-6">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('nav.my_orders') }}</h1>
+      <h1 class="text-2xl font-bold text-ink dark:text-ink">{{ $t('nav.my_orders') }}</h1>
       <span v-if="!loading" class="chip w-fit">{{ $t('order.count_orders', { count: orders.length }) }}</span>
     </div>
 
     <div v-if="loading" class="card p-10 text-center">
-      <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('common.loading') }}</p>
+      <p class="text-sm text-gray-500 dark:text-muted">{{ $t('common.loading') }}</p>
     </div>
 
     <div v-else-if="orders.length" class="card overflow-x-auto p-0">
       <table class="w-full min-w-[720px] text-sm">
         <thead>
-          <tr class="border-b border-border-gray dark:border-gray-700 text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <tr class="border-b border-border-gray dark:border-border-gray text-left text-xs uppercase tracking-wide text-gray-500 dark:text-muted">
             <th class="px-4 py-3 font-semibold">{{ $t('order.order') }}</th>
             <th class="px-4 py-3 font-semibold">{{ $t('order.placed') }}</th>
             <th class="px-4 py-3 font-semibold">{{ $t('order.items') }}</th>
@@ -68,7 +68,7 @@ onMounted(async () => {
             <th class="px-4 py-3 font-semibold">{{ $t('order.action') }}</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-border-gray dark:divide-gray-700">
+        <tbody class="divide-y divide-border-gray dark:divide-border-gray">
           <tr v-for="o in orders" :key="o.id">
             <td class="px-4 py-3">
               <RouterLink
@@ -78,9 +78,9 @@ onMounted(async () => {
                 {{ o.number }}
               </RouterLink>
             </td>
-            <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ formatDate(o.placedAt) }}</td>
-            <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ o.itemsCount }} {{ t('order.items') }}</td>
-            <td class="px-4 py-3 font-medium text-ink dark:text-gray-100">{{ formatPrice(o.total) }}</td>
+            <td class="px-4 py-3 text-gray-600 dark:text-muted">{{ formatDate(o.placedAt) }}</td>
+            <td class="px-4 py-3 text-gray-600 dark:text-muted">{{ o.itemsCount }} {{ t('order.items') }}</td>
+            <td class="px-4 py-3 font-medium text-ink dark:text-ink">{{ formatPrice(o.total) }}</td>
             <td class="px-4 py-3">
               <StatusTag :status="o.status" />
             </td>

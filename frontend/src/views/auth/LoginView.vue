@@ -39,8 +39,8 @@ async function submit() {
   <div class="w-full max-w-md">
     <div class="card p-8">
       <div class="mb-6 text-center">
-        <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('auth.welcome_back') }}</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $t('auth.sign_in_subtitle') }}</p>
+        <h1 class="text-2xl font-bold text-ink dark:text-ink">{{ $t('auth.welcome_back') }}</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-muted">{{ $t('auth.sign_in_subtitle') }}</p>
       </div>
 
       <form class="space-y-4" @submit.prevent="submit">
@@ -79,7 +79,7 @@ async function submit() {
         </div>
 
         <div class="flex items-center justify-between text-sm">
-          <label class="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+          <label class="flex items-center gap-2 text-gray-600 dark:text-muted">
             <input type="checkbox" class="accent-primary" />
             {{ $t('auth.remember_me') }}
           </label>
@@ -99,7 +99,7 @@ async function submit() {
         </button>
       </form>
 
-      <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+      <p class="mt-6 text-center text-sm text-gray-500 dark:text-muted">
         {{ $t('auth.no_account') }}
         <RouterLink to="/auth/register" class="font-medium text-primary hover:text-primary-dark">{{ $t('auth.create_one') }}</RouterLink>
       </p>

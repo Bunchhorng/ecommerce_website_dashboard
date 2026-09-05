@@ -140,7 +140,7 @@ async function signOut() {
             :to="item.route"
             :title="expanded ? undefined : $t(item.labelKey)"
             class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
-            :class="[isActive(item) ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800', expanded ? '' : 'justify-center']"
+            :class="[isActive(item) ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-muted dark:hover:bg-surface-hover', expanded ? '' : 'justify-center']"
           >
             <component :is="item.icon" :size="18" />
             <span v-if="expanded">{{ $t(item.labelKey) }}</span>
@@ -150,7 +150,7 @@ async function signOut() {
 
       <div class="border-t border-border-gray p-3">
         <button
-          class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-primary"
+          class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary dark:text-muted dark:hover:bg-surface-hover dark:hover:text-primary"
           :class="expanded ? '' : 'justify-center'"
           @click="uiStore.toggleAdminSidebar()"
         >
@@ -179,7 +179,7 @@ async function signOut() {
           <div class="relative">
             <button class="btn-icon relative" :title="$t('nav.notifications')" @click="uiStore.toggleAdminNotifications()">
               <Bell class="h-5 w-5" />
-              <span v-if="unreadCount > 0" class="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-800"></span>
+              <span v-if="unreadCount > 0" class="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-border-gray"></span>
             </button>
 
             <template v-if="uiStore.adminNotificationsOpen">
@@ -196,7 +196,7 @@ async function signOut() {
                       <span class="truncate text-sm font-medium text-ink">{{ n.title }}</span>
                       <span v-if="!n.read_at" class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"></span>
                     </div>
-                    <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">{{ n.message }}</p>
+                    <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-muted">{{ n.message }}</p>
                     <div class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">{{ formatDateTime(n.created_at) }}</div>
                   </div>
                 </div>
@@ -213,7 +213,7 @@ async function signOut() {
         </div>
 
         <div class="relative">
-          <button class="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" @click="profileOpen = !profileOpen">
+          <button class="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-surface-hover" @click="profileOpen = !profileOpen">
             <div class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">{{ auth.user?.name?.charAt(0) ?? 'A' }}</div>
             <span class="hidden text-sm font-medium text-ink sm:block">{{ auth.user?.name ?? $t('admin.nav.admin_label') }}</span>
             <ChevronDown class="h-4 w-4 text-gray-400" />
@@ -222,10 +222,10 @@ async function signOut() {
           <template v-if="profileOpen">
             <div class="fixed inset-0 z-40" @click="profileOpen = false"></div>
             <div class="absolute right-0 top-12 z-50 w-48 overflow-hidden rounded-xl border border-border-gray bg-surface py-1 shadow-popover">
-              <RouterLink to="/account/profile" class="flex items-center px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100" @click="profileOpen = false">
+              <RouterLink to="/account/profile" class="flex items-center px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink dark:text-muted dark:hover:bg-surface-hover dark:hover:text-ink" @click="profileOpen = false">
                 {{ $t('nav.profile') }}
               </RouterLink>
-              <RouterLink to="/admin/settings" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100" @click="profileOpen = false">
+              <RouterLink to="/admin/settings" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink dark:text-muted dark:hover:bg-surface-hover dark:hover:text-ink" @click="profileOpen = false">
                 <Settings class="h-4 w-4" />
                 {{ $t('admin.nav.settings') }}
               </RouterLink>

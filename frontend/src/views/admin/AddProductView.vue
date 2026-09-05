@@ -589,7 +589,7 @@ onMounted(async () => {
             role="switch"
             :aria-checked="form.trackInventory"
             class="relative h-6 w-11 rounded-full transition-colors"
-            :class="form.trackInventory ? 'bg-emerald-500' : 'bg-gray-200'"
+            :class="form.trackInventory ? 'bg-success' : 'bg-gray-200 dark:bg-surface-hover'"
             @click="form.trackInventory = !form.trackInventory"
           >
             <span
@@ -600,7 +600,7 @@ onMounted(async () => {
         </div>
       </div>
       <p class="mt-3 flex items-center gap-1 text-xs text-gray-500">
-        <Check class="h-3.5 w-3.5 text-emerald-500" />
+        <Check class="h-3.5 w-3.5 text-success" />
         {{ $t('admin.products.per_variant_stock_note') }}
       </p>
     </div>

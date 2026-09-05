@@ -81,7 +81,7 @@ const cards = computed<SummaryCard[]>(() => [
     labelKey: 'account.completed_orders',
     value: completedCount.value,
     icon: PackageCheck,
-    tint: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400',
+    tint: 'bg-emerald-100 text-emerald-600 dark:bg-success/15 dark:text-success',
     to: { name: 'account-orders' }
   },
   {
@@ -132,7 +132,7 @@ onMounted(async () => {
 
 <template>
   <div class="space-y-8">
-    <div class="flex items-center justify-between rounded-xl bg-gradient-to-r from-primary to-primary-dark p-6 text-white">
+    <div class="hero-gradient flex items-center justify-between rounded-xl p-6 text-white">
       <div>
         <h2 class="text-xl font-bold sm:text-2xl">{{ $t('account.welcome_back_name', { name: firstName }) }}</h2>
         <p class="mt-1 text-sm text-blue-100">{{ $t('account.today_summary') }}</p>
@@ -147,8 +147,8 @@ onMounted(async () => {
         <div :class="['flex h-10 w-10 items-center justify-center rounded-full', card.tint]">
           <component :is="card.icon" class="h-5 w-5" />
         </div>
-        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">{{ $t(card.labelKey) }}</p>
-        <p class="mt-1 text-3xl font-extrabold text-ink dark:text-gray-100">{{ card.value }}</p>
+        <p class="mt-3 text-sm text-gray-500 dark:text-muted">{{ $t(card.labelKey) }}</p>
+        <p class="mt-1 text-3xl font-extrabold text-ink dark:text-ink">{{ card.value }}</p>
         <RouterLink
           :to="card.to"
           class="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
@@ -161,20 +161,20 @@ onMounted(async () => {
 
     <section class="space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-bold text-ink dark:text-gray-100">{{ $t('account.recent_orders') }}</h3>
+        <h3 class="text-lg font-bold text-ink dark:text-ink">{{ $t('account.recent_orders') }}</h3>
         <RouterLink :to="{ name: 'account-orders' }" class="text-sm font-medium text-primary hover:underline">
           {{ $t('actions.view_all') }}
         </RouterLink>
       </div>
 
       <div v-if="loading" class="card p-10 text-center">
-        <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('common.loading') }}</p>
+        <p class="text-sm text-gray-500 dark:text-muted">{{ $t('common.loading') }}</p>
       </div>
 
       <div v-else-if="recentOrders.length" class="card overflow-x-auto">
         <table class="w-full min-w-[640px] text-sm">
           <thead>
-            <tr class="border-b border-border-gray dark:border-gray-700 text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <tr class="border-b border-border-gray dark:border-border-gray text-left text-xs uppercase tracking-wide text-gray-500 dark:text-muted">
               <th class="px-4 py-3 font-semibold">{{ $t('order.order') }}</th>
               <th class="px-4 py-3 font-semibold">{{ $t('order.date') }}</th>
               <th class="px-4 py-3 font-semibold">{{ $t('order.items') }}</th>
@@ -183,7 +183,7 @@ onMounted(async () => {
               <th class="px-4 py-3 font-semibold"></th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-border-gray dark:divide-gray-700">
+          <tbody class="divide-y divide-border-gray dark:divide-border-gray">
             <tr v-for="o in recentOrders" :key="o.id">
               <td class="px-4 py-3">
                 <RouterLink
@@ -193,9 +193,9 @@ onMounted(async () => {
                   {{ o.number }}
                 </RouterLink>
               </td>
-              <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ formatDate(o.placedAt) }}</td>
-              <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ o.itemsCount }} {{ $t('order.items') }}</td>
-              <td class="px-4 py-3 font-medium text-ink dark:text-gray-100">{{ formatPrice(o.total) }}</td>
+              <td class="px-4 py-3 text-gray-600 dark:text-muted">{{ formatDate(o.placedAt) }}</td>
+              <td class="px-4 py-3 text-gray-600 dark:text-muted">{{ o.itemsCount }} {{ $t('order.items') }}</td>
+              <td class="px-4 py-3 font-medium text-ink dark:text-ink">{{ formatPrice(o.total) }}</td>
               <td class="px-4 py-3">
                 <StatusTag :status="o.status" />
               </td>
@@ -228,7 +228,7 @@ onMounted(async () => {
 
     <section class="space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-bold text-ink dark:text-gray-100">{{ $t('account.your_wishlist') }}</h3>
+        <h3 class="text-lg font-bold text-ink dark:text-ink">{{ $t('account.your_wishlist') }}</h3>
         <RouterLink :to="{ name: 'account-wishlist' }" class="text-sm font-medium text-primary hover:underline">
           {{ $t('actions.view_all') }}
         </RouterLink>

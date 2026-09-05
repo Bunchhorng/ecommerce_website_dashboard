@@ -141,8 +141,8 @@ onMounted(async () => {
     <div class="card p-6">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('order.track_title', { number: order.number }) }}</h1>
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
+          <h1 class="text-2xl font-bold text-ink dark:text-ink">{{ $t('order.track_title', { number: order.number }) }}</h1>
+          <p class="mt-1 text-sm text-gray-500 dark:text-muted dark:text-gray-500">
             {{ $t('order.track_subtitle', { placed: formatDate(order.placedAt), arrives: formatDate(order.estimatedDelivery) }) }}
           </p>
         </div>
@@ -156,7 +156,7 @@ onMounted(async () => {
     </div>
 
     <div class="card mt-6 p-6">
-      <h2 class="mb-6 text-lg font-bold text-ink dark:text-gray-100">{{ $t('order.order_progress') }}</h2>
+      <h2 class="mb-6 text-lg font-bold text-ink dark:text-ink">{{ $t('order.order_progress') }}</h2>
 
       <div class="hidden sm:flex sm:items-start">
         <template v-for="(status, i) in FLOW" :key="status">
@@ -165,10 +165,10 @@ onMounted(async () => {
               class="flex h-10 w-10 items-center justify-center rounded-full font-semibold"
               :class="
                 i < currentIndex
-                  ? 'bg-emerald-500 text-white'
+                  ? 'bg-success text-white'
                   : i === currentIndex
                     ? 'bg-primary text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                    : 'bg-gray-200 dark:bg-surface-hover text-gray-500 dark:text-muted'
               "
             >
               <Check v-if="i < currentIndex" class="h-5 w-5" />
@@ -177,14 +177,14 @@ onMounted(async () => {
             <p class="mt-2 text-xs font-semibold" :class="i === currentIndex ? 'text-primary' : i < currentIndex ? 'text-ink' : 'text-gray-400 dark:text-gray-500'">
               {{ $t('status.' + status.toLowerCase()) }}
             </p>
-            <p class="mt-1 text-center text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500">
+            <p class="mt-1 text-center text-[10px] text-gray-500 dark:text-muted dark:text-gray-500">
               {{ timestampFor(status) ?? '' }}
             </p>
           </div>
           <div
             v-if="i < FLOW.length - 1"
             class="mx-2 mt-5 h-0.5 flex-1"
-            :class="i < currentIndex ? 'bg-emerald-500' : 'bg-gray-200'"
+            :class="i < currentIndex ? 'bg-success' : 'bg-gray-200'"
           ></div>
         </template>
       </div>
@@ -196,10 +196,10 @@ onMounted(async () => {
               class="flex h-10 w-10 items-center justify-center rounded-full font-semibold"
               :class="
                 i < currentIndex
-                  ? 'bg-emerald-500 text-white'
+                  ? 'bg-success text-white'
                   : i === currentIndex
                     ? 'bg-primary text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                    : 'bg-gray-200 dark:bg-surface-hover text-gray-500 dark:text-muted'
               "
             >
               <Check v-if="i < currentIndex" class="h-5 w-5" />
@@ -208,14 +208,14 @@ onMounted(async () => {
             <div
               v-if="i < FLOW.length - 1"
               class="mt-1 w-0.5 flex-1"
-              :class="i < currentIndex ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-gray-700'"
+              :class="i < currentIndex ? 'bg-success' : 'bg-gray-200 dark:bg-surface-hover'"
             ></div>
           </div>
           <div class="pb-8">
             <p class="text-sm font-semibold" :class="i === currentIndex ? 'text-primary' : i < currentIndex ? 'text-ink' : 'text-gray-400 dark:text-gray-500'">
               {{ $t('status.' + status.toLowerCase()) }}
             </p>
-            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+            <p class="mt-0.5 text-xs text-gray-500 dark:text-muted dark:text-gray-500">
               {{ timestampFor(status) ?? '' }}
             </p>
           </div>
@@ -229,23 +229,23 @@ onMounted(async () => {
       </div>
       <div>
         <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">{{ $t('order.estimated_delivery') }}</p>
-        <p class="font-semibold text-ink dark:text-gray-100">{{ formatDate(order.estimatedDelivery) }}</p>
+        <p class="font-semibold text-ink dark:text-ink">{{ formatDate(order.estimatedDelivery) }}</p>
       </div>
     </div>
 
     <div class="card mt-6 p-6">
-      <h2 class="mb-4 text-lg font-bold text-ink dark:text-gray-100">{{ $t('order.items') }}</h2>
-      <div class="divide-y divide-border-gray dark:divide-gray-700">
+      <h2 class="mb-4 text-lg font-bold text-ink dark:text-ink">{{ $t('order.items') }}</h2>
+      <div class="divide-y divide-border-gray dark:divide-border-gray">
         <div v-for="item in order.items" :key="item.id" class="flex items-center gap-4 py-4">
           <img :src="item.image" :alt="item.title" class="h-16 w-14 rounded-lg object-cover" />
           <div class="min-w-0 flex-1">
-            <p class="font-semibold text-ink dark:text-gray-100">{{ item.title }}</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+            <p class="font-semibold text-ink dark:text-ink">{{ item.title }}</p>
+            <p class="text-xs text-gray-500 dark:text-muted dark:text-gray-500">
               {{ item.brand }} · {{ item.variant?.attributes ? item.variant.attributes.map((a) => a.value).join(', ') : '' }}
             </p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{{ $t('order.qty', { qty: item.quantity }) }}</p>
+            <p class="text-xs text-gray-500 dark:text-muted dark:text-gray-500">{{ $t('order.qty', { qty: item.quantity }) }}</p>
           </div>
-          <p class="shrink-0 font-medium text-ink dark:text-gray-100">{{ formatPrice(item.unitPrice * item.quantity) }}</p>
+          <p class="shrink-0 font-medium text-ink dark:text-ink">{{ formatPrice(item.unitPrice * item.quantity) }}</p>
         </div>
       </div>
     </div>

@@ -31,7 +31,7 @@ const strengthBar = computed(() => {
   if (length === 0) return 'bg-gray-200'
   if (length < 5) return 'bg-red-500'
   if (length < 8) return 'bg-accent'
-  return 'bg-emerald-500'
+  return 'bg-success'
 })
 
 const strengthLabel = computed(() => {
@@ -75,8 +75,8 @@ async function submit() {
   <div class="mx-auto w-full max-w-xl">
     <div class="card space-y-6 p-6">
       <div>
-        <h2 class="text-xl font-bold text-ink dark:text-gray-100">{{ $t('account.change_password') }}</h2>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $t('account.change_password_subtitle') }}</p>
+        <h2 class="text-xl font-bold text-ink dark:text-ink">{{ $t('account.change_password') }}</h2>
+        <p class="mt-1 text-sm text-gray-500 dark:text-muted">{{ $t('account.change_password_subtitle') }}</p>
       </div>
 
       <form class="space-y-4" @submit.prevent="submit">
@@ -113,14 +113,14 @@ async function submit() {
           </div>
           <p v-if="errors.password" class="mt-1 text-xs text-red-500">{{ errors.password }}</p>
           <div class="mt-2">
-            <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+            <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-surface">
               <div
                 class="h-full rounded-full transition-all duration-300"
                 :class="strengthBar"
                 :style="{ width: `${strengthPercent}%` }"
               ></div>
             </div>
-            <p v-if="strengthLabel" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p v-if="strengthLabel" class="mt-1 text-xs text-gray-500 dark:text-muted">
               {{ $t('account.password_strength', { level: strengthLabel }) }}
             </p>
           </div>
@@ -153,7 +153,7 @@ async function submit() {
         </button>
       </form>
 
-      <p v-if="success" class="flex items-start gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 p-3 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+      <p v-if="success" class="flex items-start gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 p-3 text-sm font-medium text-emerald-700 dark:text-success">
         <CheckCircle2 class="h-4 w-4 shrink-0" />
         {{ $t('account.password_changed') }}
       </p>

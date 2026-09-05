@@ -53,8 +53,8 @@ async function saveProfile() {
 <template>
   <div class="card mx-auto max-w-xl space-y-6 p-6">
     <div>
-      <h2 class="text-xl font-bold text-ink dark:text-gray-100">{{ $t('account.profile_info') }}</h2>
-      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $t('account.manage_account') }}</p>
+      <h2 class="text-xl font-bold text-ink dark:text-ink">{{ $t('account.profile_info') }}</h2>
+      <p class="mt-1 text-sm text-gray-500 dark:text-muted">{{ $t('account.manage_account') }}</p>
     </div>
 
     <div class="flex items-center gap-4">
@@ -72,7 +72,7 @@ async function saveProfile() {
       </div>
       <div>
         <label class="label" for="profile-email">{{ $t('auth.email') }}</label>
-        <input id="profile-email" :value="activeUser?.email" type="email" class="input bg-gray-50 dark:bg-gray-800" disabled />
+        <input id="profile-email" :value="activeUser?.email" type="email" class="input bg-gray-50 dark:bg-surface" disabled />
       </div>
       <div>
         <label class="label" for="profile-phone">{{ $t('checkout.phone') }}</label>
@@ -83,7 +83,7 @@ async function saveProfile() {
       </button>
     </form>
 
-    <p v-if="saved" class="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 p-3 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+    <p v-if="saved" class="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 p-3 text-sm font-medium text-emerald-700 dark:text-success">
       <CheckCircle2 class="h-4 w-4 shrink-0" />
       {{ $t('account.profile_updated') }}
     </p>

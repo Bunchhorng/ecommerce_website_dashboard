@@ -211,7 +211,7 @@ async function placeOrder() {
     </div>
 
     <template v-else>
-      <h1 class="mb-6 text-2xl font-bold text-ink dark:text-gray-100 sm:text-3xl">{{ $t('nav.checkout') }}</h1>
+      <h1 class="mb-6 text-2xl font-bold text-ink dark:text-ink sm:text-3xl">{{ $t('nav.checkout') }}</h1>
 
       <div class="mb-8 flex items-center">
         <template v-for="(s, i) in steps" :key="s.id">
@@ -222,21 +222,21 @@ async function placeOrder() {
                 step === s.id
                   ? 'bg-primary text-white'
                   : step > s.id
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-gray-200 text-gray-500 dark:text-gray-400 dark:bg-gray-700'
+                    ? 'bg-success text-white'
+                    : 'bg-gray-200 text-gray-500 dark:text-muted dark:bg-surface-hover'
               "
             >
               <Check v-if="step > s.id" class="h-4 w-4" />
               <span v-else>{{ s.id }}</span>
             </div>
-            <span class="hidden text-sm font-medium sm:block" :class="step >= s.id ? 'text-ink' : 'text-gray-400 dark:text-gray-500 dark:text-gray-400'">
+            <span class="hidden text-sm font-medium sm:block" :class="step >= s.id ? 'text-ink' : 'text-gray-400 dark:text-gray-500 dark:text-muted'">
               {{ s.label }}
             </span>
           </div>
           <div
             v-if="i < steps.length - 1"
             class="mx-3 h-0.5 flex-1 rounded"
-            :class="step > s.id ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-gray-700'"
+            :class="step > s.id ? 'bg-success' : 'bg-gray-200 dark:bg-surface-hover'"
           ></div>
         </template>
       </div>
@@ -245,11 +245,11 @@ async function placeOrder() {
         <div class="card space-y-6 p-6">
           <template v-if="step === 1">
             <div>
-              <h2 class="text-lg font-bold text-ink dark:text-gray-100">{{ $t('checkout.shipping_address') }}</h2>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Where should we deliver your order?</p>
+              <h2 class="text-lg font-bold text-ink dark:text-ink">{{ $t('checkout.shipping_address') }}</h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-muted">Where should we deliver your order?</p>
             </div>
 
-            <div v-if="loadingAddresses" class="text-sm text-gray-500 dark:text-gray-400">Loading addresses...</div>
+            <div v-if="loadingAddresses" class="text-sm text-gray-500 dark:text-muted">Loading addresses...</div>
 
             <div v-else class="grid gap-4 sm:grid-cols-2">
               <label
@@ -265,7 +265,7 @@ async function placeOrder() {
                   class="peer sr-only"
                 />
                 <div
-                  class="rounded-xl border-2 border-border-gray dark:border-gray-700 p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5"
+                  class="rounded-xl border-2 border-border-gray dark:border-border-gray p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5"
                 >
                   <div class="mb-1 flex items-center gap-2">
                     <span class="chip">{{ address.label }}</span>
@@ -276,18 +276,18 @@ async function placeOrder() {
                       Default
                     </span>
                   </div>
-                  <p class="font-semibold text-ink dark:text-gray-100">{{ address.fullName }}</p>
-                  <p class="text-sm text-gray-600 dark:text-gray-300">{{ address.line1 }}</p>
-                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                  <p class="font-semibold text-ink dark:text-ink">{{ address.fullName }}</p>
+                  <p class="text-sm text-gray-600 dark:text-muted">{{ address.line1 }}</p>
+                  <p class="text-sm text-gray-600 dark:text-muted">
                     {{ address.city }}, {{ address.state }} {{ address.postalCode }}
                   </p>
-                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ address.phone }}</p>
+                  <p class="mt-1 text-sm text-gray-500 dark:text-muted">{{ address.phone }}</p>
                 </div>
               </label>
 
               <button
                 type="button"
-                class="flex min-h-[120px] items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border-gray dark:border-gray-700 p-4 text-sm font-medium text-gray-500 dark:text-gray-400 transition-colors hover:border-primary hover:text-primary"
+                class="flex min-h-[120px] items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border-gray dark:border-border-gray p-4 text-sm font-medium text-gray-500 dark:text-muted transition-colors hover:border-primary hover:text-primary"
                 @click="addressModalOpen = true"
               >
                 <Plus class="h-4 w-4" />
@@ -310,11 +310,11 @@ async function placeOrder() {
 
           <template v-else-if="step === 2">
             <div>
-              <h2 class="text-lg font-bold text-ink dark:text-gray-100">{{ $t('checkout.shipping_method') }}</h2>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Choose a delivery speed that works for you.</p>
+              <h2 class="text-lg font-bold text-ink dark:text-ink">{{ $t('checkout.shipping_method') }}</h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-muted">Choose a delivery speed that works for you.</p>
             </div>
 
-            <div v-if="loadingShipping" class="text-sm text-gray-500 dark:text-gray-400">Loading shipping methods...</div>
+            <div v-if="loadingShipping" class="text-sm text-gray-500 dark:text-muted">Loading shipping methods...</div>
 
             <div v-else class="space-y-3">
               <label
@@ -330,7 +330,7 @@ async function placeOrder() {
                   class="peer sr-only"
                 />
                 <div
-                  class="flex items-center justify-between gap-4 rounded-xl border-2 border-border-gray dark:border-gray-700 p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5"
+                  class="flex items-center justify-between gap-4 rounded-xl border-2 border-border-gray dark:border-border-gray p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5"
                 >
                   <div class="flex items-center gap-3">
                     <span
@@ -340,14 +340,14 @@ async function placeOrder() {
                       <span v-if="selectedShippingId === method.id" class="h-2.5 w-2.5 rounded-full bg-primary"></span>
                     </span>
                     <div>
-                      <p class="font-semibold text-ink dark:text-gray-100">{{ method.name }}</p>
-                      <p class="text-sm text-gray-600 dark:text-gray-300">{{ method.description }}</p>
+                      <p class="font-semibold text-ink dark:text-ink">{{ method.name }}</p>
+                      <p class="text-sm text-gray-600 dark:text-muted">{{ method.description }}</p>
                       <span class="chip mt-1">{{ method.etaDays }}–{{ method.etaDays + 1 }} days</span>
                     </div>
                   </div>
                   <div class="text-right">
                     <span v-if="method.price === 0" class="chip bg-accent !text-ink dark:!text-gray-900">Free</span>
-                    <span v-else class="font-semibold text-ink dark:text-gray-100">{{ formatPrice(method.price) }}</span>
+                    <span v-else class="font-semibold text-ink dark:text-ink">{{ formatPrice(method.price) }}</span>
                   </div>
                 </div>
               </label>
@@ -367,8 +367,8 @@ async function placeOrder() {
 
           <template v-else-if="step === 3">
             <div>
-              <h2 class="text-lg font-bold text-ink dark:text-gray-100">{{ $t('checkout.payment_method') }}</h2>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">How would you like to pay?</p>
+              <h2 class="text-lg font-bold text-ink dark:text-ink">{{ $t('checkout.payment_method') }}</h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-muted">How would you like to pay?</p>
             </div>
 
             <div class="space-y-3">
@@ -385,7 +385,7 @@ async function placeOrder() {
                   class="peer sr-only"
                 />
                 <div
-                  class="flex items-center justify-between gap-4 rounded-xl border-2 border-border-gray dark:border-gray-700 p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5"
+                  class="flex items-center justify-between gap-4 rounded-xl border-2 border-border-gray dark:border-border-gray p-4 transition-colors peer-checked:border-primary peer-checked:bg-primary/5"
                 >
                   <div class="flex items-center gap-3">
                     <span
@@ -394,17 +394,17 @@ async function placeOrder() {
                     >
                       <span v-if="paymentMethod === option.id" class="h-2.5 w-2.5 rounded-full bg-primary"></span>
                     </span>
-                    <component :is="option.icon" class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                    <component :is="option.icon" class="h-5 w-5 text-gray-500 dark:text-muted" />
                     <div>
-                      <p class="font-semibold text-ink dark:text-gray-100">{{ option.label }}</p>
-                      <p class="text-sm text-gray-600 dark:text-gray-300">{{ option.desc }}</p>
+                      <p class="font-semibold text-ink dark:text-ink">{{ option.label }}</p>
+                      <p class="text-sm text-gray-600 dark:text-muted">{{ option.desc }}</p>
                     </div>
                   </div>
                 </div>
               </label>
             </div>
 
-            <div v-if="paymentMethod === 'card'" class="space-y-4 rounded-xl bg-canvas p-4 dark:bg-gray-900">
+            <div v-if="paymentMethod === 'card'" class="space-y-4 rounded-xl bg-canvas p-4 dark:bg-canvas">
               <div>
                 <label class="label" for="card-name">Name on card</label>
                 <input id="card-name" type="text" class="input" placeholder="Alex Morgan" />
@@ -425,11 +425,11 @@ async function placeOrder() {
               </div>
             </div>
 
-            <div v-else-if="paymentMethod === 'bank'" class="rounded-xl bg-canvas p-4 text-sm text-gray-600 dark:text-gray-300 dark:bg-gray-900">
+            <div v-else-if="paymentMethod === 'bank'" class="rounded-xl bg-canvas p-4 text-sm text-gray-600 dark:text-muted dark:bg-canvas">
               After placing your order, transfer to: A/C 1234-5678-90 · E-KHMER Inc. · Swift code SVUS33
             </div>
 
-            <div v-else-if="paymentMethod === 'gateway'" class="rounded-xl bg-canvas p-4 text-sm text-gray-600 dark:text-gray-300 dark:bg-gray-900">
+            <div v-else-if="paymentMethod === 'gateway'" class="rounded-xl bg-canvas p-4 text-sm text-gray-600 dark:text-muted dark:bg-canvas">
               You'll be redirected to our secure payment partner to complete checkout.
             </div>
 
@@ -444,7 +444,7 @@ async function placeOrder() {
               </button>
             </div>
 
-            <p class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+            <p class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-muted">
               <Lock class="h-3.5 w-3.5" />
               Payments are encrypted and securely processed.
             </p>
@@ -452,55 +452,55 @@ async function placeOrder() {
 
           <template v-else>
             <div>
-              <h2 class="text-lg font-bold text-ink dark:text-gray-100">Review &amp; Place Order</h2>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Confirm your details before placing the order.</p>
+              <h2 class="text-lg font-bold text-ink dark:text-ink">Review &amp; Place Order</h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-muted">Confirm your details before placing the order.</p>
             </div>
 
             <div class="space-y-4">
-              <div v-if="selectedAddress" class="flex items-start justify-between gap-4 rounded-xl border border-border-gray dark:border-gray-700 p-4">
+              <div v-if="selectedAddress" class="flex items-start justify-between gap-4 rounded-xl border border-border-gray dark:border-border-gray p-4">
                 <div class="flex items-start gap-3">
                   <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 dark:text-gray-400">Ship to</p>
-                    <p class="font-semibold text-ink dark:text-gray-100">{{ selectedAddress.fullName }}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-300">{{ selectedAddress.line1 }}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 dark:text-muted">Ship to</p>
+                    <p class="font-semibold text-ink dark:text-ink">{{ selectedAddress.fullName }}</p>
+                    <p class="text-sm text-gray-600 dark:text-muted">{{ selectedAddress.line1 }}</p>
+                    <p class="text-sm text-gray-600 dark:text-muted">
                       {{ selectedAddress.city }}, {{ selectedAddress.state }} {{ selectedAddress.postalCode }}
                     </p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ selectedAddress.phone }}</p>
+                    <p class="text-sm text-gray-500 dark:text-muted">{{ selectedAddress.phone }}</p>
                   </div>
                 </div>
                 <button type="button" class="btn-ghost btn-sm shrink-0" @click="step = 1">Edit</button>
               </div>
 
-              <div v-if="selectedShipping" class="flex items-center justify-between rounded-xl border border-border-gray dark:border-gray-700 p-4">
+              <div v-if="selectedShipping" class="flex items-center justify-between rounded-xl border border-border-gray dark:border-border-gray p-4">
                 <div>
-                  <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 dark:text-gray-400">Delivery</p>
-                  <p class="font-semibold text-ink dark:text-gray-100">{{ selectedShipping.name }}</p>
-                  <p class="text-sm text-gray-600 dark:text-gray-300">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 dark:text-muted">Delivery</p>
+                  <p class="font-semibold text-ink dark:text-ink">{{ selectedShipping.name }}</p>
+                  <p class="text-sm text-gray-600 dark:text-muted">
                     {{ selectedShipping.price === 0 ? 'Free' : formatPrice(selectedShipping.price) }}
                   </p>
                 </div>
                 <button type="button" class="btn-ghost btn-sm shrink-0" @click="step = 2">Edit</button>
               </div>
 
-              <div class="flex items-center justify-between rounded-xl border border-border-gray dark:border-gray-700 p-4">
+              <div class="flex items-center justify-between rounded-xl border border-border-gray dark:border-border-gray p-4">
                 <div>
-                  <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 dark:text-gray-400">Payment</p>
-                  <p class="font-semibold text-ink dark:text-gray-100">{{ paymentLabel }}</p>
+                  <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 dark:text-muted">Payment</p>
+                  <p class="font-semibold text-ink dark:text-ink">{{ paymentLabel }}</p>
                 </div>
                 <button type="button" class="btn-ghost btn-sm shrink-0" @click="step = 3">Edit</button>
               </div>
 
-              <div class="divide-y divide-border-gray rounded-xl border border-border-gray dark:divide-gray-700 dark:border-gray-700">
+              <div class="divide-y divide-border-gray rounded-xl border border-border-gray dark:divide-border-gray dark:border-border-gray">
                 <div v-for="item in cartStore.items" :key="item.id" class="flex items-center gap-3 p-4">
                   <img :src="item.image" :alt="item.title" class="h-14 w-12 rounded-lg object-cover" />
                   <div class="min-w-0 flex-1">
-                    <p class="truncate font-semibold text-ink dark:text-gray-100">{{ item.title }}</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                    <p class="truncate font-semibold text-ink dark:text-ink">{{ item.title }}</p>
+                    <p class="text-xs text-gray-500 dark:text-muted">
                       Qty {{ item.quantity }} · {{ item.variant?.attributes ? item.variant.attributes.map((a) => a.value).join(', ') : '' }}
                     </p>
                   </div>
-                  <p class="shrink-0 font-medium text-ink dark:text-gray-100">{{ formatPrice(item.unitPrice * item.quantity) }}</p>
+                  <p class="shrink-0 font-medium text-ink dark:text-ink">{{ formatPrice(item.unitPrice * item.quantity) }}</p>
                 </div>
               </div>
             </div>
@@ -514,7 +514,7 @@ async function placeOrder() {
 
         <div class="card h-fit p-6 lg:sticky lg:top-24">
           <div class="mb-4 flex items-center justify-between">
-            <h3 class="font-bold text-ink dark:text-gray-100">{{ $t('checkout.order_summary') }}</h3>
+            <h3 class="font-bold text-ink dark:text-ink">{{ $t('checkout.order_summary') }}</h3>
             <RouterLink to="/cart" class="text-sm font-medium text-primary hover:text-primary-dark">
               Edit
             </RouterLink>
@@ -522,35 +522,35 @@ async function placeOrder() {
 
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-300">{{ $t('checkout.subtotal') }}</span>
-              <span class="font-medium text-ink dark:text-gray-100">{{ formatPrice(cartStore.subtotal) }}</span>
+              <span class="text-gray-600 dark:text-muted">{{ $t('checkout.subtotal') }}</span>
+              <span class="font-medium text-ink dark:text-ink">{{ formatPrice(cartStore.subtotal) }}</span>
             </div>
             <div v-if="cartStore.discountAmount > 0" class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-300">{{ $t('checkout.discount') }}</span>
+              <span class="text-gray-600 dark:text-muted">{{ $t('checkout.discount') }}</span>
               <span class="font-medium text-red-500">−{{ formatPrice(cartStore.discountAmount) }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-300">{{ $t('checkout.tax') }}</span>
-              <span class="font-medium text-ink dark:text-gray-100">{{ formatPrice(cartStore.taxAmount) }}</span>
+              <span class="text-gray-600 dark:text-muted">{{ $t('checkout.tax') }}</span>
+              <span class="font-medium text-ink dark:text-ink">{{ formatPrice(cartStore.taxAmount) }}</span>
             </div>
             <div class="flex justify-between">
-              <span class="text-gray-600 dark:text-gray-300">{{ $t('checkout.shipping') }}</span>
-              <span v-if="step === 1" class="text-gray-400 dark:text-gray-500 dark:text-gray-400">Calculated later</span>
+              <span class="text-gray-600 dark:text-muted">{{ $t('checkout.shipping') }}</span>
+              <span v-if="step === 1" class="text-gray-400 dark:text-gray-500 dark:text-muted">Calculated later</span>
               <span v-else-if="shippingPrice === 0" class="font-medium text-emerald-600">Free</span>
-              <span v-else class="font-medium text-ink dark:text-gray-100">{{ formatPrice(shippingPrice) }}</span>
+              <span v-else class="font-medium text-ink dark:text-ink">{{ formatPrice(shippingPrice) }}</span>
             </div>
           </div>
 
-          <div class="my-4 border-t border-border-gray dark:border-gray-700"></div>
+          <div class="my-4 border-t border-border-gray dark:border-border-gray"></div>
 
           <div class="flex justify-between">
-            <span class="font-semibold text-ink dark:text-gray-100">{{ $t('checkout.total') }}</span>
-            <span class="text-xl font-bold text-ink dark:text-gray-100">
+            <span class="font-semibold text-ink dark:text-ink">{{ $t('checkout.total') }}</span>
+            <span class="text-xl font-bold text-ink dark:text-ink">
               {{ step === 1 ? formatPrice(cartStore.totalAmount) : formatPrice(totalWithShipping) }}
             </span>
           </div>
 
-          <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+          <p class="mt-4 text-xs text-gray-500 dark:text-muted">
             {{ cartStore.totalItemCount }} {{ cartStore.totalItemCount === 1 ? 'item' : 'items' }} · Free shipping on orders over $100
           </p>
         </div>

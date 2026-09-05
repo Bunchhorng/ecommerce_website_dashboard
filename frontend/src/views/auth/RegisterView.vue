@@ -47,8 +47,8 @@ async function submit() {
   <div class="w-full max-w-md">
     <div class="card p-8">
       <div class="mb-6 text-center">
-        <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('auth.create_account') }}</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $t('auth.register_subtitle') }}</p>
+        <h1 class="text-2xl font-bold text-ink dark:text-ink">{{ $t('auth.create_account') }}</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-muted">{{ $t('auth.register_subtitle') }}</p>
       </div>
 
       <form class="space-y-4" @submit.prevent="submit">
@@ -134,10 +134,10 @@ async function submit() {
           <UserPlus v-else class="h-4 w-4" />
           {{ auth.loading ? $t('auth.creating_account') : $t('auth.create_account') }}
         </button>
-        <p class="text-center text-xs text-gray-500 dark:text-gray-400">{{ $t('verify.register_hint') }}</p>
+        <p class="text-center text-xs text-gray-500 dark:text-muted">{{ $t('verify.register_hint') }}</p>
       </form>
 
-      <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+      <p class="mt-6 text-center text-sm text-gray-500 dark:text-muted">
         {{ $t('auth.have_account') }}
         <RouterLink to="/auth/login" class="font-medium text-primary hover:text-primary-dark">{{ $t('auth.sign_in') }}</RouterLink>
       </p>

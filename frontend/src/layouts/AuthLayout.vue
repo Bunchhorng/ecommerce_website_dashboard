@@ -5,9 +5,9 @@ import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 
 <template>
   <div class="flex min-h-screen flex-col bg-canvas">
-    <header class="flex items-center justify-between border-b border-border-gray bg-white px-4 py-3 sm:px-6 dark:bg-gray-900">
+    <header class="flex items-center justify-between border-b border-border-gray bg-white px-4 py-3 sm:px-6 dark:bg-canvas">
       <RouterLink to="/" class="text-xl font-extrabold tracking-tight text-primary">
-        E<span class="text-ink dark:text-gray-100">-KHMER</span>
+        E<span class="text-ink dark:text-ink">-KHMER</span>
       </RouterLink>
       <div class="flex items-center gap-2">
         <LanguageSwitcher />

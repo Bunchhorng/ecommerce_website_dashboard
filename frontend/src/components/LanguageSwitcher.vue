@@ -47,7 +47,7 @@ function detach() {
   <div ref="dropdownRef" class="relative">
     <button
       type="button"
-      class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-ink dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+      class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-ink dark:text-muted dark:hover:bg-surface-hover dark:hover:text-ink"
       aria-haspopup="listbox"
       :aria-expanded="open"
       @click="toggle"
@@ -62,7 +62,7 @@ function detach() {
     <Transition name="dropdown">
       <div
         v-if="open"
-        class="card absolute right-0 top-11 z-50 w-44 overflow-hidden py-1.5 shadow-popover dark:border-gray-700 dark:bg-gray-800"
+        class="card absolute right-0 top-11 z-50 w-44 overflow-hidden py-1.5 shadow-popover dark:border-border-gray dark:bg-surface"
       >
         <p class="px-4 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
           Language
@@ -72,7 +72,7 @@ function detach() {
           :key="opt.value"
           type="button"
           class="flex w-full items-center gap-3 px-4 py-2 text-sm transition-colors"
-          :class="localeStore.currentLocale === opt.value ? 'font-semibold text-primary' : 'text-gray-600 hover:bg-gray-100 hover:text-ink dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100'"
+          :class="localeStore.currentLocale === opt.value ? 'font-semibold text-primary' : 'text-gray-600 hover:bg-gray-100 hover:text-ink dark:text-muted dark:hover:bg-surface-hover dark:hover:text-ink'"
           @click="select(opt.value)"
         >
           <span class="text-base leading-none">{{ opt.flag }}</span>

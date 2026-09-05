@@ -66,7 +66,7 @@ onMounted(async () => {
 
 <template>
   <div v-if="loading" class="card p-10 text-center">
-    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('common.loading') }}</p>
+    <p class="text-sm text-gray-500 dark:text-muted">{{ $t('common.loading') }}</p>
   </div>
 
   <template v-else-if="order">
@@ -80,10 +80,10 @@ onMounted(async () => {
           <ArrowLeft class="h-5 w-5" />
         </RouterLink>
         <div>
-          <h1 class="text-2xl font-bold text-ink dark:text-gray-100">
+          <h1 class="text-2xl font-bold text-ink dark:text-ink">
             {{ $t('order.track_title', { number: order.order_number }) }}
           </h1>
-          <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+          <p class="mt-0.5 text-sm text-gray-500 dark:text-muted">
             {{ $t('order.placed', { date: formatDateTime(order.placed_at ?? '') }) }}
           </p>
         </div>
@@ -97,8 +97,8 @@ onMounted(async () => {
           <Package class="h-6 w-6" />
         </div>
         <div class="flex-1">
-          <p class="font-semibold text-ink dark:text-gray-100">{{ $t('order.order_progress') }}</p>
-          <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('account.order_detail.view_tracking') }}</p>
+          <p class="font-semibold text-ink dark:text-ink">{{ $t('order.order_progress') }}</p>
+          <p class="text-sm text-gray-500 dark:text-muted">{{ $t('account.order_detail.view_tracking') }}</p>
         </div>
         <span class="text-primary">→</span>
       </RouterLink>
@@ -111,12 +111,12 @@ onMounted(async () => {
 
     <div class="card mt-6 overflow-hidden p-0">
       <div class="border-b border-border-gray p-4">
-        <h2 class="text-base font-semibold text-ink dark:text-gray-100">{{ $t('order.items') }}</h2>
+        <h2 class="text-base font-semibold text-ink dark:text-ink">{{ $t('order.items') }}</h2>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full min-w-[640px] text-sm">
           <thead>
-            <tr class="border-b border-border-gray bg-canvas/60 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            <tr class="border-b border-border-gray bg-canvas/60 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-muted">
               <th class="px-4 py-3">{{ $t('account.order_detail.item') }}</th>
               <th class="px-4 py-3">{{ $t('product.sku') }}</th>
               <th class="px-4 py-3 text-right">{{ $t('account.order_detail.unit_price') }}</th>
@@ -124,7 +124,7 @@ onMounted(async () => {
               <th class="px-4 py-3 text-right">{{ $t('order.total') }}</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-border-gray dark:divide-gray-700">
+          <tbody class="divide-y divide-border-gray dark:divide-border-gray">
             <tr v-for="item in order.items" :key="item.id">
               <td class="px-4 py-3">
                 <div class="flex items-center gap-3">
@@ -135,17 +135,17 @@ onMounted(async () => {
                     class="h-12 w-10 rounded-lg object-cover"
                   />
                   <div class="min-w-0">
-                    <p class="font-medium text-ink dark:text-gray-100">{{ item.product_name }}</p>
-                    <p v-if="item.variant_label" class="text-xs text-gray-500 dark:text-gray-400">
+                    <p class="font-medium text-ink dark:text-ink">{{ item.product_name }}</p>
+                    <p v-if="item.variant_label" class="text-xs text-gray-500 dark:text-muted">
                       {{ item.variant_label }}
                     </p>
                   </div>
                 </div>
               </td>
-              <td class="px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">{{ item.sku ?? '—' }}</td>
-              <td class="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{{ formatPrice(item.unit_price) }}</td>
-              <td class="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{{ item.quantity }}</td>
-              <td class="px-4 py-3 text-right font-semibold text-ink dark:text-gray-100">{{ formatPrice(item.line_total) }}</td>
+              <td class="px-4 py-3 font-mono text-xs text-gray-500 dark:text-muted">{{ item.sku ?? '—' }}</td>
+              <td class="px-4 py-3 text-right text-gray-600 dark:text-muted">{{ formatPrice(item.unit_price) }}</td>
+              <td class="px-4 py-3 text-right text-gray-600 dark:text-muted">{{ item.quantity }}</td>
+              <td class="px-4 py-3 text-right font-semibold text-ink dark:text-ink">{{ formatPrice(item.line_total) }}</td>
             </tr>
           </tbody>
         </table>
@@ -176,59 +176,59 @@ onMounted(async () => {
 
     <div class="grid gap-6 md:grid-cols-2">
       <div class="card p-5">
-        <h2 class="text-sm font-semibold text-ink dark:text-gray-100">{{ $t('account.order_detail.shipping_address') }}</h2>
-        <div class="mt-3 space-y-0.5 text-sm text-gray-600 dark:text-gray-300">
+        <h2 class="text-sm font-semibold text-ink dark:text-ink">{{ $t('account.order_detail.shipping_address') }}</h2>
+        <div class="mt-3 space-y-0.5 text-sm text-gray-600 dark:text-muted">
           <p v-for="(line, i) in renderAddress(order.shipping_address)" :key="i">{{ line }}</p>
         </div>
       </div>
 
       <div class="card p-5">
-        <h2 class="text-sm font-semibold text-ink dark:text-gray-100">{{ $t('account.order_detail.payment') }}</h2>
+        <h2 class="text-sm font-semibold text-ink dark:text-ink">{{ $t('account.order_detail.payment') }}</h2>
         <div v-if="order.payment" class="mt-3 space-y-2 text-sm">
           <div class="flex justify-between gap-3">
             <span class="text-gray-500">{{ $t('order.payment_method') }}</span>
-            <span class="font-medium text-ink dark:text-gray-100">{{ capitalize(order.payment.method) }}</span>
+            <span class="font-medium text-ink dark:text-ink">{{ capitalize(order.payment.method) }}</span>
           </div>
           <div class="flex justify-between gap-3">
             <span class="text-gray-500">{{ $t('order.status') }}</span>
-            <span class="text-ink dark:text-gray-100">
+            <span class="text-ink dark:text-ink">
               {{ capitalize(order.payment.status) }}
             </span>
           </div>
           <div v-if="order.payment.amount" class="flex justify-between gap-3">
             <span class="text-gray-500">{{ $t('account.order_detail.paid_amount') }}</span>
-            <span class="font-medium text-ink dark:text-gray-100">{{ formatPrice(order.payment.amount) }}</span>
+            <span class="font-medium text-ink dark:text-ink">{{ formatPrice(order.payment.amount) }}</span>
           </div>
           <div v-if="order.payment.paid_at" class="flex justify-between gap-3">
             <span class="text-gray-500">{{ $t('account.order_detail.paid_at') }}</span>
-            <span class="text-ink dark:text-gray-100">{{ formatDateTime(order.payment.paid_at) }}</span>
+            <span class="text-ink dark:text-ink">{{ formatDateTime(order.payment.paid_at) }}</span>
           </div>
         </div>
         <p v-else class="mt-3 text-sm text-gray-500">{{ $t('account.order_detail.no_payment') }}</p>
       </div>
 
       <div class="card p-5 md:col-span-2">
-        <h2 class="text-sm font-semibold text-ink dark:text-gray-100">{{ $t('account.order_detail.shipment') }}</h2>
+        <h2 class="text-sm font-semibold text-ink dark:text-ink">{{ $t('account.order_detail.shipment') }}</h2>
         <div v-if="order.shipment" class="mt-3 space-y-2 text-sm">
           <div class="flex justify-between gap-3">
             <span class="text-gray-500">{{ $t('account.order_detail.shipment_status') }}</span>
-            <span class="text-ink dark:text-gray-100">{{ capitalize(order.shipment.status) }}</span>
+            <span class="text-ink dark:text-ink">{{ capitalize(order.shipment.status) }}</span>
           </div>
           <div v-if="order.shipment.carrier" class="flex justify-between gap-3">
             <span class="text-gray-500">{{ $t('account.order_detail.carrier') }}</span>
-            <span class="text-ink dark:text-gray-100">{{ order.shipment.carrier }}</span>
+            <span class="text-ink dark:text-ink">{{ order.shipment.carrier }}</span>
           </div>
           <div v-if="order.shipment.tracking_number" class="flex justify-between gap-3">
             <span class="text-gray-500">{{ $t('account.order_detail.tracking_number') }}</span>
-            <span class="font-mono text-xs text-ink dark:text-gray-100">{{ order.shipment.tracking_number }}</span>
+            <span class="font-mono text-xs text-ink dark:text-ink">{{ order.shipment.tracking_number }}</span>
           </div>
           <div v-if="order.shipment.shipped_at" class="flex justify-between gap-3">
             <span class="text-gray-500">{{ $t('account.order_detail.shipped_at') }}</span>
-            <span class="text-ink dark:text-gray-100">{{ formatDateTime(order.shipment.shipped_at) }}</span>
+            <span class="text-ink dark:text-ink">{{ formatDateTime(order.shipment.shipped_at) }}</span>
           </div>
           <div v-if="order.shipment.delivered_at" class="flex justify-between gap-3">
             <span class="text-gray-500">{{ $t('account.order_detail.delivered_at') }}</span>
-            <span class="text-ink dark:text-gray-100">{{ formatDateTime(order.shipment.delivered_at) }}</span>
+            <span class="text-ink dark:text-ink">{{ formatDateTime(order.shipment.delivered_at) }}</span>
           </div>
         </div>
         <div v-else class="mt-3 flex items-center gap-3 text-sm text-gray-500">

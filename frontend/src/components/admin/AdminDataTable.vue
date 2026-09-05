@@ -175,7 +175,7 @@ function cellValue(row: TableRow, col: TableColumn): string {
           <option v-for="a in props.bulkActions" :key="a.value" :value="a.value">{{ a.label }}</option>
         </select>
         <button class="btn-primary btn-sm" @click="handleBulkApply">{{ $t('actions.apply') }}</button>
-        <span class="text-xs text-gray-500 dark:text-gray-400">{{ $t('admin.table.selected_count', { count: selectedIds.length }) }}</span>
+        <span class="text-xs text-gray-500 dark:text-muted">{{ $t('admin.table.selected_count', { count: selectedIds.length }) }}</span>
       </div>
     </div>
 
@@ -198,7 +198,7 @@ function cellValue(row: TableRow, col: TableColumn): string {
               <th
                 v-for="col in props.columns"
                 :key="col.key"
-                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-muted"
                 :style="col.width ? { width: col.width } : undefined"
               >
                 <button
@@ -256,7 +256,7 @@ function cellValue(row: TableRow, col: TableColumn): string {
                       <button
                         v-for="a in props.rowActions"
                         :key="a.value"
-                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink dark:text-muted dark:hover:bg-surface-hover dark:hover:text-ink"
                         @click="runRowAction(a.value, row)"
                       >
                         {{ a.label }}
@@ -274,7 +274,7 @@ function cellValue(row: TableRow, col: TableColumn): string {
       </div>
 
       <div class="flex items-center justify-between gap-3 border-t border-border-gray p-4">
-        <span class="text-xs text-gray-500 dark:text-gray-400">{{ $t('admin.table.showing_range', { from: rangeStart, to: rangeEnd, total: filtered.length }) }}</span>
+        <span class="text-xs text-gray-500 dark:text-muted">{{ $t('admin.table.showing_range', { from: rangeStart, to: rangeEnd, total: filtered.length }) }}</span>
         <BasePagination
           :page="currentPage"
           :page-count="pageCount"

@@ -44,8 +44,8 @@ async function resend() {
       </div>
 
       <template v-if="verified">
-        <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('verify.title') }}</h1>
-        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ $t('verify.verified_message') }}</p>
+        <h1 class="text-2xl font-bold text-ink dark:text-ink">{{ $t('verify.title') }}</h1>
+        <p class="mt-2 text-sm text-gray-500 dark:text-muted">{{ $t('verify.verified_message') }}</p>
         <RouterLink v-if="auth.isAuthenticated" to="/account" class="btn-primary mt-6 w-full">
           {{ $t('verify.go_to_dashboard') }}
         </RouterLink>
@@ -55,8 +55,8 @@ async function resend() {
       </template>
 
       <template v-else-if="needsVerification">
-        <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('verify.check_your_inbox') }}</h1>
-        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+        <h1 class="text-2xl font-bold text-ink dark:text-ink">{{ $t('verify.check_your_inbox') }}</h1>
+        <p class="mt-2 text-sm text-gray-500 dark:text-muted">
           {{ $t('verify.pending_message', { email: auth.user?.email }) }}
         </p>
 
@@ -64,7 +64,7 @@ async function resend() {
           <Send v-if="!sending" class="mr-2 h-4 w-4" />
           {{ sending ? $t('verify.sending') : $t('verify.resend_email') }}
         </button>
-        <p v-if="sent" class="mt-3 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+        <p v-if="sent" class="mt-3 text-sm font-medium text-emerald-600 dark:text-success">
           {{ $t('verify.email_sent') }}
         </p>
         <p v-else-if="error" class="mt-3 text-sm font-medium text-red-500">
@@ -73,8 +73,8 @@ async function resend() {
       </template>
 
       <template v-else>
-        <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('verify.title') }}</h1>
-        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ $t('verify.verified_message') }}</p>
+        <h1 class="text-2xl font-bold text-ink dark:text-ink">{{ $t('verify.title') }}</h1>
+        <p class="mt-2 text-sm text-gray-500 dark:text-muted">{{ $t('verify.verified_message') }}</p>
         <RouterLink to="/" class="btn-primary mt-6 w-full">
           {{ $t('verify.continue_shopping') }}
         </RouterLink>

@@ -7,15 +7,27 @@
     --color-ink: 17 24 39; /* gray-900 */
     --color-canvas: 249 250 251; /* gray-50 */
     --color-surface: 255 255 255; /* white */
+    --color-surface-hover: 249 250 251; /* gray-50 */
     --color-border: 229 231 235; /* gray-200 */
+    --color-muted: 107 114 128; /* gray-500 */
+    --color-primary: 37 99 235; /* blue-600 */
+    --color-primary-dark: 30 64 175; /* blue-800 */
+    --color-accent: 251 191 36; /* amber-400 */
+    --color-success: 16 185 129; /* emerald-500 */
     color-scheme: light;
   }
 
   html.dark {
-    --color-ink: 249 250 251; /* gray-50 */
-    --color-canvas: 17 24 39; /* gray-900 */
-    --color-surface: 31 41 55; /* gray-800 */
-    --color-border: 55 65 81; /* gray-700 */
+    --color-ink: 248 250 252; /* #F8FAFC */
+    --color-canvas: 11 15 25; /* #0B0F19 midnight navy */
+    --color-surface: 30 41 59; /* #1E293B dark slate */
+    --color-surface-hover: 51 65 85; /* #334155 */
+    --color-border: 51 65 85; /* #334155 */
+    --color-muted: 148 163 184; /* #94A3B8 */
+    --color-primary: 59 130 246; /* #3B82F6 electric blue */
+    --color-primary-dark: 29 78 216; /* #1D4ED8 */
+    --color-accent: 250 204 21; /* #FACC15 golden amber */
+    --color-success: 52 211 153; /* #34D399 mint green */
     color-scheme: dark;
   }
 
@@ -86,6 +98,22 @@
     @apply rounded-xl border border-border-gray bg-surface shadow-card transition-colors duration-300;
   }
 
+  /* Premium gradient banner: deep blue → midnight navy with an electric-blue radial glow */
+  .hero-gradient {
+    background-image:
+      radial-gradient(900px 500px at 82% -12%, rgba(59, 130, 246, 0.28), transparent 62%),
+      linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+  }
+
+  /* Soft radial glow behind feature cards (electric blue, translucent) — dark mode only */
+  .feature-glow {
+    position: relative;
+  }
+
+  html.dark .feature-glow {
+    background-image: radial-gradient(140% 100% at 0% 0%, rgba(59, 130, 246, 0.16), transparent 55%);
+  }
+
   /* ---------- Buttons ---------- */
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-60;
@@ -96,7 +124,7 @@
   }
 
   .btn-secondary {
-    @apply btn border border-border-gray bg-surface px-5 py-2.5 text-sm text-ink hover:border-gray-300 hover:bg-canvas active:scale-[0.99] dark:hover:border-gray-500 dark:hover:bg-gray-700;
+    @apply btn border border-border-gray bg-surface px-5 py-2.5 text-sm text-ink hover:border-gray-300 hover:bg-canvas active:scale-[0.99] dark:hover:border-gray-500 dark:hover:bg-surface-hover;
   }
 
   .btn-outline {
@@ -112,7 +140,7 @@
   }
 
   .btn-ghost {
-    @apply btn px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-ink dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100;
+    @apply btn px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-ink dark:text-muted dark:hover:bg-surface-hover dark:hover:text-ink;
   }
 
   .btn-sm {
@@ -124,7 +152,7 @@
   }
 
   .btn-icon {
-    @apply inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-primary;
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary dark:text-muted dark:hover:bg-surface-hover dark:hover:text-primary;
   }
 
   /* ---------- Form controls ---------- */
@@ -150,7 +178,7 @@
 
   /* ---------- Misc ---------- */
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full bg-canvas px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300;
+    @apply inline-flex items-center gap-1 rounded-full bg-canvas px-3 py-1 text-xs font-medium text-gray-600 dark:bg-surface-hover dark:text-muted;
   }
 
   .section-eyebrow {
@@ -162,11 +190,11 @@
   }
 
   .section-subtitle {
-    @apply mt-2 text-sm text-gray-500 sm:text-base dark:text-gray-400;
+    @apply mt-2 text-sm text-gray-500 sm:text-base dark:text-muted;
   }
 
   .nav-link {
-    @apply rounded-md px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-canvas hover:text-primary dark:text-gray-300 dark:hover:text-primary;
+    @apply rounded-md px-3 py-2 text-sm font-semibold text-ink transition-colors hover:bg-canvas hover:text-primary dark:text-ink dark:hover:bg-surface-hover dark:hover:text-primary;
   }
 
   .sticky-header {

@@ -9,7 +9,7 @@ import type { NotificationType } from '@/types'
 const typeMeta: Record<NotificationType, { icon: Component; tint: string }> = {
   order: { icon: Package, tint: 'bg-primary/10 text-primary' },
   promo: { icon: Bell, tint: 'bg-accent/10 text-accent' },
-  system: { icon: ShieldCheck, tint: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300' }
+  system: { icon: ShieldCheck, tint: 'bg-gray-100 dark:bg-surface text-gray-600 dark:text-muted' }
 }
 
 interface NotifItem {
@@ -68,8 +68,8 @@ onMounted(async () => {
   <div class="space-y-6">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ $t('nav.notifications') }}</h1>
-        <p v-if="unreadCount" class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $t('account.unread_count', { count: unreadCount }) }}</p>
+        <h1 class="text-2xl font-bold text-ink dark:text-ink">{{ $t('nav.notifications') }}</h1>
+        <p v-if="unreadCount" class="mt-1 text-sm text-gray-500 dark:text-muted">{{ $t('account.unread_count', { count: unreadCount }) }}</p>
       </div>
       <button v-if="unreadCount" type="button" class="btn-secondary btn-sm w-fit" @click="markAllRead">
         <Check class="h-4 w-4" />
@@ -78,23 +78,23 @@ onMounted(async () => {
     </div>
 
     <div v-if="loading" class="card p-10 text-center">
-      <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('common.loading') }}</p>
+      <p class="text-sm text-gray-500 dark:text-muted">{{ $t('common.loading') }}</p>
     </div>
 
-    <div v-else-if="notifs.length" class="card divide-y divide-border-gray dark:divide-gray-700">
+    <div v-else-if="notifs.length" class="card divide-y divide-border-gray dark:divide-border-gray">
       <button
         v-for="n in notifs"
         :key="n.id"
         type="button"
-        class="relative flex w-full cursor-pointer gap-4 p-4 text-left transition-colors hover:bg-canvas dark:hover:bg-gray-900"
+        class="relative flex w-full cursor-pointer gap-4 p-4 text-left transition-colors hover:bg-canvas dark:hover:bg-surface-hover"
         @click="toggleRead(n)"
       >
         <div :class="['flex h-10 w-10 shrink-0 items-center justify-center rounded-full', typeMeta[n.type].tint]">
           <component :is="typeMeta[n.type].icon" class="h-5 w-5" />
         </div>
         <div class="min-w-0 flex-1 pr-4">
-          <p :class="n.read ? 'font-medium text-gray-600 dark:text-gray-300' : 'font-semibold text-ink dark:text-gray-100'">{{ n.title }}</p>
-          <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{{ n.message }}</p>
+          <p :class="n.read ? 'font-medium text-gray-600 dark:text-muted' : 'font-semibold text-ink dark:text-ink'">{{ n.title }}</p>
+          <p class="mt-0.5 text-sm text-gray-500 dark:text-muted">{{ n.message }}</p>
           <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ formatDateTime(n.date) }}</p>
         </div>
         <span v-if="!n.read" class="absolute right-4 top-4 h-2 w-2 rounded-full bg-primary"></span>
@@ -102,7 +102,7 @@ onMounted(async () => {
     </div>
 
     <div v-else class="card p-10 text-center">
-      <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t('account.all_caught_up') }}</p>
+      <p class="text-sm text-gray-500 dark:text-muted">{{ $t('account.all_caught_up') }}</p>
     </div>
   </div>
 </template>

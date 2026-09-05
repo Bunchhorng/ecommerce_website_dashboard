@@ -39,9 +39,9 @@ function variantLabel(item: CartItem): string {
     <Transition name="drawer">
       <div v-if="uiStore.cartDrawerOpen" class="fixed inset-0 z-50">
         <div class="fixed inset-0 bg-black/40" @click="closeCartDrawer"></div>
-        <aside class="panel fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col bg-white shadow-xl dark:bg-gray-800">
-          <header class="flex shrink-0 items-center justify-between border-b border-border-gray px-5 py-4 dark:border-gray-700">
-            <h2 class="flex items-center gap-2 text-lg font-semibold text-ink dark:text-gray-100">
+        <aside class="panel fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col bg-white shadow-xl dark:bg-surface">
+          <header class="flex shrink-0 items-center justify-between border-b border-border-gray px-5 py-4 dark:border-border-gray">
+            <h2 class="flex items-center gap-2 text-lg font-semibold text-ink dark:text-ink">
               {{ $t('cart.your_cart') }}
               <span
                 v-if="cartStore.totalItemCount > 0"
@@ -68,7 +68,7 @@ function variantLabel(item: CartItem): string {
               </template>
             </EmptyState>
 
-            <ul v-else class="divide-y divide-border-gray dark:divide-gray-700">
+            <ul v-else class="divide-y divide-border-gray dark:divide-border-gray">
               <li v-for="item in cartStore.items" :key="item.id" class="flex gap-3 py-4">
                 <RouterLink :to="`/product/${item.slug}`" class="shrink-0">
                   <img
@@ -81,11 +81,11 @@ function variantLabel(item: CartItem): string {
                 <div class="min-w-0 flex-1">
                   <RouterLink
                     :to="`/product/${item.slug}`"
-                    class="line-clamp-1 text-sm font-semibold text-ink transition-colors hover:text-primary dark:text-gray-100"
+                    class="line-clamp-1 text-sm font-semibold text-ink transition-colors hover:text-primary dark:text-ink"
                   >
                     {{ item.title }}
                   </RouterLink>
-                  <p v-if="item.variant" class="mt-0.5 line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p v-if="item.variant" class="mt-0.5 line-clamp-1 text-xs text-gray-500 dark:text-muted">
                     {{ variantLabel(item) }}
                   </p>
                   <div class="mt-2 flex items-center justify-between gap-2">
@@ -95,7 +95,7 @@ function variantLabel(item: CartItem): string {
                       :model-value="item.quantity"
                       @update:model-value="(qty) => updateItemQuantity(item.id, qty)"
                     />
-                    <span class="text-sm font-semibold text-ink dark:text-gray-100">
+                    <span class="text-sm font-semibold text-ink dark:text-ink">
                       {{ formatPrice(item.unitPrice * item.quantity) }}
                     </span>
                   </div>
@@ -112,12 +112,12 @@ function variantLabel(item: CartItem): string {
             </ul>
           </div>
 
-          <footer v-if="cartStore.items.length > 0" class="shrink-0 space-y-3 border-t border-border-gray p-5 dark:border-gray-700">
+          <footer v-if="cartStore.items.length > 0" class="shrink-0 space-y-3 border-t border-border-gray p-5 dark:border-border-gray">
             <div class="flex items-center justify-between">
-              <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ $t('cart.subtotal') }}</span>
+              <span class="text-sm font-medium text-gray-600 dark:text-muted">{{ $t('cart.subtotal') }}</span>
               <span class="text-base font-bold text-ink dark:text-gray-50">{{ formatPrice(cartStore.subtotal) }}</span>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $t('cart.shipping_note') }}</p>
+            <p class="text-xs text-gray-500 dark:text-muted">{{ $t('cart.shipping_note') }}</p>
             <RouterLink to="/checkout" class="btn-primary w-full dark:bg-blue-500 dark:hover:bg-blue-600" @click="closeCartDrawer">
               {{ $t('actions.checkout') }}
             </RouterLink>

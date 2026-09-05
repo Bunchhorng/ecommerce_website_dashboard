@@ -5,13 +5,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#2563EB',
-        'primary-dark': '#1E40AF',
+        primary: 'rgb(var(--color-primary) / <alpha-value>)',
+        'primary-dark': 'rgb(var(--color-primary-dark) / <alpha-value>)',
         canvas: 'rgb(var(--color-canvas) / <alpha-value>)',
         surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        'surface-hover': 'rgb(var(--color-surface-hover) / <alpha-value>)',
         ink: 'rgb(var(--color-ink) / <alpha-value>)',
+        muted: 'rgb(var(--color-muted) / <alpha-value>)',
         'border-gray': 'rgb(var(--color-border) / <alpha-value>)',
-        accent: '#FBBF24'
+        accent: 'rgb(var(--color-accent) / <alpha-value>)',
+        success: 'rgb(var(--color-success) / <alpha-value>)'
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],

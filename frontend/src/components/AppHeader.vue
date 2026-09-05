@@ -104,7 +104,7 @@ async function signOut(): Promise<void> {
           to="/"
           class="text-2xl font-extrabold tracking-tight text-primary"
         >
-          E-<span class="text-ink dark:text-gray-100">KHMER</span>
+          E-<span class="text-ink dark:text-ink">KHMER</span>
         </RouterLink>
 
         <form
@@ -187,13 +187,13 @@ async function signOut(): Promise<void> {
             </button>
             <div
               v-if="auth.isAuthenticated && userMenuOpen"
-              class="card absolute right-0 top-11 z-50 w-56 overflow-hidden py-2 shadow-popover dark:border-gray-700 dark:bg-gray-800"
+              class="card absolute right-0 top-11 z-50 w-56 overflow-hidden py-2 shadow-popover dark:border-border-gray dark:bg-surface"
             >
-              <div class="border-b border-border-gray px-4 py-3 dark:border-gray-700">
-                <p class="text-sm font-semibold text-ink dark:text-gray-100">
+              <div class="border-b border-border-gray px-4 py-3 dark:border-border-gray">
+                <p class="text-sm font-semibold text-ink dark:text-ink">
                   {{ auth.user?.name }}
                 </p>
-                <p class="truncate text-xs text-gray-500 dark:text-gray-400">
+                <p class="truncate text-xs text-gray-500 dark:text-muted">
                   {{ auth.user?.email }}
                 </p>
               </div>
@@ -202,13 +202,13 @@ async function signOut(): Promise<void> {
                   v-for="link in accountLinks"
                   :key="link.labelKey"
                   :to="link.to"
-                  class="block px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-canvas hover:text-primary dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-primary"
+                  class="block px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-canvas hover:text-primary dark:text-muted dark:hover:bg-surface-hover dark:hover:text-primary"
                   @click="closeUserMenu"
                 >
                   {{ $t(link.labelKey) }}
                 </RouterLink>
               </div>
-              <div class="border-t border-border-gray px-4 py-2 dark:border-gray-700">
+              <div class="border-t border-border-gray px-4 py-2 dark:border-border-gray">
                 <button
                   type="button"
                   class="flex items-center gap-2 text-sm font-medium text-red-500 transition-colors hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
@@ -230,17 +230,17 @@ async function signOut(): Promise<void> {
       <div v-if="mobileOpen" class="fixed inset-0 z-50">
         <div class="fixed inset-0 bg-black/40" @click="closeMobile"></div>
         <aside
-          class="panel fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-white shadow-xl dark:bg-gray-800"
+          class="panel fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-white shadow-xl dark:bg-surface"
         >
           <div
-            class="flex items-center justify-between border-b border-border-gray px-4 py-4 dark:border-gray-700"
+            class="flex items-center justify-between border-b border-border-gray px-4 py-4 dark:border-border-gray"
           >
             <RouterLink
               to="/"
               class="text-xl font-extrabold tracking-tight text-primary"
               @click="closeMobile"
             >
-              E-<span class="text-ink dark:text-gray-100">KHMER</span>
+              E-<span class="text-ink dark:text-ink">KHMER</span>
             </RouterLink>
             <div class="flex items-center gap-1">
               <ThemeToggle />
@@ -264,30 +264,30 @@ async function signOut(): Promise<void> {
               v-for="item in navCategories"
               :key="item.id"
               :to="{ name: 'shop', query: { category: item.slug } }"
-              class="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-canvas hover:text-primary dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-primary"
+              class="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-canvas hover:text-primary dark:text-gray-200 dark:hover:bg-surface-hover dark:hover:text-primary"
               @click="closeMobile"
             >
               {{ item.name }}
             </RouterLink>
           </nav>
-          <div class="space-y-1 border-t border-border-gray p-4 dark:border-gray-700">
+          <div class="space-y-1 border-t border-border-gray p-4 dark:border-border-gray">
             <RouterLink
               to="/cart"
-              class="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-canvas hover:text-primary dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-primary"
+              class="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-canvas hover:text-primary dark:text-gray-200 dark:hover:bg-surface-hover dark:hover:text-primary"
               @click="closeMobile"
             >
               {{ $t('nav.cart') }}
             </RouterLink>
             <RouterLink
               to="/account"
-              class="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-canvas hover:text-primary dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-primary"
+              class="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-canvas hover:text-primary dark:text-gray-200 dark:hover:bg-surface-hover dark:hover:text-primary"
               @click="closeMobile"
             >
               {{ $t('nav.dashboard') }}
             </RouterLink>
             <RouterLink
               to="/account/wishlist"
-              class="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-canvas hover:text-primary dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-primary"
+              class="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-canvas hover:text-primary dark:text-gray-200 dark:hover:bg-surface-hover dark:hover:text-primary"
               @click="closeMobile"
             >
               {{ $t('nav.wishlist') }}

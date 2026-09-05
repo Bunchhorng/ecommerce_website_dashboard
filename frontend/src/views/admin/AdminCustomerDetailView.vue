@@ -101,7 +101,7 @@ onMounted(loadCustomer)
           </div>
         </div>
         <div class="card flex items-center gap-4 p-5">
-          <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+          <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-success/10 text-emerald-600">
             <CreditCard class="h-5 w-5" />
           </div>
           <div>
