@@ -28,6 +28,7 @@ import { useWishlistStore } from '@/stores/wishlist'
 import { useUiStore } from '@/stores/ui'
 import { useI18n } from 'vue-i18n'
 import { formatPrice, formatDate } from '@/utils/format'
+import { useAuthStore } from '@/stores/auth'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -35,6 +36,7 @@ const router = useRouter()
 const cart = useCartStore()
 const wishlist = useWishlistStore()
 const ui = useUiStore()
+const auth = useAuthStore()
 
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -126,10 +128,47 @@ const zoomX = ref(50)
 const zoomY = ref(50)
 const lightboxOpen = ref(false)
 const activeTab = ref('description')
-const writeReviewNote = ref(false)
+const writeReviewOpen = ref(false)
+const writeReviewError = ref('')
+const reviewSubmitted = ref(false)
+const reviewRating = ref(5)
+const reviewTitle = ref('')
+const reviewBody = ref('')
+const reviewSubmitting = ref(false)
 
 function openWriteReview() {
-  writeReviewNote.value = true
+  writeReviewError.value = ''
+  reviewSubmitted.value = false
+  if (!auth.isAuthenticated) return
+  writeReviewOpen.value = !writeReviewOpen.value
+}
+
+async function submitReview() {
+  if (!product.value || reviewSubmitting.value) return
+  reviewSubmitting.value = true
+  writeReviewError.value = ''
+  try {
+    await reviewsApi.create({
+      product_id: Number(product.value.id),
+      rating: reviewRating.value,
+      title: reviewTitle.value.trim() || undefined,
+      body: reviewBody.value.trim() || undefined
+    })
+    reviewSubmitted.value = true
+    writeReviewOpen.value = false
+    reviewTitle.value = ''
+    reviewBody.value = ''
+    reviewRating.value = 5
+  } catch (e: unknown) {
+    const err = e as { response?: { data?: { errors?: Record<string, string[]>; message?: string } } }
+    const errorKey = Object.keys(err.response?.data?.errors ?? {})[0]
+    writeReviewError.value =
+      (errorKey ? err.response?.data?.errors?.[errorKey]?.[0] : undefined) ??
+      err.response?.data?.message ??
+      t('product.review_submit_error')
+  } finally {
+    reviewSubmitting.value = false
+  }
 }
 
 const TABS = [
@@ -239,11 +278,6 @@ function selectOption(name: string, value: string) {
   selectedOptions[name] = value
 }
 
-const groupColorValues = computed<string[]>(() => {
-  const g = attributeGroups.value.find((x) => x.name === 'Color')
-  return g ? g.values.map((v) => v.value) : []
-})
-
 const swatchColorMap = computed(() => {
   const map = new Map<string, string>()
   const attrs = rawProduct.value?.attributes ?? []
@@ -257,7 +291,7 @@ const swatchColorMap = computed(() => {
 })
 
 function colorHex(value: string): string {
-  return swatchColorMap.get(value) ?? '#CBD5E1'
+  return swatchColorMap.value.get(value) ?? '#CBD5E1'
 }
 
 const currentPrice = computed(() => selectedVariant.value?.price ?? product.value?.price ?? 0)
@@ -654,7 +688,53 @@ const featureList = computed(() => {
 
             <div class="lg:col-span-2">
               <h3 class="text-lg font-bold text-ink dark:text-ink">{{ $t('product.verified_reviews') }}</h3>
-              <p v-if="writeReviewNote" class="mt-2 rounded-lg bg-canvas px-3 py-2 text-xs text-gray-600 dark:text-muted dark:bg-canvas">{{ $t('product.sign_in_review') }}</p>
+
+              <div v-if="!auth.isAuthenticated" class="mt-2 rounded-lg bg-canvas px-4 py-3 text-xs text-gray-600 dark:text-muted dark:bg-canvas">
+                {{ $t('product.sign_in_review') }}
+                <RouterLink to="/auth/login" class="ml-1 font-semibold text-primary hover:underline">
+                  {{ $t('nav.sign_in') }}
+                </RouterLink>
+              </div>
+
+              <div v-else-if="writeReviewOpen" class="mt-4 rounded-xl border border-border-gray p-4 dark:border-border-gray">
+                <div class="mb-3 flex items-center justify-between">
+                  <span class="text-sm font-semibold text-ink dark:text-ink">{{ $t('product.your_review') }}</span>
+                  <button type="button" class="btn-ghost btn-sm" @click="writeReviewOpen = false">{{ $t('actions.close') }}</button>
+                </div>
+                <div class="mb-3 flex items-center gap-1">
+                  <button
+                    v-for="star in 5"
+                    :key="star"
+                    type="button"
+                    class="text-2xl leading-none transition-colors"
+                    :class="star <= reviewRating ? 'text-accent' : 'text-gray-300 dark:text-gray-600'"
+                    :aria-label="`${star} star${star > 1 ? 's' : ''}`"
+                    @click="reviewRating = star"
+                  >
+                    ★
+                  </button>
+                </div>
+                <input
+                  v-model="reviewTitle"
+                  type="text"
+                  class="input mb-3"
+                  :placeholder="$t('product.review_title_placeholder')"
+                />
+                <textarea
+                  v-model="reviewBody"
+                  class="textarea mb-3"
+                  rows="4"
+                  :placeholder="$t('product.review_body_placeholder')"
+                ></textarea>
+                <p v-if="writeReviewError" class="mb-3 text-xs font-medium text-red-500">{{ writeReviewError }}</p>
+                <button type="button" class="btn-primary" :disabled="reviewSubmitting" @click="submitReview">
+                  {{ reviewSubmitting ? $t('product.review_submitting') : $t('product.review_submit') }}
+                </button>
+              </div>
+
+              <p v-else-if="reviewSubmitted" class="mt-2 rounded-lg bg-emerald-100 px-3 py-2 text-xs font-medium text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400">
+                {{ $t('product.review_pending_note') }}
+              </p>
 
               <div v-if="reviewsLoading" class="mt-5 flex justify-center py-8">
                 <Loader2 class="h-6 w-6 animate-spin text-primary" />

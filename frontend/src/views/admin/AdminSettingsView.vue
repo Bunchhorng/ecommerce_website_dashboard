@@ -1,22 +1,11 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
-import { Save, Store, BellRing, Globe } from 'lucide-vue-next'
+import { Save, Store, BellRing, Database } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
+import { adminApi } from '@/api/admin'
+import type { AdminSettings } from '@/api/admin'
 
 const { t } = useI18n()
-
-const SETTINGS_KEY = 'ekhmer-admin-settings'
-
-interface AdminSettings {
-  storeName: string
-  supportEmail: string
-  supportPhone: string
-  currency: string
-  locale: string
-  lowStockThreshold: number
-  emailOrderNotifications: boolean
-  emailLowStockAlerts: boolean
-}
 
 const defaults: AdminSettings = {
   storeName: 'E-KHMER',
@@ -34,12 +23,10 @@ const loaded = ref(false)
 const saving = ref(false)
 const saved = ref(false)
 
-onMounted(() => {
+onMounted(async () => {
   try {
-    const raw = localStorage.getItem(SETTINGS_KEY)
-    if (raw) {
-      Object.assign(form, JSON.parse(raw))
-    }
+    const { data } = await adminApi.getSettings()
+    Object.assign(form, data.data)
   } catch {
     // Fall back to defaults
   }
@@ -56,24 +43,36 @@ function showToast(msg: string) {
   }, 2500)
 }
 
-function saveSettings() {
+async function saveSettings() {
+  if (saving.value) return
+  saving.value = true
   saved.value = true
   try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(form))
+    const { data } = await adminApi.updateSettings({ ...form })
+    Object.assign(form, data.data)
     showToast(t('admin.settings.toast_saved'))
   } catch {
     showToast(t('admin.settings.toast_error'))
   } finally {
+    saving.value = false
     setTimeout(() => {
       saved.value = false
     }, 1500)
   }
 }
 
-function resetSettings() {
-  Object.assign(form, defaults)
-  localStorage.removeItem(SETTINGS_KEY)
-  showToast(t('admin.settings.toast_reset'))
+async function resetSettings() {
+  if (saving.value) return
+  saving.value = true
+  try {
+    const { data } = await adminApi.updateSettings({ ...defaults })
+    Object.assign(form, data.data)
+    showToast(t('admin.settings.toast_reset'))
+  } catch {
+    showToast(t('admin.settings.toast_error'))
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
@@ -194,10 +193,10 @@ function resetSettings() {
 
         <div class="card p-6">
           <div class="flex items-center gap-2">
-            <Globe class="h-5 w-5 text-primary" />
-            <h2 class="text-base font-semibold text-ink">{{ $t('admin.settings.local_storage') }}</h2>
+            <Database class="h-5 w-5 text-primary" />
+            <h2 class="text-base font-semibold text-ink">{{ $t('admin.settings.stored_in_db') }}</h2>
           </div>
-          <p class="mt-1 text-sm text-gray-500">{{ $t('admin.settings.local_storage_description') }}</p>
+          <p class="mt-1 text-sm text-gray-500">{{ $t('admin.settings.stored_in_db_description') }}</p>
         </div>
       </div>
     </div>

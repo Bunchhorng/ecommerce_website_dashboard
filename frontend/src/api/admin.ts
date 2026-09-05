@@ -115,6 +115,17 @@ export interface AdminReview {
   product: { id: number; name: string; slug: string }
 }
 
+export interface AdminSettings {
+  storeName: string
+  supportEmail: string
+  supportPhone: string
+  currency: string
+  locale: string
+  lowStockThreshold: number
+  emailOrderNotifications: boolean
+  emailLowStockAlerts: boolean
+}
+
 export interface AdminInventoryItem {
   id: number
   product_variant_id: number
@@ -293,6 +304,18 @@ export const adminApi = {
 
   rejectReview(id: number) {
     return apiClient.post<{ data: AdminReview }>(`/admin/reviews/${id}/reject`)
+  },
+
+  deleteReview(id: number) {
+    return apiClient.delete<{ data: { message: string } }>(`/admin/reviews/${id}`)
+  },
+
+  getSettings() {
+    return apiClient.get<{ data: AdminSettings }>('/admin/settings')
+  },
+
+  updateSettings(payload: Partial<AdminSettings>) {
+    return apiClient.put<{ data: AdminSettings }>('/admin/settings', payload)
   },
 
   listCustomers(params: { q?: string } = {}) {

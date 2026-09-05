@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ReviewController;
+use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\ShippingMethodController;
 use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\Api\Admin\AdminBrandController;
@@ -64,6 +65,9 @@ Route::get('products/{product}/reviews', [ReviewController::class, 'index'])
     ->whereNumber('product');
 Route::post('coupons/validate', [CouponController::class, 'validate']);
 
+Route::get('orders/guest/{orderNumber}', [OrderController::class, 'guest'])
+    ->where('orderNumber', '[A-Za-z0-9-]+');
+
 Route::prefix('cart')->group(function () {
     Route::get('/', [CartController::class, 'index']);
     Route::post('/', [CartController::class, 'add']);
@@ -106,6 +110,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('account/dashboard', [AccountController::class, 'profile']);
     Route::put('account/profile', [AccountController::class, 'updateProfile']);
     Route::post('account/password', [AccountController::class, 'changePassword']);
+    Route::get('account/reviews', [AccountController::class, 'reviews']);
     Route::get('account/notifications', [AccountController::class, 'notifications']);
     Route::post('account/notifications/{notification}/read', [AccountController::class, 'markRead']);
 });
@@ -159,6 +164,10 @@ Route::prefix('admin')
         Route::get('reviews', [AdminReviewController::class, 'index']);
         Route::post('reviews/{review}/approve', [AdminReviewController::class, 'approve']);
         Route::post('reviews/{review}/reject', [AdminReviewController::class, 'reject']);
+        Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy']);
+
+        Route::get('settings', [SettingsController::class, 'show']);
+        Route::put('settings', [SettingsController::class, 'update']);
 
         Route::get('customers', [AdminCustomerController::class, 'index']);
         Route::get('customers/{user}', [AdminCustomerController::class, 'show']);

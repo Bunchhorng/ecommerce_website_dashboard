@@ -6,6 +6,7 @@ import ProductCard from '@/components/ProductCard.vue'
 import { useCartStore } from '@/stores/cart'
 import { useWishlistStore } from '@/stores/wishlist'
 import { computed } from 'vue'
+import { mapCatalogProduct } from '@/utils/product'
 import type { Product } from '@/types'
 
 interface AddToCartPayload {
@@ -17,6 +18,8 @@ const cartStore = useCartStore()
 const wishlist = useWishlistStore()
 
 const count = computed(() => wishlist.count)
+
+const products = computed(() => wishlist.products.map(mapCatalogProduct))
 
 function addToCart(product: Product, payload: AddToCartPayload) {
   if (!payload.variantId) return
@@ -32,9 +35,9 @@ function addToCart(product: Product, payload: AddToCartPayload) {
       <RouterLink to="/shop" class="btn-outline btn-sm w-fit">{{ $t('account.add_from_collection') }}</RouterLink>
     </div>
 
-    <div v-if="wishlist.products.length" class="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
+    <div v-if="products.length" class="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
       <ProductCard
-        v-for="p in wishlist.products"
+        v-for="p in products"
         :key="p.id"
         :product="p"
         @add-to-cart="(e) => addToCart(p, e)"

@@ -110,7 +110,10 @@ onMounted(async () => {
     return
   }
   try {
-    const { data } = await ordersApi.get(orderNumber)
+    const request = authStore.isAuthenticated
+      ? ordersApi.get(orderNumber)
+      : ordersApi.getGuest(orderNumber)
+    const { data } = await request
     order.value = mapOrderFromApi(data.data)
   } catch {
     order.value = null

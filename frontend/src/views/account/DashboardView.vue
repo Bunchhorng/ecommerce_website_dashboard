@@ -10,6 +10,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import StatusTag from '@/components/StatusTag.vue'
 import { formatDate, formatPrice } from '@/utils/format'
+import { mapCatalogProduct } from '@/utils/product'
 import { computed, onMounted, ref } from 'vue'
 import type { Component } from 'vue'
 import type { Product } from '@/types'
@@ -93,7 +94,7 @@ const cards = computed<SummaryCard[]>(() => [
   }
 ])
 
-const wishlistProducts = computed(() => wishlist.products)
+const wishlistProducts = computed(() => wishlist.products.map(mapCatalogProduct))
 
 function capitalizeStatus(status: string): string {
   return status.charAt(0).toUpperCase() + status.slice(1)

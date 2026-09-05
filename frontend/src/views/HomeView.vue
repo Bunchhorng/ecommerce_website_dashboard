@@ -28,6 +28,7 @@ import ProductRail from '@/components/ProductRail.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import { useCartStore } from '@/stores/cart'
 import type { Product } from '@/types'
+import { mapCatalogProduct } from '@/utils/product'
 import { useWishlistStore } from '@/stores/wishlist'
 import { catalogApi, brandsApi, categoriesApi, reviewsApi } from '@/api'
 import type { CatalogProduct, ApiBrand, ApiCategory } from '@/api'
@@ -54,12 +55,12 @@ const categoryIcons: Record<string, Component> = {
   Tag
 }
 
-const featured = ref<CatalogProduct[]>([])
+const featured = ref<Product[]>([])
 const heroPrimary = ref<CatalogProduct | null>(null)
 const heroAccent = ref<CatalogProduct | null>(null)
 const dealOfDay = ref<CatalogProduct | null>(null)
-const bestSellers = ref<CatalogProduct[]>([])
-const newArrivals = ref<CatalogProduct[]>([])
+const bestSellers = ref<Product[]>([])
+const newArrivals = ref<Product[]>([])
 const brandsList = ref<ApiBrand[]>([])
 const categoriesList = ref<ApiCategory[]>([])
 
@@ -72,9 +73,9 @@ onMounted(async () => {
       brandsApi.getAll(),
       categoriesApi.getTree()
     ])
-    featured.value = featuredRes.data.data.slice(0, 4)
-    bestSellers.value = bestRes.data.data
-    newArrivals.value = newRes.data.data.slice(0, 4)
+    featured.value = featuredRes.data.data.slice(0, 4).map(mapCatalogProduct)
+    bestSellers.value = bestRes.data.data.map(mapCatalogProduct)
+    newArrivals.value = newRes.data.data.slice(0, 4).map(mapCatalogProduct)
     brandsList.value = brandsRes.data.data
     categoriesList.value = catsRes.data.data
     if (featuredRes.data.data.length > 0) heroPrimary.value = featuredRes.data.data[0]
@@ -90,14 +91,14 @@ const testimonials = ref<{ name: string; quote: string; rating: number }[]>([])
 
 async function loadTestimonials() {
   const candidates = [...featured.value, ...bestSellers.value]
-  const seen = new Set<number>()
+  const seen = new Set<string>()
   const results: { name: string; quote: string; rating: number }[] = []
   for (const product of candidates) {
     if (results.length >= 3) break
     if (seen.has(product.id)) continue
     seen.add(product.id)
     try {
-      const res = await reviewsApi.getProductReviews(product.id)
+      const res = await reviewsApi.getProductReviews(Number(product.id))
       const review = res.data.data[0]
       if (review?.body?.trim()) {
         results.push({

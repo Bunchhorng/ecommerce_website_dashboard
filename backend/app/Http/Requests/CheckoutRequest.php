@@ -16,7 +16,7 @@ class CheckoutRequest extends FormRequest
         return [
             'shipping_method_id' => ['required', 'integer', 'exists:shipping_methods,id'],
             'coupon_code' => ['nullable', 'string'],
-            'payment_method' => ['required', 'string', 'in:card,cod'],
+            'payment_method' => ['required', 'string', 'in:card,cod,bank,gateway'],
             'email' => ['nullable', 'email'],
             'note' => ['nullable', 'string', 'max:1000'],
             'address_id' => ['nullable', 'integer', 'exists:addresses,id'],

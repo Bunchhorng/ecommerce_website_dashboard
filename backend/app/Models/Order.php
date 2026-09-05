@@ -83,4 +83,9 @@ class Order extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    public function trackingEvents()
+    {
+        return $this->hasMany(TrackingEvent::class);
+    }
 }

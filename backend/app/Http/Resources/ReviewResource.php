@@ -25,6 +25,7 @@ class ReviewResource extends JsonResource
             ]),
             'product' => $this->whenLoaded('product', fn () => [
                 'id' => $this->product->id,
+                'name' => $this->product->name,
                 'slug' => $this->product->slug,
             ]),
         ];

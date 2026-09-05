@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderListResource;
 use App\Http\Resources\OrderResource;
+use App\Models\Order;
 use App\Services\OrderService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -34,6 +35,29 @@ class OrderController extends Controller
     public function show(Request $request, string $orderNumber)
     {
         return $this->resolveForUser($request->user(), $orderNumber);
+    }
+
+    public function guest(Request $request, string $orderNumber)
+    {
+        $sessionId = $request->header('X-Session-Id');
+
+        if ($sessionId === null || trim($sessionId) === '') {
+            abort(422, 'A session identifier is required for guest order lookup.');
+        }
+
+        $order = Order::where('order_number', $orderNumber)->first();
+
+        if ($order === null) {
+            abort(404, 'Order not found.');
+        }
+
+        $stored = $order->payment?->provider_data['session_id'] ?? null;
+
+        if ($stored !== 'guest_' . md5((string) $sessionId)) {
+            abort(404, 'Order not found.');
+        }
+
+        return new OrderResource($order->load(['items', 'payment', 'shipments', 'trackingEvents']));
     }
 
     public function receipt(Request $request, string $orderNumber)

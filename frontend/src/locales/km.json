@@ -51,7 +51,8 @@
     "confirm": "បញ្ជាក់",
     "load_more": "ផ្ទុកបន្ថែម",
     "back": "ត្រឡប់ក្រោយ",
-    "apply": "អនុវត្ត"
+    "apply": "អនុវត្ត",
+    "close": "បិទ"
   },
   "common": {
     "loading": "កំពុងផ្ទុក…"
@@ -100,7 +101,14 @@
     "no_reviews_description": "ធ្វើជាអ្នកដំបូងដើម្បីចែករំលែកបទពិសោធន៍របស់អ្នក។",
     "not_found_title": "រកមិនឃើញផលិតផល",
     "not_found_description": "ផលិតផលដែលអ្នកកំពុងស្វែងរកមិនមាន ឬត្រូវបានដកចេញទេ។",
-    "back_to_shop": "ត្រឡប់ទៅហាង"
+    "back_to_shop": "ត្រឡប់ទៅហាង",
+    "your_review": "សរសេរការវាយតម្លៃរបស់អ្នក",
+    "review_title_placeholder": "ចំណងជើងការវាយតម្លៃ (ស្រេចចិត្ត)",
+    "review_body_placeholder": "ចែករំលែកបទពិសោធន៍របស់អ្នកជាមួយផលិតផលនេះ (ស្រេចចិត្ត)",
+    "review_submit": "ដាក់ស្នើការវាយតម្លៃ",
+    "review_submitting": "កំពុងដាក់ស្នើ...",
+    "review_submit_error": "មានបញ្ហាអ្វីមួយ។ សូមព្យាយាមម្តងទៀត។",
+    "review_pending_note": "សូមអរគុណ! ការវាយតម្លៃរបស់អ្នកត្រូវបានដាក់ស្នើ ហើយកំពុងរង់ចាំការអនុម័ត។"
   },
   "cart": {
     "your_cart": "Cart របស់អ្នក",
@@ -509,8 +517,8 @@
       "email_order_notifications_desc": "ផ្ញើអ៊ីមែលនៅពេលមានការបញ្ជាទិញថ្មី។",
       "email_low_stock_alerts": "ការជូនដំណឹងស្តុកទាប",
       "email_low_stock_alerts_desc": "ផ្ញើអ៊ីមែលនៅពេលផលិតផលធ្លាក់ក្រោមកម្រិត។",
-      "local_storage": "រក្សាទុកក្នុងមូលដ្ឋាន",
-      "local_storage_description": "ចំណូលចិត្តទាំងនេះត្រូវបានរក្សាទុកក្នុង browser របស់អ្នក។",
+      "stored_in_db": "រក្សាទុកក្នុងមូលដ្ឋានទិន្នន័យ",
+      "stored_in_db_description": "ចំណូលចិត្តទាំងនេះអនុវត្តទូទាំងហាង ហើយត្រូវបានរក្សាទុកនៅលើម៉ាស៊ីនមេ។",
       "save_changes": "រក្សាទុកការផ្លាស់ប្តូរ",
       "saved": "បានរក្សាទុក",
       "reset": "កំណត់ឡើងវិញ",
@@ -571,11 +579,13 @@
       "row": {
         "reject": "បដិសេធ"
       },
-      "toast": {
-        "approved_review": "បានអនុម័តការវាយតម្លៃរបស់ {author}",
-        "rejected_review": "បានបដិសេធការវាយតម្លៃរបស់ {author}",
+"toast": {
+        "approved_review": "បានអនុម័តការវាយតម្លៃដោយ {author}",
+        "rejected_review": "បានបដិសេធការវាយតម្លៃដោយ {author}",
         "approved_count": "បានអនុម័ត {count} ការវាយតម្លៃ",
-        "deleted_count": "បានលុប {count} ការវាយតម្លៃ"
+        "deleted_count": "បានលុប {count} ការវាយតម្លៃ",
+        "deleted_review": "ការវាយតម្លៃត្រូវបានលុប",
+        "delete_error": "មិនអាចលុបការវាយតម្លៃបានទេ"
       }
     },
     "products": {
@@ -863,6 +873,13 @@
     "mark_all_read": "សម្គាល់ទាំងអស់ថាបានអាន",
     "all_caught_up": "អ្នកបានអានទាំងអស់ហើយ។",
     "reviews_approved_note": "ការវាយតម្លៃនឹងបង្ហាញ នៅពេលត្រូវបានអនុម័តដោយអ្នកសម្របសម្រួល។",
+    "browse_products": "រកមើលផលិតផល",
+    "reviews_empty_description": "អ្នកមិនទាន់បានសរសេរការវាយតម្លៃណាមួយទេ។",
+    "reviews_load_error": "ការផ្ទុកការវាយតម្លៃបរាជ័យ។",
+    "review_status_pending": "កំពុងរង់ចាំ",
+    "review_status_approved": "បានអនុម័ត",
+    "review_status_rejected": "ត្រូវបានបដិសេធ",
+    "no_reviews_title": "មិនទាន់មានការវាយតម្លៃ",
     "no_products_title": "មិនទាន់មានផលិតផល"
   }
 }

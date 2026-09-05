@@ -19,6 +19,10 @@ export const reviewsApi = {
     return apiClient.get<{ data: ApiReview[] }>(`/products/${productId}/reviews`)
   },
 
+  listMine() {
+    return apiClient.get<{ data: ApiReview[] }>('/account/reviews')
+  },
+
   create(payload: { product_id: number; rating: number; title?: string; body?: string }) {
     return apiClient.post<{ data: ApiReview }>('/reviews', payload)
   },

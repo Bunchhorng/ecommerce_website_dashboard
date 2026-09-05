@@ -20,6 +20,10 @@ export const ordersApi = {
     return apiClient.get<{ data: import('./checkout').ApiOrder }>(`/orders/${orderNumber}`)
   },
 
+  getGuest(orderNumber: string) {
+    return apiClient.get<{ data: import('./checkout').ApiOrder }>(`/orders/guest/${orderNumber}`)
+  },
+
   receipt(orderNumber: string) {
     return apiClient.get<Blob>(`/orders/${orderNumber}/receipt`, { responseType: 'blob' })
   },

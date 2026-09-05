@@ -87,7 +87,7 @@ class CheckoutController extends Controller
 
         $this->checkout->release($order);
 
-        return new OrderResource($order->fresh(['items', 'payment', 'shipments']));
+        return new OrderResource($order->fresh(['items', 'payment', 'shipments', 'trackingEvents']));
     }
 
     protected function resolveOwnedOrder(Request $request, string $orderNumber): Order
@@ -105,7 +105,7 @@ class CheckoutController extends Controller
                 abort(404, 'Order not found.');
             }
 
-            return $order->load(['items', 'payment', 'shipments']);
+            return $order->load(['items', 'payment', 'shipments', 'trackingEvents']);
         }
 
         $sessionId = $request->header('X-Session-Id');
@@ -115,7 +115,7 @@ class CheckoutController extends Controller
             abort(404, 'Order not found.');
         }
 
-        return $order->load(['items', 'payment', 'shipments']);
+        return $order->load(['items', 'payment', 'shipments', 'trackingEvents']);
     }
 
     protected function resolveAddress(CheckoutRequest $request, $user, ?string $sessionId): array

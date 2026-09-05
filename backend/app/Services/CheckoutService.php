@@ -12,6 +12,7 @@ use App\Models\PaymentTransaction;
 use App\Models\ProductVariant;
 use App\Models\Shipment;
 use App\Models\ShippingMethod;
+use App\Models\TrackingEvent;
 use App\Models\User;
 use App\Notifications\OrderPlacedNotification;
 use Illuminate\Support\Facades\DB;
@@ -100,6 +101,11 @@ class CheckoutService
             ]);
             $order->save();
 
+            $order->trackingEvents()->create([
+                'status' => Order::STATUS_PENDING,
+                'description' => 'Order placed',
+            ]);
+
             foreach ($cart->items as $item) {
                 $variant = $item->variant()->with(['product.images', 'attributeValues.value.attribute'])->first();
                 $product = $variant?->product;
@@ -139,7 +145,7 @@ class CheckoutService
                 $this->coupon->applyUsage($coupon, $order, $user);
             }
 
-            return $order->load(['items', 'payment', 'shipments']);
+            return $order->load(['items', 'payment', 'shipments', 'trackingEvents']);
         });
     }
 
@@ -164,22 +170,32 @@ class CheckoutService
                 throw ValidationException::withMessages(['message' => 'No payment record found']);
             }
 
-            $payment->status = Payment::STATUS_COMPLETED;
-            $payment->transaction_id = $transactionId ?? 'PAY-'.strtoupper(Str::random(12));
-            $payment->paid_at = now();
-            $payment->save();
+            $isCashOnDelivery = $payment->method === 'cod';
 
-            PaymentTransaction::create([
-                'payment_id' => $payment->id,
-                'type' => 'capture',
-                'status' => 'success',
-                'amount' => round((float) $payment->amount, 2),
-                'reference' => $payment->transaction_id,
-            ]);
+            if (! $isCashOnDelivery) {
+                $payment->status = Payment::STATUS_COMPLETED;
+                $payment->transaction_id = $transactionId ?? 'PAY-'.strtoupper(Str::random(12));
+                $payment->paid_at = now();
+                $payment->save();
 
-            $order->payment_status = Order::PAYMENT_PAID;
+                PaymentTransaction::create([
+                    'payment_id' => $payment->id,
+                    'type' => 'capture',
+                    'status' => 'success',
+                    'amount' => round((float) $payment->amount, 2),
+                    'reference' => $payment->transaction_id,
+                ]);
+
+                $order->payment_status = Order::PAYMENT_PAID;
+            }
+
             $order->status = Order::STATUS_CONFIRMED;
             $order->save();
+
+            $order->trackingEvents()->create([
+                'status' => Order::STATUS_CONFIRMED,
+                'description' => trim(($order->payment_status === Order::PAYMENT_PAID ? 'Payment received' : 'Order confirmed').'.'),
+            ]);
 
             if ($order->user_id !== null) {
                 $user = $order->user()->first();
@@ -187,7 +203,7 @@ class CheckoutService
                 $this->cart->clear($this->cart->forUser($user, null));
             }
 
-            return $order->load(['items', 'payment', 'shipments']);
+            return $order->load(['items', 'payment', 'shipments', 'trackingEvents']);
         });
     }
 
@@ -209,6 +225,11 @@ class CheckoutService
         $order->status = Order::STATUS_CANCELLED;
         $order->note = trim(($order->note ? $order->note.' ' : '').'reservation released');
         $order->save();
+
+        $order->trackingEvents()->create([
+            'status' => Order::STATUS_CANCELLED,
+            'description' => 'Order cancelled',
+        ]);
     }
 
     /**

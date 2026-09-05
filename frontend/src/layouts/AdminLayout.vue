@@ -28,6 +28,7 @@ import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import { accountApi } from '@/api'
+import type { ApiNotification } from '@/api/account'
 import { formatDateTime } from '@/utils/format'
 
 interface NavItem {
@@ -48,7 +49,7 @@ const auth = useAuthStore()
 
 const expanded = computed(() => !uiStore.adminSidebarCollapsed)
 const profileOpen = ref(false)
-const notifications = ref<{ id: number; title: string; message: string; read_at: string | null; created_at: string }[]>([])
+const notifications = ref<ApiNotification[]>([])
 const unreadCount = computed(() => notifications.value.filter((n) => !n.read_at).length)
 
 onMounted(async () => {

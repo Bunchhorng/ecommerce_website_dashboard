@@ -73,12 +73,6 @@ function aggregateByMonth(raw: { date: string; revenue: number }[]): { label: st
     })
 }
 
-function lowStockTone(count: number): string {
-  if (count <= 5) return 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400'
-  if (count <= 10) return 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400'
-  return 'bg-gray-100 text-gray-600 dark:bg-surface dark:text-muted'
-}
-
 async function loadDashboard() {
   loading.value = true
   try {

@@ -48,4 +48,11 @@ class AdminReviewController extends Controller
 
         return new ReviewResource($review->fresh(['user', 'product']));
     }
+
+    public function destroy(Review $review)
+    {
+        $review->delete();
+
+        return response()->json(['data' => ['message' => 'Review deleted successfully.']]);
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
+use App\Http\Resources\ReviewResource;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -61,6 +62,17 @@ class AccountController extends Controller
         }
 
         return response()->json(['data' => ['message' => 'Password updated successfully.']]);
+    }
+
+    public function reviews(Request $request)
+    {
+        $reviews = $request->user()
+            ->reviews()
+            ->with(['product', 'product.images'])
+            ->latest()
+            ->get();
+
+        return ReviewResource::collection($reviews);
     }
 
     public function notifications(Request $request)

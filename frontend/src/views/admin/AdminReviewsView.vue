@@ -33,8 +33,8 @@ const bulkActions = computed(() =>
 
 const rowActions = computed(() =>
   activeTab.value === 'pending'
-    ? [{ label: t('status.approved'), value: 'approve' }, { label: t('admin.reviews.row.reject'), value: 'reject' }]
-    : []
+    ? [{ label: t('status.approved'), value: 'approve' }, { label: t('admin.reviews.row.reject'), value: 'reject' }, { label: t('actions.delete'), value: 'delete' }]
+    : [{ label: t('actions.delete'), value: 'delete' }]
 )
 
 function capitalize(s: string): string {
@@ -117,10 +117,22 @@ async function rejectReview(id: number) {
   }
 }
 
+async function deleteReview(id: number) {
+  try {
+    await adminApi.deleteReview(id)
+    pending.value = pending.value.filter((r) => r.id !== id)
+    approved.value = approved.value.filter((r) => r.id !== id)
+    showToast(t('admin.reviews.toast.deleted_review'))
+  } catch {
+    showToast(t('admin.reviews.toast.delete_error'))
+  }
+}
+
 function onRowAction(payload: { action: string; row: TableRow }) {
   const id = Number(payload.row.id)
   if (payload.action === 'approve') approveReview(id)
   else if (payload.action === 'reject') rejectReview(id)
+  else if (payload.action === 'delete') deleteReview(id)
 }
 
 function onBulkAction(payload: { action: string; ids: string[] }) {
@@ -130,7 +142,10 @@ function onBulkAction(payload: { action: string; ids: string[] }) {
         showToast(t('admin.reviews.toast.approved_count', { count: payload.ids.length }))
       })
   } else if (payload.action === 'delete') {
-    showToast(t('admin.reviews.toast.deleted_count', { count: payload.ids.length }))
+    Promise.all(payload.ids.map((id) => deleteReview(Number(id))))
+      .then(() => {
+        showToast(t('admin.reviews.toast.deleted_count', { count: payload.ids.length }))
+      })
   }
 }
 

@@ -27,6 +27,13 @@ class OrderResource extends JsonResource
             'note' => $this->note,
             'coupon_code' => $this->coupon_code,
             'placed_at' => $this->placed_at?->toISOString(),
+            'tracking_events' => $this->whenLoaded('trackingEvents', function () {
+                return $this->trackingEvents->map(fn ($e) => [
+                    'status' => $e->status,
+                    'description' => $e->description,
+                    'at' => $e->created_at?->toISOString(),
+                ])->values();
+            }),
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
             'payment' => $this->whenLoaded('payment', function () {
                 if ($this->payment === null) {

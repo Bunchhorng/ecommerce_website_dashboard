@@ -26,10 +26,6 @@ const columns = computed<TableColumn[]>(() => [
   { key: 'actions', label: '', type: 'actions' }
 ])
 
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1)
-}
-
 const rows = computed<TableRow[]>(() =>
   products.value.map((p) => ({
     id: p.id,

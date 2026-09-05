@@ -51,7 +51,8 @@
     "confirm": "Confirm",
     "load_more": "Load More",
     "back": "Back",
-    "apply": "Apply"
+    "apply": "Apply",
+    "close": "Close"
   },
   "common": {
     "loading": "Loading…"
@@ -100,7 +101,14 @@
     "no_reviews_description": "Be the first to share your experience.",
     "not_found_title": "Product not found",
     "not_found_description": "The product you are looking for does not exist or has been removed.",
-    "back_to_shop": "Back to shop"
+    "back_to_shop": "Back to shop",
+    "your_review": "Write Your Review",
+    "review_title_placeholder": "Review title (optional)",
+    "review_body_placeholder": "Share your experience with this product (optional)",
+    "review_submit": "Submit Review",
+    "review_submitting": "Submitting...",
+    "review_submit_error": "Something went wrong. Please try again.",
+    "review_pending_note": "Thank you! Your review has been submitted and is pending moderation."
   },
   "cart": {
     "your_cart": "Your Cart",
@@ -509,8 +517,8 @@
       "email_order_notifications_desc": "Email when a new order is placed.",
       "email_low_stock_alerts": "Low stock alerts",
       "email_low_stock_alerts_desc": "Email when a product drops below its threshold.",
-      "local_storage": "Stored locally",
-      "local_storage_description": "These preferences are saved in your browser for this device.",
+      "stored_in_db": "Stored in database",
+      "stored_in_db_description": "These preferences apply store-wide and persist on the server.",
       "save_changes": "Save Changes",
       "saved": "Saved",
       "reset": "Reset",
@@ -575,7 +583,9 @@
         "approved_review": "Approved review by {author}",
         "rejected_review": "Rejected review by {author}",
         "approved_count": "Approved {count} reviews",
-        "deleted_count": "Deleted {count} reviews"
+        "deleted_count": "Deleted {count} reviews",
+        "deleted_review": "Review deleted",
+        "delete_error": "Could not delete review"
       }
     },
     "products": {
@@ -863,6 +873,13 @@
     "mark_all_read": "Mark all as read",
     "all_caught_up": "You're all caught up.",
     "reviews_approved_note": "Reviews appear once approved by moderation.",
+    "browse_products": "Browse Products",
+    "reviews_empty_description": "You haven't written any reviews yet.",
+    "reviews_load_error": "Failed to load your reviews.",
+    "review_status_pending": "Pending",
+    "review_status_approved": "Approved",
+    "review_status_rejected": "Rejected",
+    "no_reviews_title": "No reviews yet",
     "no_products_title": "No products yet"
   }
 }

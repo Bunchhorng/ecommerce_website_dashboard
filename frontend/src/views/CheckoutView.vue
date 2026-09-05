@@ -12,7 +12,7 @@ import {
   Landmark,
   Wallet
 } from 'lucide-vue-next'
-import type { Address, ShippingMethod, PaymentMethod, OrderStatus } from '@/types'
+import type { Address, ShippingMethod, PaymentMethod } from '@/types'
 import { addressesApi, type ApiAddress } from '@/api/addresses'
 import { shippingApi, type ApiShippingMethod } from '@/api/shipping'
 import { checkoutApi } from '@/api/checkout'
@@ -33,7 +33,7 @@ const steps = [
 ]
 
 const addresses = ref<Address[]>([])
-const selectedAddressId = ref<number | null>(null)
+const selectedAddressId = ref<string | null>(null)
 const addressModalOpen = ref(false)
 const loadingAddresses = ref(true)
 const newAddress = reactive<Omit<Address, 'id' | 'isDefault'>>({
@@ -49,7 +49,7 @@ const newAddress = reactive<Omit<Address, 'id' | 'isDefault'>>({
 })
 
 const shipping = ref<ShippingMethod[]>([])
-const selectedShippingId = ref<number | null>(null)
+const selectedShippingId = ref<string | null>(null)
 const selectedShipping = ref<ShippingMethod | null>(null)
 const loadingShipping = ref(true)
 watch(selectedShippingId, (id) => {
@@ -65,6 +65,8 @@ const paymentOptions = [
 ]
 const paymentMethod = ref<PaymentMethod>('cod')
 
+const placing = ref(false)
+
 const selectedAddress = computed(
   () => addresses.value.find((a) => a.id === selectedAddressId.value) ?? addresses.value[0]
 )
@@ -78,7 +80,7 @@ const paymentLabel = computed(() => {
 
 function mapAddressFromApi(a: ApiAddress): Address {
   return {
-    id: a.id,
+    id: String(a.id),
     label: a.label ?? 'Address',
     fullName: a.full_name,
     line1: a.address_line1,
@@ -94,7 +96,7 @@ function mapAddressFromApi(a: ApiAddress): Address {
 
 function mapShippingFromApi(s: ApiShippingMethod): ShippingMethod {
   return {
-    id: s.id,
+    id: String(s.id),
     name: s.name,
     description: s.description ?? '',
     etaDays: s.estimated_days_min ?? 1,
@@ -184,17 +186,22 @@ async function saveAddress() {
 }
 
 async function placeOrder() {
-  if (!selectedAddress.value || !selectedShipping.value) return
+  if (!selectedAddress.value || !selectedShipping.value || placing.value) return
+  placing.value = true
   try {
     const { data } = await checkoutApi.begin({
-      shipping_method_id: selectedShipping.value.id,
+      shipping_method_id: Number(selectedShipping.value.id),
       payment_method: paymentMethod.value,
-      address_id: selectedAddress.value.id
+      coupon_code: cartStore.appliedCoupon?.code,
+      address_id: Number(selectedAddress.value.id)
     })
+    await checkoutApi.confirm(data.data.order_number)
     await cartStore.clear()
     router.push({ name: 'order-success', params: { orderId: data.data.order_number } })
   } catch {
     /* handle silently */
+  } finally {
+    placing.value = false
   }
 }
 </script>
@@ -505,9 +512,9 @@ async function placeOrder() {
               </div>
             </div>
 
-            <button type="button" class="btn-primary btn-lg w-full" @click="placeOrder">
+            <button type="button" class="btn-primary btn-lg w-full" :disabled="placing" @click="placeOrder">
               <Lock class="h-4 w-4" />
-              Place Order · {{ formatPrice(totalWithShipping) }}
+              {{ placing ? 'Placing order…' : `Place Order · ${formatPrice(totalWithShipping)}` }}
             </button>
           </template>
         </div>

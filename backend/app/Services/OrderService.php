@@ -10,6 +10,7 @@ use App\Models\PaymentTransaction;
 use App\Models\Shipment;
 use App\Models\User;
 use App\Notifications\OrderStatusNotification;
+use App\Models\TrackingEvent;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -27,7 +28,7 @@ class OrderService
     public function listFor(User $user, ?string $status = null): LengthAwarePaginator
     {
         return $user->orders()
-            ->with(['items', 'payment', 'shipments'])
+            ->with(['items', 'payment', 'shipments', 'trackingEvents'])
             ->when($status !== null, fn ($q) => $q->where('status', $status))
             ->latest('placed_at')
             ->paginate(10);
@@ -38,7 +39,7 @@ class OrderService
      */
     public function findByNumber(User $user, string $orderNumber): Order
     {
-        $order = $user->orders()->with(['items', 'payment', 'shipments'])->where('order_number', $orderNumber)->first();
+        $order = $user->orders()->with(['items', 'payment', 'shipments', 'trackingEvents'])->where('order_number', $orderNumber)->first();
 
         if ($order === null) {
             throw new NotFoundHttpException();
@@ -112,10 +113,28 @@ class OrderService
             $order->status = $to;
             $order->save();
 
+            $this->recordTrackingEvent($order, $to);
             $this->notifyStatusChange($order, $to);
 
-            return $order->load(['items', 'payment', 'shipments']);
+            return $order->load(['items', 'payment', 'shipments', 'trackingEvents']);
         });
+    }
+
+    private function recordTrackingEvent(Order $order, string $to): void
+    {
+        $descriptions = [
+            Order::STATUS_CONFIRMED => 'Order confirmed',
+            Order::STATUS_PROCESSING => 'Order is being processed',
+            Order::STATUS_SHIPPED => 'Order has been shipped',
+            Order::STATUS_DELIVERED => 'Order has been delivered',
+            Order::STATUS_CANCELLED => 'Order was cancelled',
+            Order::STATUS_REFUNDED => 'Order was refunded',
+        ];
+
+        $order->trackingEvents()->create([
+            'status' => $to,
+            'description' => $descriptions[$to] ?? 'Status changed to '.$to,
+        ]);
     }
 
     private function notifyStatusChange(Order $order, string $to): void
@@ -161,9 +180,10 @@ class OrderService
             $order->note = trim(($order->note ? $order->note.' ' : '').'cancelled');
             $order->save();
 
+            $this->recordTrackingEvent($order, Order::STATUS_CANCELLED);
             $this->notifyStatusChange($order, Order::STATUS_CANCELLED);
 
-            return $order->load(['items', 'payment', 'shipments']);
+            return $order->load(['items', 'payment', 'shipments', 'trackingEvents']);
         });
     }
 }

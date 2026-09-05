@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { wishlistApi, catalogApi } from '@/api'
+import { wishlistApi } from '@/api'
 import type { CatalogProduct } from '@/api'
 
 const LOCAL_STORAGE_KEY = 'ekhmer_wishlist'

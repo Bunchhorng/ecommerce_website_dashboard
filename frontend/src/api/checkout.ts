@@ -39,6 +39,11 @@ export interface ApiOrder {
   note: string | null
   coupon_code: string | null
   placed_at: string | null
+  tracking_events?: {
+    status: string
+    description: string | null
+    at: string
+  }[]
   items: {
     id: number
     product_id: number

@@ -49,7 +49,7 @@ class AdminOrderController extends Controller
 
     public function show(Order $order)
     {
-        return new OrderResource($order->load(['items', 'payment', 'shipments']));
+        return new OrderResource($order->load(['items', 'payment', 'shipments', 'trackingEvents']));
     }
 
     public function transition(OrderTransitionRequest $request, Order $order)

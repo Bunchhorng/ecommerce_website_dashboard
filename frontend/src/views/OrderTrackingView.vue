@@ -5,12 +5,14 @@ import { Package, Check } from 'lucide-vue-next'
 import type { OrderStatus, Order, OrderItem, TrackingEvent } from '@/types'
 import { ordersApi } from '@/api/orders'
 import type { ApiOrder } from '@/api/checkout'
+import { useAuthStore } from '@/stores/auth'
 import StatusTag from '@/components/StatusTag.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { formatDate, formatDateTime, formatPrice } from '@/utils/format'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 
 const order = ref<Order | null>(null)
 const loading = ref(true)
@@ -37,33 +39,10 @@ function mapOrderFromApi(raw: ApiOrder): Order {
 
   const status = capitalize(raw.status) as OrderStatus
 
-  const trackingEvents: TrackingEvent[] = []
-  if (raw.placed_at) {
-    trackingEvents.push({ status: 'Pending', at: raw.placed_at })
-  }
-  const flowIndex = FLOW.indexOf(status)
-  if (flowIndex >= 1 && raw.placed_at) {
-    trackingEvents.push({ status: 'Confirmed', at: raw.placed_at })
-  }
-  if (flowIndex >= 2 && raw.placed_at) {
-    const d = new Date(raw.placed_at)
-    d.setHours(d.getHours() + 2)
-    trackingEvents.push({ status: 'Processing', at: d.toISOString() })
-  }
-  if (flowIndex >= 3 && raw.shipment?.shipped_at) {
-    trackingEvents.push({ status: 'Shipped', at: raw.shipment.shipped_at })
-  } else if (flowIndex >= 3 && raw.placed_at) {
-    const d = new Date(raw.placed_at)
-    d.setDate(d.getDate() + 2)
-    trackingEvents.push({ status: 'Shipped', at: d.toISOString() })
-  }
-  if (flowIndex >= 4 && raw.shipment?.delivered_at) {
-    trackingEvents.push({ status: 'Delivered', at: raw.shipment.delivered_at })
-  } else if (flowIndex >= 4 && raw.placed_at) {
-    const d = new Date(raw.placed_at)
-    d.setDate(d.getDate() + 5)
-    trackingEvents.push({ status: 'Delivered', at: d.toISOString() })
-  }
+  const trackingEvents: TrackingEvent[] = (raw.tracking_events ?? []).map((e) => ({
+    status: capitalize(e.status) as OrderStatus,
+    at: e.at
+  }))
 
   const estimatedDelivery = (() => {
     if (raw.shipment?.delivered_at) return raw.shipment.delivered_at
@@ -122,7 +101,10 @@ onMounted(async () => {
     return
   }
   try {
-    const { data } = await ordersApi.get(orderNumber)
+    const request = authStore.isAuthenticated
+      ? ordersApi.get(orderNumber)
+      : ordersApi.getGuest(orderNumber)
+    const { data } = await request
     order.value = mapOrderFromApi(data.data)
   } catch {
     order.value = null

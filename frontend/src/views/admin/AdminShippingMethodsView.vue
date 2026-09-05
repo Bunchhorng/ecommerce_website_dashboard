@@ -78,16 +78,6 @@ async function addMethod() {
   }
 }
 
-async function removeMethod(m: AdminShippingMethod) {
-  try {
-    await adminApi.deleteShippingMethod(m.id)
-    methods.value = methods.value.filter((x) => x.id !== m.id)
-    showToast(t('admin.shipping.toast_deleted', { name: m.name }))
-  } catch {
-    showToast(t('admin.shipping.toast_delete_error'))
-  }
-}
-
 const toast = ref('')
 let toastTimer: ReturnType<typeof setTimeout> | undefined
 function showToast(msg: string) {
