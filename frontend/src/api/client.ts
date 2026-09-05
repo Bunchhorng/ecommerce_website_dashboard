@@ -6,7 +6,7 @@ export const apiClient = axios.create({
   headers: { Accept: 'application/json' }
 })
 
-const SESSION_KEY = 'shopverse_session_id'
+const SESSION_KEY = 'ekhmer_session_id'
 
 function getSessionId(): string {
   let sid = localStorage.getItem(SESSION_KEY)

@@ -189,9 +189,9 @@
   },
   "auth": {
     "welcome_back": "សូមស្វាគមន៍ត្រឡប់មកវិញ",
-    "sign_in_subtitle": "ចូលគណនីដើម្បីបន្តទៅ ShopVerse",
+    "sign_in_subtitle": "ចូលគណនីដើម្បីបន្តទៅ E-KHMER",
     "create_account": "បង្កើតគណនីរបស់អ្នក",
-    "register_subtitle": "ចូលរួមជាមួយ ShopVerse ហើយចាប់ផ្តើមទិញទំនិញ",
+    "register_subtitle": "ចូលរួមជាមួយ E-KHMER ហើយចាប់ផ្តើមទិញទំនិញ",
     "forgot_password_title": "កំណត់ពាក្យសម្ងាត់របស់អ្នកឡើងវិញ",
     "forgot_password_subtitle": "បញ្ចូលអ៊ីមែលរបស់អ្នក ហើយយើងនឹងផ្ញើ Link កំណត់ឡើងវិញទៅអ្នក",
     "send_reset_link": "ផ្ញើ Link កំណត់ឡើងវិញ",
@@ -263,7 +263,7 @@
     "faq": "សំណួរញឹកញាប់",
     "shipping_returns": "ការដឹកជញ្ជូន និងការប្តូរទំនិញ",
     "privacy_policy": "គោលការណ៍ឯកជនភាព",
-    "copyright": "© 2026 ShopVerse។ រក្សាសិទ្ធិគ្រប់យ៉ាង។"
+    "copyright": "© 2026 E-KHMER។ រក្សាសិទ្ធិគ្រប់យ៉ាង។"
   },
   "home": {
     "hero_badge": "ការលក់រដូវក្តៅ · បញ្ចុះតម្លៃរហូតដល់ 40%",

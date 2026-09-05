@@ -189,9 +189,9 @@
   },
   "auth": {
     "welcome_back": "Welcome back",
-    "sign_in_subtitle": "Sign in to continue to ShopVerse",
+    "sign_in_subtitle": "Sign in to continue to E-KHMER",
     "create_account": "Create your account",
-    "register_subtitle": "Join ShopVerse and start shopping",
+    "register_subtitle": "Join E-KHMER and start shopping",
     "forgot_password_title": "Reset your password",
     "forgot_password_subtitle": "Enter your email and we'll send you a reset link",
     "send_reset_link": "Send Reset Link",
@@ -263,7 +263,7 @@
     "faq": "FAQ",
     "shipping_returns": "Shipping & Returns",
     "privacy_policy": "Privacy Policy",
-    "copyright": "© 2026 ShopVerse. All rights reserved."
+    "copyright": "© 2026 E-KHMER. All rights reserved."
   },
   "home": {
     "hero_badge": "Summer Sale · Up to 40% off",

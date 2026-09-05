@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
-const SETTINGS_KEY = 'shopverse-admin-settings'
+const SETTINGS_KEY = 'ekhmer-admin-settings'
 
 interface AdminSettings {
   storeName: string
@@ -19,8 +19,8 @@ interface AdminSettings {
 }
 
 const defaults: AdminSettings = {
-  storeName: 'ShopVerse',
-  supportEmail: 'support@shopverse.com',
+  storeName: 'E-KHMER',
+  supportEmail: 'support@e-khmer.com',
   supportPhone: '',
   currency: 'USD',
   locale: 'en',

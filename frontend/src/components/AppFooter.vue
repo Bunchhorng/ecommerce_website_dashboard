@@ -38,7 +38,7 @@ function subscribe(): void {
       <div class="grid gap-10 lg:grid-cols-4">
         <div>
           <RouterLink to="/" class="text-2xl font-extrabold tracking-tight text-white">
-            Shop<span class="text-primary">Verse</span>
+            E-<span class="text-primary">KHMER</span>
           </RouterLink>
           <p class="mt-4 max-w-xs text-sm text-gray-400">
             {{ $t('footer.tagline') }}

@@ -37,7 +37,7 @@ async function saveProfile() {
         name: updated.name,
         phone: updated.phone ?? undefined
       }
-      localStorage.setItem('shopverse_user', JSON.stringify(authStore.user))
+      localStorage.setItem('ekhmer_user', JSON.stringify(authStore.user))
     }
     saved.value = true
     if (timer) clearTimeout(timer)

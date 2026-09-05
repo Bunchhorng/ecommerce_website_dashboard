@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { wishlistApi, catalogApi } from '@/api'
 import type { CatalogProduct } from '@/api'
 
-const LOCAL_STORAGE_KEY = 'shopverse_wishlist'
+const LOCAL_STORAGE_KEY = 'ekhmer_wishlist'
 
 function load(): number[] {
   try {

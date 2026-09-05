@@ -27,7 +27,7 @@
 <body>
     <div class="header">
         <div>
-            <div class="brand">SHOPVERSE</div>
+            <div class="brand">E-KHMER</div>
             <p class="muted">E-Commerce Store</p>
         </div>
         <div class="right">
@@ -110,6 +110,6 @@
         <div class="grand"><span>Total</span><span>${{ number_format((float) $order->total, 2) }}</span></div>
     </div>
 
-    <div class="footer">Thank you for shopping with ShopVerse · {{ $order->order_number }}</div>
+    <div class="footer">Thank you for shopping with E-KHMER · {{ $order->order_number }}</div>
 </body>
 </html>

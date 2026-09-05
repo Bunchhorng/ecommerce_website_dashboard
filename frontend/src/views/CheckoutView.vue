@@ -426,7 +426,7 @@ async function placeOrder() {
             </div>
 
             <div v-else-if="paymentMethod === 'bank'" class="rounded-xl bg-canvas p-4 text-sm text-gray-600 dark:text-gray-300 dark:bg-gray-900">
-              After placing your order, transfer to: A/C 1234-5678-90 · ShopVerse Inc. · Swift code SVUS33
+              After placing your order, transfer to: A/C 1234-5678-90 · E-KHMER Inc. · Swift code SVUS33
             </div>
 
             <div v-else-if="paymentMethod === 'gateway'" class="rounded-xl bg-canvas p-4 text-sm text-gray-600 dark:text-gray-300 dark:bg-gray-900">

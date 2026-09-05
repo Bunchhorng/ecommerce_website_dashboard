@@ -14,7 +14,7 @@ class UserSeeder extends Seeder
     {
         User::create([
             'name' => 'Admin',
-            'email' => 'admin@shopverse.dev',
+            'email' => 'admin@ekhmer.dev',
             'password' => 'password',
             'role' => 'admin',
             'phone' => '+1 (415) 555-0100',

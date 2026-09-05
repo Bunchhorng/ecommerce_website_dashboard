@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import apiClient from '@/api/client'
 
 const TOKEN_KEY = 'access_token'
-const USER_KEY = 'shopverse_user'
+const USER_KEY = 'ekhmer_user'
 
 export interface AuthUser {
   id: number

@@ -90,7 +90,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  document.title = to.meta.title ? `${to.meta.title} · ShopVerse` : 'ShopVerse'
+  document.title = to.meta.title ? `${to.meta.title} · E-KHMER` : 'E-KHMER'
 
   const auth = useAuthStore()
 

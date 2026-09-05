@@ -104,7 +104,7 @@ async function signOut(): Promise<void> {
           to="/"
           class="text-2xl font-extrabold tracking-tight text-primary"
         >
-          Shop<span class="text-ink dark:text-gray-100">Verse</span>
+          E-<span class="text-ink dark:text-gray-100">KHMER</span>
         </RouterLink>
 
         <form
@@ -240,7 +240,7 @@ async function signOut(): Promise<void> {
               class="text-xl font-extrabold tracking-tight text-primary"
               @click="closeMobile"
             >
-              Shop<span class="text-ink dark:text-gray-100">Verse</span>
+              E-<span class="text-ink dark:text-gray-100">KHMER</span>
             </RouterLink>
             <div class="flex items-center gap-1">
               <ThemeToggle />

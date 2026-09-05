@@ -2,19 +2,14 @@
 ---------------------------------------------------------
 |                      For  Developer                   |
 ---------------------------------------------------------
-git checkout dev ៖ ប្តូរទៅកាន់សាខា dev (សាខារួម/សាខាមេ)។
-
+git clone git_url ៖ clone project from github
+git checkout dev ៖ ប្តូរទៅកាន់សាខា dev (Branch រួម)។
 git pull ៖ ទាញយកកូដថ្មីៗចុងក្រោយបង្អស់ពី Server មកដាក់ក្នុង dev។
-
-git checkout ur_branch ៖ ប្តូរមកកាន់សាខារបស់អ្នកវិញ (ur_branch)។
-
-git merge dev ៖ បញ្ចូលកូដថ្មីៗពី dev ចូលមកក្នុង ur_branch (ដើម្បីការពារ ឬដោះស្រាយ Conflict)។
-
-git checkout dev ៖ ប្តូរទៅកាន់សាខា dev វិញ។
-
-git merge ur_branch ៖ បញ្ចូលកូដដែលអ្នកបានធ្វើរួចពី ur_branch ទៅក្នុងសាខា dev។
-
-ចំណាំ៖ បន្ទាប់ពីជំហានចុងក្រោយ អ្នកគួរតែរត់ពាក្យបញ្ជា git push នៅលើសាខា dev ដើម្បីបញ្ជូនកូដថ្មីនេះឡើងទៅកាន់ Remote Server (GitHub/GitLab)។
+git checkout your_branch ៖ ប្តូរមកកាន់ branch របស់អ្នកវិញ (your_branch)។
+git merge dev ៖ បញ្ចូលកូដថ្មីៗពី dev ចូលមកក្នុង your_branch (ដើម្បីការពារ ឬដោះស្រាយ Conflict)។
+git checkout dev ៖ ប្តូរទៅកាន់ branch dev វិញ។
+git merge your_branch ៖ បញ្ចូលកូដដែលអ្នកបានធ្វើរួចពី your_branch ទៅក្នុងសាខា dev។
+ចំណាំ៖ បន្ទាប់ពីជំហានចុងក្រោយ អ្នកគួរតែរត់ពាក្យបញ្ជា git push នៅលើ branch dev ដើម្បីបញ្ជូនកូដថ្មីនេះឡើងទៅកាន់ Remote Server (GitHub/GitLab)។
 
 
 

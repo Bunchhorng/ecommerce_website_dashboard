@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 
-const STORAGE_KEY = 'shopverse_theme'
+const STORAGE_KEY = 'ekhmer_theme'
 
 function loadInitial(): ThemeMode {
   try {

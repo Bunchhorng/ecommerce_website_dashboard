@@ -97,7 +97,7 @@ Configure the backend URL with `VITE_API_URL` in `frontend/.env` (e.g. `VITE_API
 
 | Store | Purpose |
 | --- | --- |
-| `stores/cart.ts` | Cart items, applied coupon, computed subtotal/discount/tax/total; persists to `localStorage` under `shopverse_cart`. Includes coupon validation logic (percentage/fixed, min-order). |
+| `stores/cart.ts` | Cart items, applied coupon, computed subtotal/discount/tax/total; persists to `localStorage` under `ekhmer_cart`. Includes coupon validation logic (percentage/fixed, min-order). |
 | `stores/wishlist.ts` | Customer wishlist. |
 | `stores/ui.ts` | Shared UI state (drawers, toasts, etc.). |
 

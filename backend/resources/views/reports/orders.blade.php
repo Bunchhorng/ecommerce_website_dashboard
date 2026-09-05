@@ -21,7 +21,7 @@
 <body>
     <div class="header">
         <h1>Orders Report</h1>
-        <p class="muted">ShopVerse</p>
+        <p class="muted">E-KHMER</p>
     </div>
     <div class="meta">
         <span>Generated: {{ now()->format('Y-m-d H:i') }}</span>
@@ -59,6 +59,6 @@
             </tr>
         </tfoot>
     </table>
-    <div class="footer">ShopVerse · Orders Report · Generated {{ now()->format('Y-m-d H:i') }}</div>
+    <div class="footer">E-KHMER · Orders Report · Generated {{ now()->format('Y-m-d H:i') }}</div>
 </body>
 </html>

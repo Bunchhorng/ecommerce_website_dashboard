@@ -118,14 +118,14 @@ async function signOut() {
     >
       <div class="flex h-16 items-center border-b border-border-gray p-4" :class="expanded ? '' : 'justify-center'">
         <RouterLink v-if="expanded" to="/admin" class="flex items-center gap-2.5">
-          <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-extrabold text-white">SV</div>
+          <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-extrabold text-white">EK</div>
           <div class="flex flex-col items-start leading-none">
-            <span class="text-base font-extrabold tracking-tight text-ink">ShopVerse</span>
+            <span class="text-base font-extrabold tracking-tight text-ink">E-KHMER</span>
             <span class="chip mt-1 !px-2 !py-0 text-[10px] uppercase tracking-wide">{{ $t('admin.nav.admin_label') }}</span>
           </div>
         </RouterLink>
         <RouterLink v-else to="/admin" :title="$t('admin.nav.admin_label')">
-          <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-extrabold text-white">SV</div>
+          <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-extrabold text-white">EK</div>
         </RouterLink>
       </div>
 
