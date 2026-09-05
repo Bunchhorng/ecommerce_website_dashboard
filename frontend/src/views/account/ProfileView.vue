@@ -12,7 +12,6 @@ const form = reactive({
   phone: activeUser.value?.phone ?? ''
 })
 
-const avatarFileName = ref('')
 const saved = ref(false)
 const saving = ref(false)
 let timer: ReturnType<typeof setTimeout> | null = null
@@ -23,10 +22,6 @@ const initials = computed(() =>
     .map((word) => word[0])
     .join('')
 )
-
-function chooseAvatar() {
-  avatarFileName.value = 'avatar-alex-morgan.png'
-}
 
 async function saveProfile() {
   saving.value = true
@@ -67,10 +62,6 @@ async function saveProfile() {
         class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-lg font-bold text-white"
       >
         {{ initials }}
-      </div>
-      <div>
-        <button type="button" class="btn-secondary btn-sm" @click="chooseAvatar">{{ $t('account.upload') }}</button>
-        <p v-if="avatarFileName" class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ avatarFileName }}</p>
       </div>
     </div>
 

@@ -12,6 +12,8 @@ export interface AuthUser {
   role: 'customer' | 'admin'
   avatar?: string | null
   newsletter?: boolean
+  email_verified?: boolean
+  email_verified_at?: string | null
 }
 
 function loadUser(): AuthUser | null {
@@ -76,6 +78,19 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       localStorage.removeItem(TOKEN_KEY)
       localStorage.removeItem(USER_KEY)
+    },
+
+    async refreshUser() {
+      const { data } = await apiClient.get('/auth/me')
+      const responseData = data.data ?? data
+      this.user = responseData as AuthUser
+      localStorage.setItem(USER_KEY, JSON.stringify(this.user))
+      return this.user
+    },
+
+    async sendVerificationEmail() {
+      const { data } = await apiClient.post('/auth/email/verification-notification')
+      return (data.data ?? data).message as string
     }
   }
 })

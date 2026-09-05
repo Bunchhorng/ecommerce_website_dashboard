@@ -39,6 +39,7 @@ const rows = computed<TableRow[]>(() =>
 )
 
 const showCreateForm = ref(false)
+const editingId = ref<number | null>(null)
 const form = ref<{
   code: string
   type: 'percentage' | 'fixed'
@@ -55,6 +56,11 @@ const form = ref<{
   expiresAt: ''
 })
 
+function resetForm() {
+  form.value = { code: '', type: 'percentage', value: '', minOrderAmount: '', usageLimit: '', expiresAt: '' }
+  editingId.value = null
+}
+
 async function loadCoupons() {
   loading.value = true
   try {
@@ -68,28 +74,35 @@ async function loadCoupons() {
   }
 }
 
-async function createCoupon() {
+async function saveCoupon() {
   const value = Number(form.value.value)
   if (!form.value.code || !Number.isFinite(value)) {
     showToast(t('admin.coupons.toast_fill_required'))
     return
   }
 
+  const payload = {
+    code: form.value.code.toUpperCase(),
+    type: form.value.type,
+    value,
+    min_order_amount: Number(form.value.minOrderAmount) || null,
+    usage_limit: Number(form.value.usageLimit) || null,
+    expires_at: form.value.expiresAt || null
+  }
+
   try {
-    await adminApi.createCoupon({
-      code: form.value.code.toUpperCase(),
-      type: form.value.type,
-      value,
-      min_order_amount: Number(form.value.minOrderAmount) || null,
-      usage_limit: Number(form.value.usageLimit) || null,
-      expires_at: form.value.expiresAt || null
-    })
+    if (editingId.value != null) {
+      await adminApi.updateCoupon(editingId.value, payload)
+      showToast(t('admin.coupons.toast_updated', { code: form.value.code }))
+    } else {
+      await adminApi.createCoupon(payload)
+      showToast(t('admin.coupons.toast_created'))
+    }
     await loadCoupons()
-    form.value = { code: '', type: 'percentage', value: '', minOrderAmount: '', usageLimit: '', expiresAt: '' }
+    resetForm()
     showCreateForm.value = false
-    showToast(t('admin.coupons.toast_created'))
   } catch {
-    showToast(t('admin.coupons.toast_create_error'))
+    showToast(t('admin.coupons.toast_update_error'))
   }
 }
 
@@ -118,7 +131,18 @@ async function toggleStatus(id: string) {
 function onRowAction(payload: { action: string; row: TableRow }) {
   const id = String(payload.row.id)
   if (payload.action === 'edit') {
-    showToast(t('admin.coupons.toast_editing', { code: String(payload.row.code) }))
+    const c = coupons.value.find((x) => x.id === Number(id))
+    if (!c) return
+    editingId.value = c.id
+    form.value = {
+      code: c.code,
+      type: c.type,
+      value: String(c.value),
+      minOrderAmount: c.min_order_amount != null ? String(c.min_order_amount) : '',
+      usageLimit: c.usage_limit != null ? String(c.usage_limit) : '',
+      expiresAt: c.expires_at ? c.expires_at.slice(0, 10) : ''
+    }
+    showCreateForm.value = true
   } else if (payload.action === 'toggle') {
     toggleStatus(id)
   } else if (payload.action === 'delete') {
@@ -149,8 +173,6 @@ function onBulkAction(payload: { action: string; ids: string[] }) {
       .catch(() => {
         showToast(t('admin.coupons.toast_delete_error'))
       })
-  } else if (payload.action === 'export') {
-    showToast(t('admin.coupons.toast_exported_csv', { count: payload.ids.length }))
   }
 }
 
@@ -164,7 +186,7 @@ onMounted(loadCoupons)
         <h1 class="text-2xl font-bold text-ink">{{ $t('admin.coupons.title') }}</h1>
         <span class="chip">{{ $t('admin.coupons.total_count', { count: totalCount }) }}</span>
       </div>
-      <button class="btn-primary btn-sm" @click="showCreateForm = !showCreateForm">
+      <button class="btn-primary btn-sm" @click="showCreateForm = !showCreateForm; editingId = null">
         <Plus class="h-4 w-4" />
         {{ $t('admin.coupons.new_coupon') }}
       </button>
@@ -172,8 +194,8 @@ onMounted(loadCoupons)
 
     <div v-if="showCreateForm" class="card p-6">
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-lg font-semibold">{{ $t('admin.coupons.create_coupon') }}</h2>
-        <button class="btn-icon" type="button" @click="showCreateForm = false">
+        <h2 class="text-lg font-semibold">{{ editingId != null ? $t('admin.coupons.edit_coupon') : $t('admin.coupons.create_coupon') }}</h2>
+        <button class="btn-icon" type="button" @click="showCreateForm = false; resetForm()">
           <X class="h-5 w-5" />
         </button>
       </div>
@@ -207,8 +229,8 @@ onMounted(loadCoupons)
         </div>
       </div>
       <div class="mt-5 flex justify-end gap-2">
-        <button class="btn-secondary btn-sm" type="button" @click="showCreateForm = false">{{ $t('actions.cancel') }}</button>
-        <button class="btn-primary btn-sm" type="button" @click="createCoupon">{{ $t('admin.coupons.save_coupon') }}</button>
+        <button class="btn-secondary btn-sm" type="button" @click="showCreateForm = false; resetForm()">{{ $t('actions.cancel') }}</button>
+        <button class="btn-primary btn-sm" type="button" @click="saveCoupon">{{ editingId != null ? $t('actions.save_changes') : $t('admin.coupons.save_coupon') }}</button>
       </div>
     </div>
 
@@ -219,7 +241,7 @@ onMounted(loadCoupons)
       :search-keys="['code']"
       :search-placeholder="$t('admin.coupons.search_placeholder')"
       :page-size="8"
-      :bulk-actions="[{ label: $t('actions.delete'), value: 'delete' }, { label: $t('admin.coupons.export'), value: 'export' }]"
+      :bulk-actions="[{ label: $t('actions.delete'), value: 'delete' }]"
       :row-actions="[
         { label: $t('actions.edit'), value: 'edit' },
         { label: $t('admin.coupons.activate_deactivate'), value: 'toggle' },

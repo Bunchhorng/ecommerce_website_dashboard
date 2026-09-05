@@ -13,13 +13,16 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\VariantAttributeValue;
 use App\Services\InventoryService;
+use App\Services\MediaUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class AdminProductController extends Controller
 {
-    public function __construct(private InventoryService $inventoryService)
-    {
+    public function __construct(
+        private InventoryService $inventoryService,
+        private MediaUploadService $mediaService,
+    ) {
     }
 
     public function index(Request $request)
@@ -75,6 +78,10 @@ class AdminProductController extends Controller
             $this->createVariants($product, $request->input('variants'));
         }
 
+        if ($request->has('images')) {
+            $this->syncImages($product, $request->input('images', []));
+        }
+
         return (new ProductDetailResource(
             $this->loadDetail($product)
         ))->response()->setStatusCode(201);
@@ -97,6 +104,10 @@ class AdminProductController extends Controller
 
         if ($request->has('variants')) {
             $this->syncVariants($product, $request->input('variants') ?? [], $request->user()?->id);
+        }
+
+        if ($request->has('images')) {
+            $this->syncImages($product, $request->input('images', []));
         }
 
         return new ProductDetailResource($this->loadDetail($product));
@@ -224,6 +235,52 @@ class AdminProductController extends Controller
             if (!in_array($variant->id, $referencedIds, true)) {
                 $variant->delete();
             }
+        }
+    }
+
+    protected function syncImages(Product $product, array $paths): void
+    {
+        $paths = array_values(array_filter(array_map('trim', $paths), fn ($p) => $p !== ''));
+
+        $existing = $product->images()->orderBy('sort_order')->get();
+
+        if (count($paths) === 0) {
+            foreach ($existing as $image) {
+                $this->mediaService->deleteImage($image->image_path);
+                $image->delete();
+            }
+
+            return;
+        }
+
+        $keep = array_flip($paths);
+
+        foreach ($existing as $image) {
+            if (!isset($keep[$image->image_path])) {
+                $this->mediaService->deleteImage($image->image_path);
+                $image->delete();
+            }
+        }
+
+        $sortOrder = 0;
+
+        foreach ($paths as $path) {
+            $row = $existing->firstWhere('image_path', $path);
+            $isCover = $sortOrder === 0;
+
+            if ($row !== null) {
+                if ((int) $row->sort_order !== $sortOrder || (bool) $row->is_cover !== $isCover) {
+                    $row->update(['sort_order' => $sortOrder, 'is_cover' => $isCover]);
+                }
+            } else {
+                $product->images()->create([
+                    'image_path' => $path,
+                    'sort_order' => $sortOrder,
+                    'is_cover' => $isCover,
+                ]);
+            }
+
+            $sortOrder++;
         }
     }
 

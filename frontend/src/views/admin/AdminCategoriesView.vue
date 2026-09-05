@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { Plus, Pencil, Trash2, ChevronRight, FolderTree } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2, ChevronRight, FolderTree, ImagePlus, UploadCloud } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import BaseModal from '@/components/BaseModal.vue'
 import { adminApi } from '@/api/admin'
+import { mediaApi } from '@/api/uploads'
 import type { AdminCategory } from '@/api/admin'
 
 const { t } = useI18n()
@@ -22,7 +23,28 @@ const open = ref<Record<string, boolean>>({})
 const modalOpen = ref(false)
 const modalMode = ref<'root' | 'child' | 'edit'>('root')
 const targetId = ref<number | null>(null)
-const form = reactive({ name: '', slug: '' })
+const form = reactive({ name: '', slug: '', imageUrl: null as string | null })
+const imageFile = ref<File | null>(null)
+const imageInput = ref<HTMLInputElement | null>(null)
+
+function resetImage() {
+  imageFile.value = null
+  if (imageInput.value) imageInput.value.value = ''
+}
+
+function onImagePicked(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file || !file.type.startsWith('image/')) return
+  imageFile.value = file
+  form.imageUrl = URL.createObjectURL(file)
+}
+
+function removeImagePreview() {
+  imageFile.value = null
+  form.imageUrl = null
+  if (imageInput.value) imageInput.value.value = ''
+}
 
 const modalTitle = computed(() => {
   if (modalMode.value === 'edit') return t('admin.categories.edit_category')
@@ -35,6 +57,8 @@ function openAddRoot() {
   targetId.value = null
   form.name = ''
   form.slug = ''
+  form.imageUrl = null
+  resetImage()
   modalOpen.value = true
 }
 
@@ -43,6 +67,8 @@ function openAddChild(parent: AdminCategory) {
   targetId.value = parent.id
   form.name = ''
   form.slug = ''
+  form.imageUrl = null
+  resetImage()
   modalOpen.value = true
 }
 
@@ -51,6 +77,8 @@ function openEdit(node: AdminCategory) {
   targetId.value = node.id
   form.name = node.name
   form.slug = node.slug
+  form.imageUrl = node.image
+  resetImage()
   modalOpen.value = true
 }
 
@@ -98,26 +126,37 @@ async function saveNode() {
   const slug = form.slug.trim() || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 
   try {
-    if (modalMode.value === 'edit' && targetId.value != null) {
-      await adminApi.updateCategory(targetId.value, { name, slug })
-      const node = findNode(tree.value, targetId.value)
-      if (node) {
-        node.name = name
-        node.slug = slug
-      }
-      showToast(t('admin.categories.toast_updated', { name }))
-    } else if (modalMode.value === 'child' && targetId.value != null) {
-      await adminApi.createCategory({ name, slug, parent_id: targetId.value })
-      await loadCategories()
-      showToast(t('admin.categories.toast_added_child', { name }))
-    } else {
-      await adminApi.createCategory({ name, slug })
-      await loadCategories()
-      showToast(t('admin.categories.toast_added', { name }))
-    }
+    await saveCategoryRecord(name, slug)
     modalOpen.value = false
   } catch {
     showToast(t('admin.categories.toast_save_error'))
+  }
+}
+
+async function saveCategoryRecord(name: string, slug: string): Promise<void> {
+  if (modalMode.value === 'edit' && targetId.value != null) {
+    await adminApi.updateCategory(targetId.value, { name, slug })
+    if (imageFile.value) {
+      await mediaApi.uploadCategoryImage(targetId.value, imageFile.value)
+    }
+    const node = findNode(tree.value, targetId.value)
+    if (node) {
+      node.name = name
+      node.slug = slug
+    }
+    showToast(t('admin.categories.toast_updated', { name }))
+  } else {
+    const parentId = modalMode.value === 'child' && targetId.value != null ? targetId.value : undefined
+    const { data: resp } = await adminApi.createCategory({ name, slug, ...(parentId ? { parent_id: parentId } : {}) })
+    if (imageFile.value) {
+      await mediaApi.uploadCategoryImage(resp.data.id, imageFile.value)
+    }
+    await loadCategories()
+    if (parentId) {
+      showToast(t('admin.categories.toast_added_child', { name }))
+    } else {
+      showToast(t('admin.categories.toast_added', { name }))
+    }
   }
 }
 
@@ -177,7 +216,13 @@ onMounted(loadCategories)
               <ChevronRight class="h-4 w-4" />
             </button>
             <span v-else class="h-8 w-8"></span>
-            <FolderTree class="h-4 w-4 shrink-0 text-primary" />
+            <img
+              v-if="root.image"
+              :src="root.image"
+              :alt="root.name"
+              class="h-8 w-8 shrink-0 rounded-lg object-cover"
+            />
+            <FolderTree v-else class="h-4 w-4 shrink-0 text-primary" />
             <span class="flex-1 text-sm font-medium text-ink">{{ root.name }}</span>
             <span class="chip">{{ root.products_count ?? 0 }}</span>
             <button class="btn-icon h-8 w-8" type="button" :title="$t('admin.categories.add_child')" @click="openAddChild(root)">
@@ -222,6 +267,25 @@ onMounted(loadCategories)
         <div>
           <label class="label" for="cat-slug">{{ $t('admin.categories.slug_label') }}</label>
           <input id="cat-slug" v-model="form.slug" class="input" :placeholder="$t('admin.categories.slug_placeholder')" />
+        </div>
+        <div>
+          <label class="label">{{ $t('admin.categories.image_label') }}</label>
+          <div class="flex items-center gap-4">
+            <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-canvas">
+              <img v-if="form.imageUrl" :src="form.imageUrl" alt="Category" class="h-full w-full object-cover" />
+              <UploadCloud v-else class="h-6 w-6 text-gray-300" />
+            </div>
+            <div class="flex gap-2">
+              <button type="button" class="btn-secondary btn-sm" @click="imageInput?.click()">
+                <ImagePlus class="h-4 w-4" />
+                {{ form.imageUrl ? $t('admin.categories.change_image') : $t('admin.categories.upload_image') }}
+              </button>
+              <button v-if="form.imageUrl" type="button" class="btn-ghost btn-sm" @click="removeImagePreview()">
+                {{ $t('admin.categories.remove_image') }}
+              </button>
+            </div>
+            <input ref="imageInput" type="file" accept="image/*" class="hidden" @change="onImagePicked" />
+          </div>
         </div>
       </div>
       <template #footer>

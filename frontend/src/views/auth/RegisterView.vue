@@ -134,6 +134,7 @@ async function submit() {
           <UserPlus v-else class="h-4 w-4" />
           {{ auth.loading ? $t('auth.creating_account') : $t('auth.create_account') }}
         </button>
+        <p class="text-center text-xs text-gray-500 dark:text-gray-400">{{ $t('verify.register_hint') }}</p>
       </form>
 
       <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">

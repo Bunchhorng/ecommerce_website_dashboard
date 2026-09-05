@@ -215,8 +215,24 @@
     "reset_password_subtitle": "ជ្រើសរើសពាក្យសម្ងាត់ដ៏រឹងមាំសម្រាប់គណនីរបស់អ្នក",
     "new_password": "ពាក្យសម្ងាត់ថ្មី",
     "reset_password": "កំណត់ពាក្យសម្ងាត់ឡើងវិញ",
-    "password_reset_success": "ពាក្យសម្ងាត់របស់អ្នកត្រូវបានកំណត់ឡើងវិញ។ ឥឡូវអ្នកអាចចូលគណនីបាន។",
+    "password_reset_success": "ពាក្យសម្ងាត់របស់អ្នកត្រូវបានកំណត់ឡើវិញ។ ឥឡូវអ្នកអាចចូលគណនីបាន។",
     "go_to_sign_in": "ចូលទៅកាន់ការចូលគណនី"
+  },
+  "verify": {
+    "title": "ផ្ទៀងផ្ទាត់អ៊ីមែលរបស់អ្នក",
+    "check_your_inbox": "ពិនិត្យ Inbox របស់អ្នក",
+    "verified_message": "អ៊ីមែលរបស់អ្នកត្រូវបានផ្ទៀងផ្ទាត់ដោយជោគជ័យ។",
+    "pending_message": "យើងបានផ្ញើ Link ផ្ទៀងផ្ទាត់ទៅ {email}។ ចុចលើ Link ក្នុងអ៊ីមែលដើម្បីផ្ទៀងផ្ទាត់អាសយដ្ឋានរបស់អ្នក។",
+    "resend_email": "ផ្ញើអ៊ីមែលផ្ទៀងផ្ទាត់ម្តងទៀត",
+    "sending": "កំពុងផ្ញើ…",
+    "email_sent": "អ៊ីមែលផ្ទៀងផ្ទាត់ថ្មីត្រូវបានផ្ញើ។",
+    "resend_failed": "មិនអាចផ្ញើអ៊ីមែលបានមួយភ្លែតនេះទេ។ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ។",
+    "go_to_dashboard": "ទៅកាន់ផ្ទាំងគ្រប់គ្រងរបស់ខ្ញុំ",
+    "continue_shopping": "បន្តការទិញទំនិញ",
+    "banner_message": "អាសយដ្ឋានអ៊ីមែលរបស់អ្នកមិនទាន់ត្រូវបានផ្ទៀងផ្ទាត់នៅឡើយទេ។",
+    "banner_hint": "ផ្ទៀងផ្ទាត់អាសយដ្ឋានអ៊ីមែលរបស់អ្នកដើម្បីធានាសុវត្ថិភាពគណនី។",
+    "banner_resend": "ផ្ញើអ៊ីមែលម្តងទៀត",
+    "register_hint": "បន្ទាប់ពីបង្កើតគណនី យើងនឹងផ្ញើ Link ផ្ទៀងផ្ទាត់ទៅកាន់អ៊ីមែលរបស់អ្នក។"
   },
   "error": {
     "invalid_credentials": "អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ។ សូមព្យាយាមម្តងទៀត។",
@@ -292,6 +308,8 @@
     "testimonials": "អត្ថាធិប្បាយ",
     "testimonials_title": "អ្វីដែលអតិថិជនរបស់យើងនិយាយ",
     "testimonials_subtitle": "រឿងពិតពីអ្នកទិញរីករាយនៅជុំវិញពិភពលោក។",
+    "verified_buyer": "អ្នកទិញដែលបានផ្ទៀងផ្ទាត់",
+    "no_reviews_yet": "មិនទាន់មានការវាយតម្លៃពីអតិថិជនទេ — ទុកជាអ្នកដំបូងដែលចែករំលែកបទពិសោធន៍របស់អ្នក។",
     "newsletter_title": "ទទួលបានការបញ្ចុះតម្លៃ 10% លើការបញ្ជាទិញដំបូងរបស់អ្នក",
     "newsletter_subtitle": "ចូលរួមសំបុត្រព័ត៌មានរបស់យើងសម្រាប់ការផ្តល់ជូនពិសេស ទំនិញថ្មី និងការចូលមើលមុនគេ។",
     "perk_exclusive": "ការផ្តល់ជូនពិសេសសម្រាប់អ្នកជាវ",
@@ -410,7 +428,8 @@
         "cancelled": "បានបោះបង់ {number}",
         "exported_csv": "បាននាំចេញ {count} ការបញ្ជាទិញទៅ CSV",
         "marked_delivered": "បានសម្គាល់ {count} ការបញ្ជាទិញជាបានប្រគល់",
-        "printing_labels": "កំពុងបោះពុម្ពស្លាកសម្រាប់ {count} ការបញ្ជាទិញ"
+        "printing_labels": "កំពុងបោះពុម្ពស្លាកសម្រាប់ {count} ការបញ្ជាទិញ",
+        "action_failed": "សកម្មភាពបរាជ័យ។ សូមព្យាយាមម្តងទៀត។"
       }
     },
     "order_detail": {
@@ -651,6 +670,10 @@
       "name_placeholder": "ឈ្មោះប្រភេទ",
       "slug_label": "Slug",
       "slug_placeholder": "category-slug",
+      "image_label": "រូបភាព",
+      "upload_image": "ផ្ទុករូបភាព",
+      "change_image": "ប្តូររូបភាព",
+      "remove_image": "លុបរូបភាព",
       "save": "រក្សាទុក",
       "toast_enter_name": "សូមបញ្ចូលឈ្មោះ។",
       "toast_updated": "បានធ្វើបច្ចុប្បន្នភាព {name}",
@@ -667,6 +690,10 @@
       "name_placeholder": "ឈ្មោះម៉ាក",
       "website_label": "គេហទំព័រ",
       "website_placeholder": "https://example.com",
+      "logo_label": "Logo",
+      "upload_logo": "ផ្ទុក Logo",
+      "change_logo": "ប្តូរ Logo",
+      "remove_logo": "លុប Logo",
       "save": "រក្សាទុក",
       "products_count": "{count} ផលិតផល",
       "toast_enter_name": "សូមបញ្ចូលឈ្មោះ។",
@@ -679,6 +706,8 @@
       "total_count": "{count} ប័ណ្ណ",
       "new_coupon": "ប័ណ្ណថ្មី",
       "create_coupon": "បង្កើតប័ណ្ណ",
+      "edit_coupon": "កែប័ណ្ណ",
+      "toast_updated": "បានធ្វើបច្ចុប្បន្នភាពប័ណ្ណ {code}។",
       "column_code": "លេខកូដ",
       "column_type": "ប្រភេទ",
       "column_value": "តម្លៃ",
@@ -707,7 +736,9 @@
       "toast_deleted": "បានលុប {code}",
       "toast_editing": "កំពុងកែ {code}",
       "toast_deleted_count": "បានលុប {count} ប័ណ្ណ",
-      "toast_exported_csv": "បាននាំចេញ {count} ប័ណ្ណទៅ CSV"
+      "toast_exported_csv": "បាននាំចេញ {count} ប័ណ្ណទៅ CSV",
+      "toast_create_error": "មិនអាចបង្កើតប័ណ្ណបានទេ។",
+      "toast_update_error": "មិនអាចរក្សាទុកប័ណ្ណបានទេ។"
     },
     "shipping": {
       "title": "វិធីសាស្ត្រដឹកជញ្ជូន",

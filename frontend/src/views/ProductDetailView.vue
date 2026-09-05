@@ -320,15 +320,15 @@ function openLightbox() {
 
 function addToCart() {
   const p = product.value
-  if (!p) return
-  cart.addItem({ product: p, variantId: selectedVariant.value?.id, quantity: quantity.value })
+  if (!p || !selectedVariant.value?.id) return
+  cart.addItem({ variantId: selectedVariant.value.id, quantity: quantity.value })
   ui.openCartDrawer()
 }
 
 function buyNow() {
   const p = product.value
-  if (!p) return
-  cart.addItem({ product: p, variantId: selectedVariant.value?.id, quantity: quantity.value })
+  if (!p || !selectedVariant.value?.id) return
+  cart.addItem({ variantId: selectedVariant.value.id, quantity: quantity.value })
   router.push('/checkout')
 }
 

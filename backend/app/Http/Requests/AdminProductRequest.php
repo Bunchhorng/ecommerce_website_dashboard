@@ -29,6 +29,8 @@ class AdminProductRequest extends FormRequest
             'weight' => ['nullable', 'numeric'],
             'is_featured' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
+            'images' => ['nullable', 'array'],
+            'images.*' => ['nullable', 'string'],
             'variants' => ['nullable', 'array'],
             'variants.*.sku' => ['nullable', 'string'],
             'variants.*.name' => ['nullable', 'string'],

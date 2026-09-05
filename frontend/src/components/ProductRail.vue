@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ArrowRight, PackageOpen } from 'lucide-vue-next'
 import { useCartStore } from '@/stores/cart'
-import type { AddToCartInput } from '@/stores/cart'
 import { useWishlistStore } from '@/stores/wishlist'
 import type { Product } from '@/types'
 import EmptyState from './EmptyState.vue'
@@ -20,8 +19,9 @@ withDefaults(
 const cartStore = useCartStore()
 const wishlistStore = useWishlistStore()
 
-function handleAdd(payload: AddToCartInput): void {
-  cartStore.addItem({ product: payload.product, variantId: payload.variantId, quantity: 1 })
+function handleAdd(payload: { product: Product; variantId?: string }): void {
+  if (!payload.variantId) return
+  cartStore.addItem({ variantId: payload.variantId, quantity: 1 })
 }
 
 function handleWishlist(productId: string): void {

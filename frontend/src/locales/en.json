@@ -218,6 +218,22 @@
     "password_reset_success": "Your password has been reset. You can now sign in.",
     "go_to_sign_in": "Go to sign in"
   },
+  "verify": {
+    "title": "Verify your email",
+    "check_your_inbox": "Check your inbox",
+    "verified_message": "Your email address has been verified successfully.",
+    "pending_message": "We sent a verification link to {email}. Click the link in that email to verify your address.",
+    "resend_email": "Resend verification email",
+    "sending": "Sending…",
+    "email_sent": "A new verification email has been sent.",
+    "resend_failed": "We could not send the email right now. Please try again later.",
+    "go_to_dashboard": "Go to my dashboard",
+    "continue_shopping": "Continue shopping",
+    "banner_message": "Your email address is not verified yet.",
+    "banner_hint": "Verify your email address to secure your account.",
+    "banner_resend": "Resend email",
+    "register_hint": "After creating your account, we'll send a verification link to your email."
+  },
   "error": {
     "invalid_credentials": "Invalid email or password. Please try again.",
     "registration_failed": "Registration failed. That email may already be in use.",
@@ -292,6 +308,8 @@
     "testimonials": "Testimonials",
     "testimonials_title": "What our customers say",
     "testimonials_subtitle": "Real stories from happy shoppers around the world.",
+    "verified_buyer": "Verified Buyer",
+    "no_reviews_yet": "No customer reviews yet — be the first to share your experience.",
     "newsletter_title": "Get 10% off your first order",
     "newsletter_subtitle": "Join our newsletter for exclusive deals, new arrivals, and early access to sales.",
     "perk_exclusive": "Exclusive subscriber deals",
@@ -410,7 +428,8 @@
         "cancelled": "Cancelled {number}",
         "exported_csv": "Exported {count} orders to CSV",
         "marked_delivered": "Marked {count} orders as Delivered",
-        "printing_labels": "Printing labels for {count} orders"
+        "printing_labels": "Printing labels for {count} orders",
+        "action_failed": "The action failed. Please try again."
       }
     },
     "order_detail": {
@@ -651,6 +670,10 @@
       "name_placeholder": "Category name",
       "slug_label": "Slug",
       "slug_placeholder": "category-slug",
+      "image_label": "Image",
+      "upload_image": "Upload image",
+      "change_image": "Change image",
+      "remove_image": "Remove image",
       "save": "Save",
       "toast_enter_name": "Please enter a name.",
       "toast_updated": "Updated {name}",
@@ -667,6 +690,10 @@
       "name_placeholder": "Brand name",
       "website_label": "Website",
       "website_placeholder": "https://example.com",
+      "logo_label": "Logo",
+      "upload_logo": "Upload logo",
+      "change_logo": "Change logo",
+      "remove_logo": "Remove logo",
       "save": "Save",
       "products_count": "{count} products",
       "toast_enter_name": "Please enter a name.",
@@ -679,6 +706,8 @@
       "total_count": "{count} coupons",
       "new_coupon": "New Coupon",
       "create_coupon": "Create Coupon",
+      "edit_coupon": "Edit Coupon",
+      "toast_updated": "Coupon {code} updated.",
       "column_code": "Code",
       "column_type": "Type",
       "column_value": "Value",
@@ -707,7 +736,9 @@
       "toast_deleted": "Deleted {code}",
       "toast_editing": "Editing {code}",
       "toast_deleted_count": "Deleted {count} coupons",
-      "toast_exported_csv": "Exported {count} coupons to CSV"
+      "toast_exported_csv": "Exported {count} coupons to CSV",
+      "toast_create_error": "Could not create the coupon.",
+      "toast_update_error": "Could not save the coupon."
     },
     "shipping": {
       "title": "Shipping Methods",

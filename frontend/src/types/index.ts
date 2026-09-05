@@ -81,6 +81,7 @@ export interface CartItem {
   unitPrice: number
   quantity: number
   variant: CartVariantSelection | null
+  variantName?: string
 }
 
 export interface Coupon {

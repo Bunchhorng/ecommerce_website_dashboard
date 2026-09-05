@@ -17,6 +17,7 @@ class UserResource extends JsonResource
             'avatar' => $this->avatar,
             'phone' => $this->phone,
             'newsletter' => (bool) $this->newsletter,
+            'email_verified' => $this->hasVerifiedEmail() ? true : false,
             'email_verified_at' => $this->email_verified_at?->toISOString(),
         ];
     }

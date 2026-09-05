@@ -6,6 +6,7 @@ import AdminDataTable from '@/components/admin/AdminDataTable.vue'
 import type { TableColumn, TableRow } from '@/types'
 import { adminApi } from '@/api/admin'
 import type { AdminOrderItem } from '@/api/admin'
+import { downloadResponse } from '@/utils/download'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -77,31 +78,62 @@ async function loadOrders(params: { status?: string; q?: string } = {}) {
   }
 }
 
-function onRowAction(payload: { action: string; row: TableRow }) {
+async function onRowAction(payload: { action: string; row: TableRow }) {
+  const id = Number(payload.row.id)
   if (payload.action === 'view') {
-    const id = Number(payload.row.id)
     if (id) {
       router.push({ name: 'admin-order-detail', params: { id } })
       return
     }
     showToast(t('admin.orders.toast.open_invoice', { number: String(payload.row.number) }))
   } else if (payload.action === 'process') {
-    const orderId = orders.value.find((o) => o.order_number === payload.row.number)?.order_number
-    if (orderId) {
+    try {
+      await adminApi.transitionOrder(id, 'processing')
       showToast(t('admin.orders.toast.marked_processing', { number: String(payload.row.number) }))
+      await loadOrders()
+    } catch {
+      showToast(t('admin.orders.toast.action_failed'))
     }
   } else if (payload.action === 'cancel') {
-    showToast(t('admin.orders.toast.cancelled', { number: String(payload.row.number) }))
+    try {
+      await adminApi.transitionOrder(id, 'cancelled')
+      showToast(t('admin.orders.toast.cancelled', { number: String(payload.row.number) }))
+      await loadOrders()
+    } catch {
+      showToast(t('admin.orders.toast.action_failed'))
+    }
   }
 }
 
-function onBulkAction(payload: { action: string; ids: string[] }) {
+async function onBulkAction(payload: { action: string; ids: string[] }) {
   if (payload.action === 'export') {
-    showToast(t('admin.orders.toast.exported_csv', { count: payload.ids.length }))
+    try {
+      const res = await adminApi.getOrdersCsv()
+      downloadResponse(res, 'orders.csv')
+      showToast(t('admin.orders.toast.exported_csv', { count: payload.ids.length }))
+    } catch {
+      showToast(t('admin.orders.toast.action_failed'))
+    }
   } else if (payload.action === 'delivered') {
-    showToast(t('admin.orders.toast.marked_delivered', { count: payload.ids.length }))
+    let ok = 0
+    for (const id of payload.ids) {
+      try {
+        await adminApi.transitionOrder(Number(id), 'delivered')
+        ok++
+      } catch {
+        /* strict state machine rejects invalid jumps */
+      }
+    }
+    showToast(t('admin.orders.toast.marked_delivered', { count: ok }))
+    await loadOrders()
   } else if (payload.action === 'print') {
-    showToast(t('admin.orders.toast.printing_labels', { count: payload.ids.length }))
+    try {
+      const res = await adminApi.getOrdersPdf()
+      downloadResponse(res, 'orders.pdf')
+      showToast(t('admin.orders.toast.printing_labels', { count: payload.ids.length }))
+    } catch {
+      showToast(t('admin.orders.toast.action_failed'))
+    }
   }
 }
 

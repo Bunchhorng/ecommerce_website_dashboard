@@ -76,6 +76,8 @@ class ProductDetailResource extends JsonResource
                 'id' => $image->id,
                 'image_path' => $image->image_path,
                 'alt_text' => $image->alt_text,
+                'sort_order' => (int) $image->sort_order,
+                'is_cover' => (bool) $image->is_cover,
             ])
             ->values()
             ->all();

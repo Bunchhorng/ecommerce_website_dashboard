@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ShoppingBag, Trash2, Lock, X } from 'lucide-vue-next'
 import { useCartStore } from '@/stores/cart'
+import type { CartItem } from '@/types'
 import QuantityCounter from '@/components/QuantityCounter.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { formatPrice } from '@/utils/format'
@@ -21,9 +22,10 @@ async function applyCoupon() {
   if (ok) couponInput.value = ''
 }
 
-function variantLine(attributes: { name: string; value: string }[] | undefined): string {
-  if (!attributes || attributes.length === 0) return ''
-  return attributes.map((a) => `${a.name}: ${a.value}`).join(', ')
+function variantLine(item: CartItem): string {
+  if (item.variantName) return item.variantName
+  if (!item.variant || item.variant.attributes.length === 0) return ''
+  return item.variant.attributes.map((a) => `${a.name}: ${a.value}`).join(', ')
 }
 </script>
 
@@ -65,7 +67,7 @@ function variantLine(attributes: { name: string; value: string }[] | undefined):
               {{ item.title }}
             </RouterLink>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              {{ item.variant?.attributes ? variantLine(item.variant.attributes) : '' }}
+              {{ variantLine(item) }}
             </p>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ formatPrice(item.unitPrice) }} each</p>
           </div>

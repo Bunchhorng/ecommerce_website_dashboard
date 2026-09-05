@@ -1,72 +1,79 @@
 import { defineStore } from 'pinia'
-import { couponsApi } from '@/api'
-import type { Coupon } from '@/types'
+import { cartApi, couponsApi } from '@/api'
+import type { ApiCart, ApiCartItem } from '@/api/cart'
+import type { CartItem, Coupon } from '@/types'
 
 export const TAX_RATE = 0.1
 
 export interface AddToCartInput {
-  product: { id: string; slug: string; title: string; brand: { name: string }; images: { url: string }[]; price: number; stockQuantity: number; variants: { id: string; price: number; stockQuantity: number; attributes: { name: string; value: string }[]; sku: string }[] }
-  variantId?: string
+  variantId: string | number
   quantity?: number
 }
+
+export interface CartTotals {
+  subtotal: number
+  discount_amount: number
+  tax_amount: number
+  total: number
+  items_count: number
+}
+
+const EMPTY_TOTALS: CartTotals = { subtotal: 0, discount_amount: 0, tax_amount: 0, total: 0, items_count: 0 }
 
 function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100
 }
 
-const LOCAL_STORAGE_KEY = 'shopverse_cart'
-
-function persist(state: CartState) {
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ items: state.items, appliedCoupon: state.appliedCoupon }))
-  } catch {
-    /* storage unavailable */
+function toDisplayItem(api: ApiCartItem): CartItem {
+  const variant = api.variant
+  return {
+    id: String(api.id),
+    productId: String(variant.product?.id ?? variant.id),
+    slug: variant.product?.slug ?? '',
+    title: variant.product?.name ?? variant.name,
+    brand: '',
+    image: variant.product?.cover_image ?? '',
+    unitPrice: variant.price ?? 0,
+    quantity: api.quantity,
+    variant: {
+      variantId: String(variant.id),
+      attributes: [],
+      sku: variant.sku
+    },
+    variantName: variant.name
   }
 }
 
-type CartState = {
-  items: import('@/types').CartItem[]
-  appliedCoupon: Coupon | null
-  couponError: string
-  couponSuccess: string
-}
-
 export const useCartStore = defineStore('cart', {
-  state: (): CartState => {
-    let restored: { items: import('@/types').CartItem[]; appliedCoupon: Coupon | null } | null = null
-    try {
-      const raw = localStorage.getItem(LOCAL_STORAGE_KEY)
-      if (raw) restored = JSON.parse(raw) as { items: import('@/types').CartItem[]; appliedCoupon: Coupon | null }
-    } catch {
-      restored = null
-    }
-    return {
-      items: restored?.items ?? [],
-      appliedCoupon: restored?.appliedCoupon ?? null,
-      couponError: '',
-      couponSuccess: ''
-    }
-  },
+  state: () => ({
+    items: [] as CartItem[],
+    totals: { ...EMPTY_TOTALS } as CartTotals,
+    appliedCoupon: null as Coupon | null,
+    couponError: '',
+    couponSuccess: '',
+    loaded: false,
+    loading: false
+  }),
 
   getters: {
     subtotal(state): number {
-      return round2(state.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0))
+      return state.totals.subtotal
     },
     discountAmount(state): number {
       if (!state.appliedCoupon) return 0
       if (state.appliedCoupon.type === 'percentage') {
-        return round2((this.subtotal * state.appliedCoupon.value) / 100)
+        return round2((this.totals.subtotal * state.appliedCoupon.value) / 100)
       }
-      return round2(Math.min(state.appliedCoupon.value, this.subtotal))
+      return round2(Math.min(state.appliedCoupon.value, this.totals.subtotal))
     },
     taxAmount(): number {
-      return round2((this.subtotal - this.discountAmount) * TAX_RATE)
+      return this.totals.tax_amount
     },
     totalAmount(): number {
-      return round2(this.subtotal - this.discountAmount + this.taxAmount)
+      return round2(Math.max(this.totals.total - this.discountAmount, 0))
     },
     totalItemCount(): number {
-      return this.items.reduce((sum, item) => sum + item.quantity, 0)
+      return this.totals.items_count
     },
     isEmpty(): boolean {
       return this.items.length === 0
@@ -74,51 +81,57 @@ export const useCartStore = defineStore('cart', {
   },
 
   actions: {
-    addItem({ product, variantId, quantity = 1 }: AddToCartInput) {
-      const targetVariant = variantId ? product.variants.find((v) => v.id === variantId) : undefined
-      const unitPrice = targetVariant?.price ?? product.price
-      const maxQty = targetVariant?.stockQuantity ?? product.stockQuantity
-      const safeQty = Math.max(1, Math.min(quantity, Math.max(maxQty, 1)))
+    async initialize(): Promise<void> {
+      if (this.loaded || this.loading) return
+      await this.fetch()
+    },
 
-      const existing = this.items.find(
-        (item) => item.productId === product.id && item.variant?.variantId === (variantId ?? null)
-      )
-
-      if (existing) {
-        existing.quantity = Math.min(existing.quantity + safeQty, Math.max(maxQty, 1))
-      } else {
-        this.items.push({
-          id: `ci-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          productId: product.id,
-          slug: product.slug,
-          title: product.title,
-          brand: product.brand.name,
-          image: product.images[0]?.url ?? '',
-          unitPrice,
-          quantity: safeQty,
-          variant: targetVariant
-            ? {
-                variantId: targetVariant.id,
-                attributes: targetVariant.attributes,
-                sku: targetVariant.sku
-              }
-            : null
-        })
+    async fetch(): Promise<void> {
+      if (this.loading) return
+      this.loading = true
+      try {
+        const { data } = await cartApi.get()
+        this.applyCart(data.data)
+      } catch {
+        /* keep last known state */
+      } finally {
+        this.loading = false
+        this.loaded = true
       }
+    },
+
+    applyCart(cart: ApiCart): void {
+      this.items = cart.items.map(toDisplayItem)
+      this.totals = { ...EMPTY_TOTALS, ...cart.totals }
+    },
+
+    async addItem({ variantId, quantity = 1 }: AddToCartInput): Promise<void> {
+      const { data } = await cartApi.addItem(Number(variantId), quantity)
+      this.applyCart(data.data)
       this.clearCouponFeedback()
-      persist(this.$state as unknown as CartState)
     },
 
-    removeItem(itemId: string) {
-      this.items = this.items.filter((item) => item.id !== itemId)
-      persist(this.$state as unknown as CartState)
+    async updateQuantity(itemId: string | number, quantity: number): Promise<void> {
+      const { data } = await cartApi.updateItem(Number(itemId), quantity)
+      this.applyCart(data.data)
     },
 
-    updateQuantity(itemId: string, quantity: number) {
-      const item = this.items.find((i) => i.id === itemId)
-      if (!item) return
-      item.quantity = Math.max(1, quantity)
-      persist(this.$state as unknown as CartState)
+    async removeItem(itemId: string | number): Promise<void> {
+      const { data } = await cartApi.removeItem(Number(itemId))
+      this.applyCart(data.data)
+    },
+
+    async clear(): Promise<void> {
+      this.items = []
+      this.totals = { ...EMPTY_TOTALS }
+      this.appliedCoupon = null
+      this.couponSuccess = ''
+      this.couponError = ''
+      try {
+        await cartApi.clear()
+      } catch {
+        /* clear locally even if the request fails */
+      }
     },
 
     async applyCoupon(code: string): Promise<boolean> {
@@ -127,7 +140,7 @@ export const useCartStore = defineStore('cart', {
       this.couponSuccess = ''
 
       try {
-        const { data } = await couponsApi.validate(normalized, this.subtotal)
+        const { data } = await couponsApi.validate(normalized, this.totals.subtotal)
         const result = data.data
 
         if (!result.valid) {
@@ -144,7 +157,6 @@ export const useCartStore = defineStore('cart', {
           description: result.message
         }
         this.couponSuccess = result.message || `Coupon ${result.code} applied!`
-        persist(this.$state as unknown as CartState)
         return true
       } catch {
         this.couponError = `Coupon "${normalized}" is not valid.`
@@ -152,28 +164,15 @@ export const useCartStore = defineStore('cart', {
       }
     },
 
-    removeCoupon() {
+    removeCoupon(): void {
       this.appliedCoupon = null
-      this.couponSuccess = ''
-      this.couponError = ''
-      persist(this.$state as unknown as CartState)
-    },
-
-    clearCouponFeedback() {
       this.couponSuccess = ''
       this.couponError = ''
     },
 
-    clearCart() {
-      this.items = []
-      this.appliedCoupon = null
+    clearCouponFeedback(): void {
       this.couponSuccess = ''
       this.couponError = ''
-      try {
-        localStorage.removeItem(LOCAL_STORAGE_KEY)
-      } catch {
-        /* ignore */
-      }
     }
   }
 })

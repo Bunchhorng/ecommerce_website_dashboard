@@ -27,16 +27,17 @@ import StarRating from '@/components/StarRating.vue'
 import ProductRail from '@/components/ProductRail.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import { useCartStore } from '@/stores/cart'
-import type { AddToCartInput } from '@/stores/cart'
+import type { Product } from '@/types'
 import { useWishlistStore } from '@/stores/wishlist'
-import { catalogApi, brandsApi, categoriesApi } from '@/api'
+import { catalogApi, brandsApi, categoriesApi, reviewsApi } from '@/api'
 import type { CatalogProduct, ApiBrand, ApiCategory } from '@/api'
 
 const cartStore = useCartStore()
 const wishlistStore = useWishlistStore()
 
-function handleAdd(payload: AddToCartInput): void {
-  cartStore.addItem({ product: payload.product, variantId: payload.variantId, quantity: 1 })
+function handleAdd(payload: { product: Product; variantId?: string }): void {
+  if (!payload.variantId) return
+  cartStore.addItem({ variantId: payload.variantId, quantity: 1 })
 }
 
 function handleWishlist(productId: string): void {
@@ -79,18 +80,47 @@ onMounted(async () => {
     if (featuredRes.data.data.length > 0) heroPrimary.value = featuredRes.data.data[0]
     if (featuredRes.data.data.length > 1) heroAccent.value = featuredRes.data.data[1]
     if (bestRes.data.data.length > 0) dealOfDay.value = bestRes.data.data[0]
+    await loadTestimonials()
   } catch {
     /* API may not be available */
   }
 })
 
-const categoryImages: Record<string, string> = {
-  electronics: 'https://picsum.photos/seed/cat-electronics/600/700',
-  fashion: 'https://picsum.photos/seed/cat-fashion/600/700',
-  shoes: 'https://picsum.photos/seed/cat-shoes/600/700',
-  beauty: 'https://picsum.photos/seed/cat-beauty/600/700',
-  accessories: 'https://picsum.photos/seed/cat-accessories/600/700',
-  home: 'https://picsum.photos/seed/cat-home/600/700'
+const testimonials = ref<{ name: string; quote: string; rating: number }[]>([])
+
+async function loadTestimonials() {
+  const candidates = [...featured.value, ...bestSellers.value]
+  const seen = new Set<number>()
+  const results: { name: string; quote: string; rating: number }[] = []
+  for (const product of candidates) {
+    if (results.length >= 3) break
+    if (seen.has(product.id)) continue
+    seen.add(product.id)
+    try {
+      const res = await reviewsApi.getProductReviews(product.id)
+      const review = res.data.data[0]
+      if (review?.body?.trim()) {
+        results.push({
+          name: review.user.name,
+          quote: review.body.trim(),
+          rating: review.rating
+        })
+      }
+    } catch {
+      /* skip products without public reviews */
+    }
+  }
+  testimonials.value = results
+}
+
+function initialsOf(name: string): string {
+  return (
+    name
+      .split(' ')
+      .map((w) => w[0]?.toUpperCase() ?? '')
+      .join('')
+      .slice(0, 2) || 'U'
+  )
 }
 
 const dealCountdown = ref({ days: '02', hours: '14', mins: '32', secs: '08' })
@@ -283,12 +313,19 @@ function subscribe() {
         >
           <div class="relative h-28 overflow-hidden bg-canvas sm:h-32">
             <img
-              :src="categoryImages[cat.slug] ?? `https://picsum.photos/seed/${cat.slug}/600/700`"
+              v-if="cat.image"
+              :src="cat.image"
               :alt="cat.name"
               loading="lazy"
               class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+            <div
+              v-else
+              class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10"
+            >
+              <component :is="categoryIcons['Tag'] ?? Tag" class="h-10 w-10 text-primary" />
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
           </div>
           <div class="flex items-center gap-3 px-4 py-3.5">
             <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
@@ -438,13 +475,9 @@ function subscribe() {
           <p class="section-subtitle">{{ $t('home.testimonials_subtitle') }}</p>
         </div>
 
-        <div class="mt-10 grid gap-6 lg:grid-cols-3">
+        <div v-if="testimonials.length" class="mt-10 grid gap-6 lg:grid-cols-3">
           <div
-            v-for="(t, i) in [
-              { name: 'Olivia Bennett', role: 'Verified Buyer', quote: 'The checkout was buttery smooth and my order arrived two days early. This is now my go-to store.', rating: 5 },
-              { name: 'James Carter', role: 'Frequent Customer', quote: 'Easily the best online shopping experience I have had. Real-time tracking made the wait enjoyable.', rating: 5 },
-              { name: 'Mei-Lin Chen', role: 'Verified Buyer', quote: 'Quality products, honest prices, and the wishlist saved me when my size restocked.', rating: 4 }
-            ]"
+            v-for="(t, i) in testimonials"
             :key="i"
             class="card relative flex flex-col justify-between rounded-2xl p-6 transition-shadow duration-300 hover:shadow-lg"
           >
@@ -453,17 +486,22 @@ function subscribe() {
               <p class="mt-4 text-gray-600 italic dark:text-gray-300">"{{ t.quote }}"</p>
             </div>
             <div class="mt-6 flex items-center gap-3">
-              <img :src="`https://picsum.photos/seed/avatar-${i}/100/100`" :alt="t.name" class="h-10 w-10 rounded-full object-cover" />
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
+                {{ initialsOf(t.name) }}
+              </div>
               <div>
                 <div class="text-sm font-semibold text-ink dark:text-gray-100">{{ t.name }}</div>
                 <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                   <BadgeCheck :size="13" class="text-primary" />
-                  {{ t.role }}
+                  {{ $t('home.verified_buyer') }}
                 </div>
               </div>
             </div>
           </div>
         </div>
+        <p v-else class="mt-10 text-center text-sm text-gray-400 dark:text-gray-500">
+          {{ $t('home.no_reviews_yet') }}
+        </p>
       </div>
     </section>
 

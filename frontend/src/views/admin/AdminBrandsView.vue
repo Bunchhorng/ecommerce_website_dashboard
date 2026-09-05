@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
-import { Plus, Pencil, Trash2 } from 'lucide-vue-next'
+import { onMounted, reactive, ref } from 'vue'
+import { Plus, Pencil, Trash2, UploadCloud, ImagePlus } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import BaseModal from '@/components/BaseModal.vue'
 import { adminApi } from '@/api/admin'
+import { mediaApi } from '@/api/uploads'
 import type { AdminBrand } from '@/api/admin'
 
 const { t } = useI18n()
@@ -13,12 +14,35 @@ const brands = ref<AdminBrand[]>([])
 
 const modalOpen = ref(false)
 const editingId = ref<number | null>(null)
-const form = reactive({ name: '', website: '' })
+const form = reactive({ name: '', website: '', logoUrl: null as string | null })
+const logoFile = ref<File | null>(null)
+const logoInput = ref<HTMLInputElement | null>(null)
+
+function resetLogo() {
+  logoFile.value = null
+  if (logoInput.value) logoInput.value.value = ''
+}
+
+function onLogoPicked(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file || !file.type.startsWith('image/')) return
+  logoFile.value = file
+  form.logoUrl = URL.createObjectURL(file)
+}
+
+function removeLogoPreview() {
+  logoFile.value = null
+  form.logoUrl = null
+  if (logoInput.value) logoInput.value.value = ''
+}
 
 function openAdd() {
   editingId.value = null
   form.name = ''
   form.website = ''
+  form.logoUrl = null
+  resetLogo()
   modalOpen.value = true
 }
 
@@ -26,6 +50,8 @@ function openEdit(b: AdminBrand) {
   editingId.value = b.id
   form.name = b.name
   form.website = b.description ?? ''
+  form.logoUrl = b.logo
+  resetLogo()
   modalOpen.value = true
 }
 
@@ -52,10 +78,16 @@ async function saveBrand() {
   try {
     if (editingId.value != null) {
       await adminApi.updateBrand(editingId.value, { name, description: form.website.trim() || null })
+      if (logoFile.value) {
+        await mediaApi.uploadBrandLogo(editingId.value, logoFile.value)
+      }
       await loadBrands()
       showToast(t('admin.brands.toast_updated', { name }))
     } else {
-      await adminApi.createBrand({ name, slug, description: form.website.trim() || null })
+      const { data: resp } = await adminApi.createBrand({ name, slug, description: form.website.trim() || null })
+      if (logoFile.value) {
+        await mediaApi.uploadBrandLogo(resp.data.id, logoFile.value)
+      }
       await loadBrands()
       showToast(t('admin.brands.toast_added', { name }))
     }
@@ -115,7 +147,10 @@ onMounted(loadBrands)
     <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
       <div v-for="b in brands" :key="b.id" class="card p-5">
         <div class="flex items-start gap-4">
-          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+          <div v-if="b.logo" class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-canvas">
+            <img :src="b.logo" :alt="b.name" class="h-full w-full object-cover" />
+          </div>
+          <div v-else class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
             {{ initials(b.name) }}
           </div>
           <div class="min-w-0 flex-1">
@@ -153,6 +188,25 @@ onMounted(loadBrands)
         <div>
           <label class="label" for="brand-website">{{ $t('admin.brands.website_label') }}</label>
           <input id="brand-website" v-model="form.website" class="input" :placeholder="$t('admin.brands.website_placeholder')" />
+        </div>
+        <div>
+          <label class="label">{{ $t('admin.brands.logo_label') }}</label>
+          <div class="flex items-center gap-4">
+            <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-canvas">
+              <img v-if="form.logoUrl" :src="form.logoUrl" alt="Logo" class="h-full w-full object-cover" />
+              <UploadCloud v-else class="h-6 w-6 text-gray-300" />
+            </div>
+            <div class="flex gap-2">
+              <button type="button" class="btn-secondary btn-sm" @click="logoInput?.click()">
+                <ImagePlus class="h-4 w-4" />
+                {{ form.logoUrl ? $t('admin.brands.change_logo') : $t('admin.brands.upload_logo') }}
+              </button>
+              <button v-if="form.logoUrl" type="button" class="btn-ghost btn-sm" @click="removeLogoPreview()">
+                {{ $t('admin.brands.remove_logo') }}
+              </button>
+            </div>
+            <input ref="logoInput" type="file" accept="image/*" class="hidden" @change="onLogoPicked" />
+          </div>
         </div>
       </div>
       <template #footer>

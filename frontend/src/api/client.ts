@@ -6,11 +6,23 @@ export const apiClient = axios.create({
   headers: { Accept: 'application/json' }
 })
 
+const SESSION_KEY = 'shopverse_session_id'
+
+function getSessionId(): string {
+  let sid = localStorage.getItem(SESSION_KEY)
+  if (!sid) {
+    sid = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : `sess-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    localStorage.setItem(SESSION_KEY, sid)
+  }
+  return sid
+}
+
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  config.headers['X-Session-Id'] = getSessionId()
   return config
 })
 

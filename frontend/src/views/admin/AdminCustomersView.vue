@@ -18,22 +18,16 @@ const columns = computed<TableColumn[]>(() => [
   { key: 'avatar', label: t('admin.customers.customer'), type: 'image' },
   { key: 'name', label: '', sortable: true },
   { key: 'email', label: t('admin.customers.email') },
-  { key: 'orders', label: t('admin.customers.orders'), type: 'number', sortable: true },
-  { key: 'totalSpent', label: t('admin.customers.total_spent'), type: 'currency', sortable: true },
   { key: 'status', label: t('order.status'), type: 'status' },
   { key: 'joinedAt', label: t('admin.customers.joined'), type: 'date', sortable: true },
   { key: 'actions', label: '', type: 'actions' }
 ])
 
-const bulkActions = computed(() => [
-  { label: t('admin.customers.bulk.export_csv'), value: 'export' },
-  { label: t('admin.customers.bulk.add_segment'), value: 'segment' }
-])
+const bulkActions = computed(() => [])
 
 const rowActions = computed(() => [
   { label: t('admin.customers.row.view_profile'), value: 'view' },
-  { label: t('admin.customers.row.send_email'), value: 'email' },
-  { label: t('admin.customers.row.block'), value: 'block' }
+  { label: t('admin.customers.row.send_email'), value: 'email' }
 ])
 
 function capitalize(s: string): string {
@@ -46,8 +40,6 @@ const rows = computed<TableRow[]>(() =>
     avatar: c.avatar ?? '',
     name: c.name,
     email: c.email,
-    orders: 0,
-    totalSpent: 0,
     status: capitalize(c.role),
     joinedAt: c.created_at
   }))
@@ -85,18 +77,13 @@ function onRowAction(payload: { action: string; row: TableRow }) {
     }
     showToast(t('admin.customers.toast.viewing_profile', { name: String(payload.row.name) }))
   } else if (payload.action === 'email') {
-    showToast(t('admin.customers.toast.email_drafted', { name: String(payload.row.name) }))
-  } else if (payload.action === 'block') {
-    showToast(t('admin.customers.toast.blocked', { name: String(payload.row.name) }))
+    const email = String(payload.row.email ?? '')
+    if (email) window.location.href = `mailto:${email}`
   }
 }
 
-function onBulkAction(payload: { action: string; ids: string[] }) {
-  if (payload.action === 'export') {
-    showToast(t('admin.customers.toast.exported_csv', { count: payload.ids.length }))
-  } else if (payload.action === 'segment') {
-    showToast(t('admin.customers.toast.added_segment', { count: payload.ids.length }))
-  }
+function onBulkAction(_payload: { action: string; ids: string[] }) {
+  /* no customer bulk endpoints available */
 }
 
 onMounted(() => loadCustomers())

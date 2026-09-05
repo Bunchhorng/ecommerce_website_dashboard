@@ -4,11 +4,13 @@ namespace Tests\Feature\Api;
 
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
@@ -182,5 +184,108 @@ class AuthTest extends TestCase
             'password' => 'newpassword123',
             'password_confirmation' => 'different',
         ])->assertStatus(422);
+    }
+
+    public function test_register_sends_email_verification_notification(): void
+    {
+        Notification::fake();
+
+        $this->postJson('/api/auth/register', [
+            'name' => 'Jane Doe',
+            'email' => 'verify@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ])->assertStatus(201);
+
+        $user = User::where('email', 'verify@example.com')->firstOrFail();
+        $this->assertNull($user->email_verified_at);
+        Notification::assertSentTo($user, VerifyEmail::class);
+    }
+
+    public function test_verification_link_marks_email_as_verified(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->unverified()->create(['email' => 'verify@example.com']);
+        $verificationUrl = URL::temporarySignedRoute('verification.verify', now()->addMinutes(60), [
+            'id' => $user->id,
+            'hash' => sha1($user->email),
+        ]);
+
+        $this->actingAs($user, 'sanctum')->getJson($verificationUrl)
+            ->assertOk()
+            ->assertJsonPath('data.message', 'Email verified successfully.');
+
+        $this->assertNotNull($user->fresh()->email_verified_at);
+    }
+
+    public function test_verification_of_an_already_verified_email_is_idempotent(): void
+    {
+        $user = User::factory()->create(['email' => 'verify@example.com']);
+        $verificationUrl = URL::temporarySignedRoute('verification.verify', now()->addMinutes(60), [
+            'id' => $user->id,
+            'hash' => sha1($user->email),
+        ]);
+
+        $this->getJson($verificationUrl)
+            ->assertOk()
+            ->assertJsonPath('data.message', 'Your email is already verified.');
+    }
+
+    public function test_verification_rejects_an_invalid_hash(): void
+    {
+        $user = User::factory()->unverified()->create(['email' => 'verify@example.com']);
+        $verificationUrl = URL::temporarySignedRoute('verification.verify', now()->addMinutes(60), [
+            'id' => $user->id,
+            'hash' => sha1('wrong-email@example.com'),
+        ]);
+
+        $this->getJson($verificationUrl)->assertStatus(403);
+
+        $this->assertNull($user->fresh()->email_verified_at);
+    }
+
+    public function test_verification_rejects_an_expired_link(): void
+    {
+        $user = User::factory()->unverified()->create(['email' => 'verify@example.com']);
+        $verificationUrl = URL::temporarySignedRoute('verification.verify', now()->subMinutes(5), [
+            'id' => $user->id,
+            'hash' => sha1($user->email),
+        ]);
+
+        $this->getJson($verificationUrl)->assertStatus(403);
+
+        $this->assertNull($user->fresh()->email_verified_at);
+    }
+
+    public function test_unverified_user_can_resend_verification_email(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->unverified()->create();
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/auth/email/verification-notification')
+            ->assertOk()
+            ->assertJsonPath('data.message', 'Verification email sent.');
+
+        Notification::assertSentTo($user, VerifyEmail::class);
+    }
+
+    public function test_verified_user_cannot_resend_verification_email(): void
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/auth/email/verification-notification')
+            ->assertOk()
+            ->assertJsonPath('data.message', 'Your email is already verified.');
+
+        Notification::assertNotSentTo($user, VerifyEmail::class);
+    }
+
+    public function test_verification_link_requires_authentication_for_resend(): void
+    {
+        $this->postJson('/api/auth/email/verification-notification')->assertStatus(401);
     }
 }

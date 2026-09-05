@@ -58,6 +58,11 @@ const filters = reactive<Filters>({
 
 let applying = false
 
+function handleAdd(payload: { product: Product; variantId?: string }): void {
+  if (!payload.variantId) return
+  cart.addItem({ variantId: payload.variantId, quantity: 1 })
+}
+
 function toArray(v: unknown): string[] {
   if (Array.isArray(v)) return v.filter((x): x is string => typeof x === 'string')
   if (typeof v === 'string') return v ? [v] : []
@@ -482,7 +487,7 @@ function setPage(p: number) {
               v-for="p in products"
               :key="p.id"
               :product="p"
-              @add-to-cart="cart.addItem($event)"
+              @add-to-cart="handleAdd"
               @wishlist-toggle="wishlist.toggle($event)"
             />
           </div>

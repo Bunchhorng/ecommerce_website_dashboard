@@ -15,6 +15,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import { adminApi } from '@/api/admin'
 import type { AdminBrand, AdminCategory, AdminProduct } from '@/api/admin'
+import { mediaApi } from '@/api/uploads'
 import { formatPrice } from '@/utils/format'
 
 const { t } = useI18n()
@@ -43,6 +44,8 @@ interface ImageItem {
   url: string
   name: string
   isMain: boolean
+  file?: File
+  savedPath?: string
 }
 
 const form = reactive({
@@ -141,7 +144,7 @@ function addFile(file: File) {
   if (!file.type.startsWith('image/')) return
   const url = URL.createObjectURL(file)
   objectUrls.push(url)
-  images.value.push({ id: Date.now() + Math.random(), url, name: file.name, isMain: images.value.length === 0 })
+  images.value.push({ id: Date.now() + Math.random(), url, name: file.name, isMain: images.value.length === 0, file })
 }
 
 function onFiles(e: Event) {
@@ -156,18 +159,6 @@ function onDrop(e: DragEvent) {
   const files = e.dataTransfer?.files
   if (!files) return
   for (const file of Array.from(files)) addFile(file)
-}
-
-function addSamples() {
-  const base = images.value.length
-  for (let i = 0; i < 3; i++) {
-    images.value.push({
-      id: Date.now() + Math.random(),
-      url: `https://picsum.photos/seed/addp${base + i}/400/400`,
-      name: `Sample ${base + i + 1}`,
-      isMain: images.value.length === 0
-    })
-  }
 }
 
 function pickFiles() {
@@ -238,8 +229,29 @@ function loadForEdit(product: AdminProduct): void {
     id: g.id,
     url: g.image_path,
     name: `Image ${i + 1}`,
-    isMain: i === 0
+    isMain: i === 0,
+    savedPath: g.image_path
   }))
+}
+
+const saving = ref(false)
+
+async function resolveImagePaths(): Promise<string[]> {
+  const ordered = [...images.value].sort((a, b) => (a.isMain ? -1 : 0) - (b.isMain ? -1 : 0))
+  const paths: string[] = []
+
+  for (const img of ordered) {
+    if (img.file) {
+      const { data: resp } = await mediaApi.uploadImage(img.file, 'products')
+      paths.push(resp.data.path)
+    } else if (img.savedPath) {
+      paths.push(img.savedPath)
+    } else if (img.url) {
+      paths.push(img.url)
+    }
+  }
+
+  return paths
 }
 
 async function save() {
@@ -268,6 +280,9 @@ async function save() {
   }
 
   try {
+    saving.value = true
+    const imagePaths = await resolveImagePaths()
+
     if (isEdit.value) {
       const variantsPayload = variants.value
         .filter((x) => x.enabled)
@@ -284,13 +299,13 @@ async function save() {
             : { attributes: v.attributes.map((a) => ({ attribute: a.name, value: a.value })) })
         }))
 
-      await adminApi.updateProduct(productId, { ...payload, variants: variantsPayload })
+      await adminApi.updateProduct(productId, { ...payload, variants: variantsPayload, images: imagePaths })
       showToast(t('admin.products.toast_updated', { title: form.title, price: formatPrice(form.price) }))
       router.push({ name: 'admin-products' })
       return
     }
 
-    const { data: resp } = await adminApi.createProduct(payload)
+    const { data: resp } = await adminApi.createProduct({ ...payload, images: imagePaths })
     const createdId = resp.data.id
 
     for (const v of variants.value.filter((x) => x.enabled)) {
@@ -309,6 +324,8 @@ async function save() {
     router.push({ name: 'admin-products' })
   } catch {
     showToast(t('admin.products.toast_save_error'))
+  } finally {
+    saving.value = false
   }
 }
 
@@ -363,7 +380,7 @@ onMounted(async () => {
       <div class="flex flex-wrap gap-2">
         <button class="btn-secondary btn-sm" type="button" @click="router.push({ name: 'admin-products' })">{{ $t('actions.cancel') }}</button>
         <button class="btn-ghost btn-sm" type="button" @click="saveDraft()">{{ $t('admin.products.save_draft') }}</button>
-        <button class="btn-primary btn-sm" type="submit">
+        <button class="btn-primary btn-sm" type="submit" :disabled="saving">
           <Save class="h-4 w-4" />
           {{ $t('admin.products.save_product') }}
         </button>
@@ -608,7 +625,6 @@ onMounted(async () => {
             <ImagePlus class="h-4 w-4" />
             {{ $t('admin.products.browse_files') }}
           </button>
-          <button class="btn-ghost btn-sm" type="button" @click="addSamples()">{{ $t('admin.products.add_sample_images') }}</button>
         </div>
       </div>
       <p v-if="errors.images" class="mt-2 text-xs text-red-600">{{ errors.images }}</p>
@@ -640,7 +656,7 @@ onMounted(async () => {
 
     <div class="flex flex-wrap items-center justify-end gap-2">
       <button class="btn-secondary" type="button" @click="router.push({ name: 'admin-products' })">{{ $t('actions.cancel') }}</button>
-      <button class="btn-primary" type="submit">
+      <button class="btn-primary" type="submit" :disabled="saving">
         <Save class="h-4 w-4" />
         {{ $t('admin.products.save_product') }}
       </button>

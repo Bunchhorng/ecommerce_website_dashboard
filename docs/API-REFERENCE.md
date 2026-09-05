@@ -123,7 +123,7 @@ This reference was generated from the **live Laravel backend** running inside Do
 
 ## 3. Public Catalog & Lookup
 
-### POST /catalog/products — Filtered product listing (paginated)
+### GET /catalog/products — Filtered product listing (paginated)
 
 Controller: `CatalogController@index` → `CatalogService::filtered()`.
 

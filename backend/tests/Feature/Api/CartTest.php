@@ -112,6 +112,33 @@ class CartTest extends TestCase
             ->assertJsonPath('data.items_count', 2);
     }
 
+    public function test_guest_cart_is_merged_into_user_cart_after_login(): void
+    {
+        $user = User::factory()->create();
+        [$variantId] = $this->variantWithStock(10);
+
+        $headers = ['X-Session-Id' => 'sess-merge'];
+
+        $this->withHeaders($headers)
+            ->postJson('/api/cart', ['product_variant_id' => $variantId, 'quantity' => 2])
+            ->assertCreated();
+
+        $this->withHeaders($headers)
+            ->postJson('/api/auth/login', ['email' => $user->email, 'password' => 'password'])
+            ->assertOk()
+            ->assertJsonPath('data.user.id', $user->id);
+
+        $cart = Cart::where('user_id', $user->id)->firstOrFail();
+        $this->assertSame(2, (int) $cart->items()->firstOrFail()->quantity);
+
+        $token = $user->createToken('api')->plainTextToken;
+        $this->withToken($token)
+            ->getJson('/api/cart')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.items.0.quantity', 2);
+    }
+
     public function test_clear_empties_the_cart(): void
     {
         [$variantId] = $this->variantWithStock(10);

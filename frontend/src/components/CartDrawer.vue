@@ -3,7 +3,7 @@ import { useRouter } from 'vue-router'
 import { ShoppingBag, Trash2, X } from 'lucide-vue-next'
 import { useCartStore } from '@/stores/cart'
 import { useUiStore } from '@/stores/ui'
-import type { CartVariantSelection } from '@/types'
+import type { CartItem } from '@/types'
 import { formatPrice } from '@/utils/format'
 import EmptyState from './EmptyState.vue'
 import QuantityCounter from './QuantityCounter.vue'
@@ -29,8 +29,8 @@ function removeItem(itemId: string): void {
   cartStore.removeItem(itemId)
 }
 
-function variantLabel(variant: CartVariantSelection): string {
-  return variant.attributes.map((a) => a.value).join(', ')
+function variantLabel(item: CartItem): string {
+  return item.variantName ?? item.variant?.sku ?? ''
 }
 </script>
 
@@ -86,7 +86,7 @@ function variantLabel(variant: CartVariantSelection): string {
                     {{ item.title }}
                   </RouterLink>
                   <p v-if="item.variant" class="mt-0.5 line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
-                    {{ variantLabel(item.variant) }}
+                    {{ variantLabel(item) }}
                   </p>
                   <div class="mt-2 flex items-center justify-between gap-2">
                     <span class="text-xs text-gray-400 dark:text-gray-500">{{ formatPrice(item.unitPrice) }}</span>

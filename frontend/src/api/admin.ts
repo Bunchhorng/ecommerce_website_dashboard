@@ -21,7 +21,7 @@ export interface AdminProduct extends CatalogProduct {
   weight: number | null
   meta_title: string | null
   meta_description: string | null
-  gallery: { id: number; image_path: string; alt_text: string | null }[]
+  gallery: { id: number; image_path: string; alt_text: string | null; sort_order: number; is_cover: boolean }[]
   attributes: {
     id: number
     name: string

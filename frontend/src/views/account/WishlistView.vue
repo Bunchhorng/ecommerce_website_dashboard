@@ -19,7 +19,8 @@ const wishlist = useWishlistStore()
 const count = computed(() => wishlist.count)
 
 function addToCart(product: Product, payload: AddToCartPayload) {
-  cartStore.addItem({ product, variantId: payload.variantId, quantity: 1 })
+  if (!payload.variantId) return
+  cartStore.addItem({ variantId: payload.variantId, quantity: 1 })
   wishlist.remove(product.id)
 }
 </script>

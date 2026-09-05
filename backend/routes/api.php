@@ -18,13 +18,14 @@ use App\Http\Controllers\Api\Admin\AdminBrandController;
 use App\Http\Controllers\Api\Admin\AdminCategoryController;
 use App\Http\Controllers\Api\Admin\AdminCouponController;
 use App\Http\Controllers\Api\Admin\AdminCustomerController;
+use App\Http\Controllers\Api\Admin\AdminInventoryController;
+use App\Http\Controllers\Api\Admin\AdminMediaController;
 use App\Http\Controllers\Api\Admin\AdminOrderController;
 use App\Http\Controllers\Api\Admin\AdminProductController;
 use App\Http\Controllers\Api\Admin\AdminReportController;
 use App\Http\Controllers\Api\Admin\AdminReviewController;
 use App\Http\Controllers\Api\Admin\AdminShippingMethodController;
 use App\Http\Controllers\Api\Admin\DashboardController;
-use App\Http\Controllers\Api\Admin\AdminInventoryController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -37,10 +38,14 @@ Route::post('auth/register', [AuthController::class, 'register']);
 Route::post('auth/login', [AuthController::class, 'login']);
 Route::post('auth/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('auth/reset-password', [AuthController::class, 'resetPassword']);
+Route::get('auth/email/verify/{id}/{hash}', [AuthController::class, 'verify'])
+    ->middleware('signed')
+    ->name('verification.verify');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
+    Route::post('auth/email/verification-notification', [AuthController::class, 'sendVerificationEmail']);
 });
 
 Route::prefix('catalog')->group(function () {
@@ -115,16 +120,22 @@ Route::prefix('admin')
         Route::get('products/{product}', [AdminProductController::class, 'show']);
         Route::put('products/{product}', [AdminProductController::class, 'update']);
         Route::delete('products/{product}', [AdminProductController::class, 'destroy']);
+        Route::post('products/{product}/images', [AdminMediaController::class, 'storeProductImage']);
+        Route::delete('products/{product}/images/{image}', [AdminMediaController::class, 'destroyProductImage']);
+
+        Route::post('uploads/image', [AdminMediaController::class, 'uploadImage']);
 
         Route::get('categories', [AdminCategoryController::class, 'index']);
         Route::post('categories', [AdminCategoryController::class, 'store']);
         Route::put('categories/{category}', [AdminCategoryController::class, 'update']);
         Route::delete('categories/{category}', [AdminCategoryController::class, 'destroy']);
+        Route::post('categories/{category}/image', [AdminMediaController::class, 'uploadCategoryImage']);
 
         Route::get('brands', [AdminBrandController::class, 'index']);
         Route::post('brands', [AdminBrandController::class, 'store']);
         Route::put('brands/{brand}', [AdminBrandController::class, 'update']);
         Route::delete('brands/{brand}', [AdminBrandController::class, 'destroy']);
+        Route::post('brands/{brand}/logo', [AdminMediaController::class, 'uploadBrandLogo']);
 
         Route::get('shipping-methods', [AdminShippingMethodController::class, 'index']);
         Route::post('shipping-methods', [AdminShippingMethodController::class, 'store']);

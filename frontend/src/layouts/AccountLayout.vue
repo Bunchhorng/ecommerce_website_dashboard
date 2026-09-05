@@ -17,7 +17,7 @@ import { useWishlistStore } from '@/stores/wishlist'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { ref, computed, onMounted } from 'vue'
-import { accountApi, ordersApi } from '@/api'
+import { accountApi } from '@/api'
 import type { Component } from 'vue'
 
 interface NavItem {
@@ -71,6 +71,28 @@ const navItems = computed<NavItem[]>(() => [
 
 function isActive(name: string): boolean {
   return route.name === name
+}
+
+const resending = ref(false)
+const resendSent = ref(false)
+const resendError = ref(false)
+
+const showVerifyBanner = computed(
+  () => auth.isAuthenticated && !auth.user?.email_verified
+)
+
+async function resendVerification() {
+  resending.value = true
+  resendSent.value = false
+  resendError.value = false
+  try {
+    await auth.sendVerificationEmail()
+    resendSent.value = true
+  } catch {
+    resendError.value = true
+  } finally {
+    resending.value = false
+  }
 }
 
 async function signOut() {
@@ -199,6 +221,27 @@ async function signOut() {
 
     <main class="flex-1 p-4 sm:p-6 lg:p-8">
       <h1 class="mb-6 text-2xl font-bold text-ink dark:text-gray-100">{{ route.meta.title ?? 'Dashboard' }}</h1>
+      <div
+        v-if="showVerifyBanner"
+        class="mb-6 flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm sm:flex-row sm:items-center dark:border-amber-900/50 dark:bg-amber-900/20"
+      >
+        <div class="flex-1">
+          <p class="font-semibold text-amber-800 dark:text-amber-300">{{ $t('verify.banner_message') }}</p>
+          <p class="mt-0.5 text-amber-700 dark:text-amber-400">{{ $t('verify.banner_hint') }}</p>
+          <p v-if="resendSent" class="mt-1 font-medium text-emerald-600 dark:text-emerald-400">
+            {{ $t('verify.email_sent') }}
+          </p>
+          <p v-else-if="resendError" class="mt-1 font-medium text-red-500">{{ $t('verify.resend_failed') }}</p>
+        </div>
+        <button
+          type="button"
+          class="btn-outline shrink-0"
+          :disabled="resending"
+          @click="resendVerification"
+        >
+          {{ resending ? $t('verify.sending') : $t('verify.banner_resend') }}
+        </button>
+      </div>
       <router-view />
     </main>
   </div>

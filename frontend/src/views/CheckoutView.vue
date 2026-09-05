@@ -16,7 +16,6 @@ import type { Address, ShippingMethod, PaymentMethod, OrderStatus } from '@/type
 import { addressesApi, type ApiAddress } from '@/api/addresses'
 import { shippingApi, type ApiShippingMethod } from '@/api/shipping'
 import { checkoutApi } from '@/api/checkout'
-import { cartApi } from '@/api/cart'
 import { useCartStore } from '@/stores/cart'
 import BaseModal from '@/components/BaseModal.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -192,8 +191,7 @@ async function placeOrder() {
       payment_method: paymentMethod.value,
       address_id: selectedAddress.value.id
     })
-    await cartApi.clear()
-    cartStore.clearCart()
+    await cartStore.clear()
     router.push({ name: 'order-success', params: { orderId: data.data.order_number } })
   } catch {
     /* handle silently */
