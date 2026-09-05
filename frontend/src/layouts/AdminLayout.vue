@@ -24,9 +24,9 @@ import {
   LogOut,
   Settings
 } from 'lucide-vue-next'
-import ThemeToggle from '@/components/ThemeToggle.vue'
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import { accountApi } from '@/api'
 import { formatDateTime } from '@/utils/format'
 
@@ -175,7 +175,6 @@ async function signOut() {
 
         <div class="flex items-center gap-1">
           <ThemeToggle />
-
           <div class="relative">
             <button class="btn-icon relative" :title="$t('nav.notifications')" @click="uiStore.toggleAdminNotifications()">
               <Bell class="h-5 w-5" />

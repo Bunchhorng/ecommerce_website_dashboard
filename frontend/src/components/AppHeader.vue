@@ -3,8 +3,8 @@ import { onBeforeUnmount, ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import type { RouteLocationRaw } from "vue-router";
 import { Heart, LogIn, LogOut, Menu, Search, ShoppingBag, User, X } from "lucide-vue-next";
-import ThemeToggle from "@/components/ThemeToggle.vue";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
+import ThemeToggle from "@/components/ThemeToggle.vue";
 import { categoriesApi } from "@/api";
 
 const navCategories = ref<{ id: number; name: string; slug: string }[]>([]);

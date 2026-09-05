@@ -15,10 +15,10 @@ import {
 } from 'lucide-vue-next'
 import { useWishlistStore } from '@/stores/wishlist'
 import { useAuthStore } from '@/stores/auth'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import { useRouter } from 'vue-router'
 import { ref, computed, onMounted } from 'vue'
 import { accountApi } from '@/api'
-import ThemeToggle from '@/components/ThemeToggle.vue'
 import type { Component } from 'vue'
 
 interface NavItem {
@@ -226,7 +226,6 @@ async function signOut() {
     <main class="flex-1 p-4 sm:p-6 lg:p-8">
       <div class="mb-6 flex items-center justify-between gap-3">
         <h1 class="text-2xl font-bold text-ink dark:text-ink">{{ route.meta.title ?? 'Dashboard' }}</h1>
-        <ThemeToggle />
       </div>
       <div
         v-if="showVerifyBanner"
