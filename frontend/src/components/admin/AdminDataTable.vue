@@ -175,7 +175,7 @@ function cellValue(row: TableRow, col: TableColumn): string {
           <option v-for="a in props.bulkActions" :key="a.value" :value="a.value">{{ a.label }}</option>
         </select>
         <button class="btn-primary btn-sm" @click="handleBulkApply">{{ $t('actions.apply') }}</button>
-        <span class="text-xs text-gray-500">{{ $t('admin.table.selected_count', { count: selectedIds.length }) }}</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400">{{ $t('admin.table.selected_count', { count: selectedIds.length }) }}</span>
       </div>
     </div>
 
@@ -184,7 +184,7 @@ function cellValue(row: TableRow, col: TableColumn): string {
     <template v-else-if="filtered.length">
       <div class="max-h-[520px] overflow-auto">
         <table class="w-full min-w-[640px] text-sm">
-          <thead class="sticky top-0 z-10 bg-gray-50">
+          <thead class="sticky top-0 z-10 bg-canvas">
             <tr class="border-b border-border-gray">
               <th v-if="props.selectable" class="w-10 px-3 py-3">
                 <input
@@ -198,7 +198,7 @@ function cellValue(row: TableRow, col: TableColumn): string {
               <th
                 v-for="col in props.columns"
                 :key="col.key"
-                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"
+                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
                 :style="col.width ? { width: col.width } : undefined"
               >
                 <button
@@ -209,7 +209,7 @@ function cellValue(row: TableRow, col: TableColumn): string {
                   {{ col.label }}
                   <ArrowUp v-if="sortKey === col.key && sortDir === 'asc'" class="h-3.5 w-3.5" />
                   <ArrowDown v-else-if="sortKey === col.key && sortDir === 'desc'" class="h-3.5 w-3.5" />
-                  <ArrowUpDown v-else class="h-3.5 w-3.5 text-gray-300" />
+                  <ArrowUpDown v-else class="h-3.5 w-3.5 text-gray-300 dark:text-gray-500" />
                 </button>
                 <span v-else>{{ col.label }}</span>
               </th>
@@ -238,10 +238,10 @@ function cellValue(row: TableRow, col: TableColumn): string {
                 <td v-else-if="col.type === 'currency'" class="px-4 py-3 align-middle font-medium text-ink">
                   {{ formatPrice(Number(row[col.key])) }}
                 </td>
-                <td v-else-if="col.type === 'number'" class="px-4 py-3 align-middle text-gray-700">
+                <td v-else-if="col.type === 'number'" class="px-4 py-3 align-middle text-ink">
                   {{ String(row[col.key]) }}
                 </td>
-                <td v-else-if="col.type === 'date'" class="px-4 py-3 align-middle text-gray-600">
+                <td v-else-if="col.type === 'date'" class="px-4 py-3 align-middle text-ink opacity-80">
                   {{ formatDate(String(row[col.key])) }}
                 </td>
                 <td v-else-if="col.type === 'actions'" class="px-4 py-3 align-middle text-right">
@@ -251,12 +251,12 @@ function cellValue(row: TableRow, col: TableColumn): string {
                     </button>
                     <div
                       v-if="menuOpenId === String(row.id) && props.rowActions.length"
-                      class="absolute right-0 top-9 z-20 w-44 overflow-hidden rounded-xl border border-border-gray bg-white py-1 shadow-popover"
+                      class="absolute right-0 top-9 z-20 w-44 overflow-hidden rounded-xl border border-border-gray bg-surface py-1 shadow-popover"
                     >
                       <button
                         v-for="a in props.rowActions"
                         :key="a.value"
-                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink"
+                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100"
                         @click="runRowAction(a.value, row)"
                       >
                         {{ a.label }}
@@ -264,7 +264,7 @@ function cellValue(row: TableRow, col: TableColumn): string {
                     </div>
                   </div>
                 </td>
-                <td v-else class="px-4 py-3 align-middle text-gray-700">
+                <td v-else class="px-4 py-3 align-middle text-ink opacity-90">
                   {{ cellValue(row, col) }}
                 </td>
               </template>
@@ -274,7 +274,7 @@ function cellValue(row: TableRow, col: TableColumn): string {
       </div>
 
       <div class="flex items-center justify-between gap-3 border-t border-border-gray p-4">
-        <span class="text-xs text-gray-500">{{ $t('admin.table.showing_range', { from: rangeStart, to: rangeEnd, total: filtered.length }) }}</span>
+        <span class="text-xs text-gray-500 dark:text-gray-400">{{ $t('admin.table.showing_range', { from: rangeStart, to: rangeEnd, total: filtered.length }) }}</span>
         <BasePagination
           :page="currentPage"
           :page-count="pageCount"

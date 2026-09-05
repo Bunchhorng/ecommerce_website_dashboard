@@ -346,7 +346,7 @@ async function placeOrder() {
                     </div>
                   </div>
                   <div class="text-right">
-                    <span v-if="method.price === 0" class="chip bg-accent !text-ink dark:text-gray-100">Free</span>
+                    <span v-if="method.price === 0" class="chip bg-accent !text-ink dark:!text-gray-900">Free</span>
                     <span v-else class="font-semibold text-ink dark:text-gray-100">{{ formatPrice(method.price) }}</span>
                   </div>
                 </div>

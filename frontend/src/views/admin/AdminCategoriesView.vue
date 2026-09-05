@@ -244,7 +244,7 @@ onMounted(loadCategories)
             >
               <ChevronRight class="h-4 w-4 shrink-0 text-gray-400" />
               <FolderTree class="h-4 w-4 shrink-0 text-gray-400" />
-              <span class="flex-1 text-sm text-gray-700">{{ child.name }}</span>
+              <span class="flex-1 text-sm text-ink">{{ child.name }}</span>
               <span class="chip">{{ child.products_count ?? 0 }}</span>
               <button class="btn-icon h-8 w-8" type="button" :title="$t('actions.edit')" @click="openEdit(child)">
                 <Pencil class="h-4 w-4" />

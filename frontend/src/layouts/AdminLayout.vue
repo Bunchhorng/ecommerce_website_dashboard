@@ -113,7 +113,7 @@ async function signOut() {
 <template>
   <div class="flex h-screen overflow-hidden bg-canvas">
     <aside
-      class="flex shrink-0 flex-col border-r border-border-gray bg-white transition-all duration-200"
+      class="flex shrink-0 flex-col border-r border-border-gray bg-surface transition-all duration-200"
       :class="expanded ? 'w-64' : 'w-[72px]'"
     >
       <div class="flex h-16 items-center border-b border-border-gray p-4" :class="expanded ? '' : 'justify-center'">
@@ -131,7 +131,7 @@ async function signOut() {
 
       <nav class="flex-1 space-y-1 overflow-y-auto p-3">
         <template v-for="group in navGroups" :key="group.titleKey">
-          <div v-if="expanded" class="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+          <div v-if="expanded" class="px-3 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
             {{ $t(group.titleKey) }}
           </div>
           <RouterLink
@@ -140,7 +140,7 @@ async function signOut() {
             :to="item.route"
             :title="expanded ? undefined : $t(item.labelKey)"
             class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
-            :class="[isActive(item) ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100', expanded ? '' : 'justify-center']"
+            :class="[isActive(item) ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800', expanded ? '' : 'justify-center']"
           >
             <component :is="item.icon" :size="18" />
             <span v-if="expanded">{{ $t(item.labelKey) }}</span>
@@ -150,7 +150,7 @@ async function signOut() {
 
       <div class="border-t border-border-gray p-3">
         <button
-          class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary"
+          class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-primary"
           :class="expanded ? '' : 'justify-center'"
           @click="uiStore.toggleAdminSidebar()"
         >
@@ -161,7 +161,7 @@ async function signOut() {
     </aside>
 
     <div class="flex flex-1 flex-col overflow-hidden">
-      <header class="flex h-16 shrink-0 items-center gap-3 border-b border-border-gray bg-white px-4 sm:px-6">
+      <header class="flex h-16 shrink-0 items-center gap-3 border-b border-border-gray bg-surface px-4 sm:px-6">
         <button class="btn-icon" :title="$t('admin.nav.toggle_sidebar')" @click="uiStore.toggleAdminSidebar()">
           <Menu class="h-5 w-5" />
         </button>
@@ -184,7 +184,7 @@ async function signOut() {
 
             <template v-if="uiStore.adminNotificationsOpen">
               <div class="fixed inset-0 z-40" @click="uiStore.adminNotificationsOpen = false"></div>
-              <div class="absolute right-0 top-12 z-50 w-80 overflow-hidden rounded-xl border border-border-gray bg-white shadow-popover dark:border-gray-700 dark:bg-gray-800">
+              <div class="absolute right-0 top-12 z-50 w-80 overflow-hidden rounded-xl border border-border-gray bg-surface shadow-popover">
               <div class="flex items-center justify-between border-b border-border-gray px-4 py-3">
                 <span class="text-sm font-semibold text-ink">{{ $t('nav.notifications') }}</span>
                 <span class="chip !py-0.5 text-[11px]">{{ $t('admin.dashboard.new_count', { count: unreadCount }) }}</span>
@@ -196,8 +196,8 @@ async function signOut() {
                       <span class="truncate text-sm font-medium text-ink">{{ n.title }}</span>
                       <span v-if="!n.read_at" class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"></span>
                     </div>
-                    <p class="mt-0.5 truncate text-xs text-gray-500">{{ n.message }}</p>
-                    <div class="mt-1 text-[11px] text-gray-400">{{ formatDateTime(n.created_at) }}</div>
+                    <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">{{ n.message }}</p>
+                    <div class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">{{ formatDateTime(n.created_at) }}</div>
                   </div>
                 </div>
               </div>
@@ -213,7 +213,7 @@ async function signOut() {
         </div>
 
         <div class="relative">
-          <button class="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-100" @click="profileOpen = !profileOpen">
+          <button class="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" @click="profileOpen = !profileOpen">
             <div class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">{{ auth.user?.name?.charAt(0) ?? 'A' }}</div>
             <span class="hidden text-sm font-medium text-ink sm:block">{{ auth.user?.name ?? $t('admin.nav.admin_label') }}</span>
             <ChevronDown class="h-4 w-4 text-gray-400" />
@@ -221,16 +221,16 @@ async function signOut() {
 
           <template v-if="profileOpen">
             <div class="fixed inset-0 z-40" @click="profileOpen = false"></div>
-            <div class="absolute right-0 top-12 z-50 w-48 overflow-hidden rounded-xl border border-border-gray bg-white py-1 shadow-popover">
-              <RouterLink to="/account/profile" class="flex items-center px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink" @click="profileOpen = false">
+            <div class="absolute right-0 top-12 z-50 w-48 overflow-hidden rounded-xl border border-border-gray bg-surface py-1 shadow-popover">
+              <RouterLink to="/account/profile" class="flex items-center px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100" @click="profileOpen = false">
                 {{ $t('nav.profile') }}
               </RouterLink>
-              <RouterLink to="/admin/settings" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink" @click="profileOpen = false">
+              <RouterLink to="/admin/settings" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-ink dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100" @click="profileOpen = false">
                 <Settings class="h-4 w-4" />
                 {{ $t('admin.nav.settings') }}
               </RouterLink>
               <div class="my-1 border-t border-border-gray"></div>
-              <button class="flex w-full items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50" @click="signOut">
+              <button class="flex w-full items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10" @click="signOut">
                 <LogOut class="h-4 w-4" />
                 {{ $t('nav.sign_out') }}
               </button>

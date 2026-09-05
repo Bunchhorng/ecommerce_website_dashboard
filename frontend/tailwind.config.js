@@ -7,9 +7,10 @@ export default {
       colors: {
         primary: '#2563EB',
         'primary-dark': '#1E40AF',
-        canvas: '#F3F4F6',
-        ink: '#111827',
-        'border-gray': '#E5E7EB',
+        canvas: 'rgb(var(--color-canvas) / <alpha-value>)',
+        surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        ink: 'rgb(var(--color-ink) / <alpha-value>)',
+        'border-gray': 'rgb(var(--color-border) / <alpha-value>)',
         accent: '#FBBF24'
       },
       fontFamily: {

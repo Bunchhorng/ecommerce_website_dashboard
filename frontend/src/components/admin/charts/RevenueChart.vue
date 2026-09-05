@@ -4,17 +4,19 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import type { ChartData, ChartOptions, TooltipItem } from 'chart.js'
 import { Line } from 'vue-chartjs'
 import { useI18n } from 'vue-i18n'
+import { useChartTheme } from '@/composables/useChartTheme'
 import { formatPrice } from '@/utils/format'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler)
 ChartJS.defaults.font.family = 'Inter, sans-serif'
-ChartJS.defaults.color = '#6B7280'
 
 const props = defineProps<{
   data: { label: string; revenue: number }[]
 }>()
 
+const { palette } = useChartTheme()
 const { t } = useI18n()
+const primary = '#2563EB'
 
 const chartData = computed<ChartData<'line'>>(() => ({
   labels: props.data.map((p) => p.label),
@@ -22,9 +24,9 @@ const chartData = computed<ChartData<'line'>>(() => ({
     {
       label: t('admin.chart.revenue'),
       data: props.data.map((p) => p.revenue),
-      borderColor: '#2563EB',
+      borderColor: primary,
       backgroundColor: 'rgba(37, 99, 235, 0.08)',
-      pointBackgroundColor: '#2563EB',
+      pointBackgroundColor: primary,
       tension: 0.35,
       fill: true,
       borderWidth: 2,
@@ -34,7 +36,7 @@ const chartData = computed<ChartData<'line'>>(() => ({
   ]
 }))
 
-const chartOptions: ChartOptions<'line'> = {
+const chartOptions = computed<ChartOptions<'line'>>(() => ({
   responsive: true,
   maintainAspectRatio: false,
   interaction: { mode: 'index', intersect: false },
@@ -49,19 +51,19 @@ const chartOptions: ChartOptions<'line'> = {
   scales: {
     x: {
       grid: { display: false },
-      ticks: { color: '#6B7280' }
+      ticks: { color: palette.value.text }
     },
     y: {
       beginAtZero: true,
       border: { display: false },
-      grid: { color: '#F3F4F6' },
+      grid: { color: palette.value.grid },
       ticks: {
-        color: '#6B7280',
+        color: palette.value.text,
         callback: (value: number | string) => `$${Number(value) / 1000}k`
       }
     }
   }
-}
+}))
 </script>
 
 <template>

@@ -642,7 +642,7 @@ onMounted(async () => {
           </button>
           <button
             class="absolute bottom-1 left-1 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
-            :class="img.isMain ? 'bg-accent text-ink' : 'bg-white/90 text-gray-500 hover:text-ink'"
+            :class="img.isMain ? 'bg-accent text-ink dark:text-gray-900' : 'bg-white/90 text-gray-500 hover:text-ink'"
             type="button"
             @click="setMain(img.id)"
           >

@@ -259,7 +259,7 @@ function subscribe() {
                 <div class="text-xs text-gray-500 dark:text-gray-400">{{ $t('home.loved_by_shoppers') }}</div>
               </div>
 
-              <div class="absolute -left-2 top-1/2 flex -translate-y-1/2 items-center gap-2 rounded-2xl bg-accent px-3.5 py-2.5 text-ink shadow-2xl dark:text-gray-100">
+              <div class="absolute -left-2 top-1/2 flex -translate-y-1/2 items-center gap-2 rounded-2xl bg-accent px-3.5 py-2.5 text-ink shadow-2xl dark:text-gray-900">
                 <Tag :size="16" class="shrink-0" />
                 <div>
                   <div class="text-base font-extrabold leading-none">-22%</div>
@@ -369,7 +369,7 @@ function subscribe() {
               <div v-if="dealOfDay.compare_at_price" class="pb-1 text-lg text-blue-200 line-through">
                 {{ dealOfDay.compare_at_price.toFixed(2) }}
               </div>
-              <span v-if="dealOfDay.compare_at_price && dealOfDay.compare_at_price > dealOfDay.price" class="mb-1.5 rounded-md bg-accent px-2 py-1 text-xs font-bold text-ink">
+              <span v-if="dealOfDay.compare_at_price && dealOfDay.compare_at_price > dealOfDay.price" class="mb-1.5 rounded-md bg-accent px-2 py-1 text-xs font-bold text-ink dark:text-gray-900">
                 -{{ Math.round(((dealOfDay.compare_at_price - dealOfDay.price) / dealOfDay.compare_at_price) * 100) }}%
               </span>
             </div>

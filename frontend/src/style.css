@@ -3,16 +3,56 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-ink: 17 24 39; /* gray-900 */
+    --color-canvas: 249 250 251; /* gray-50 */
+    --color-surface: 255 255 255; /* white */
+    --color-border: 229 231 235; /* gray-200 */
+    color-scheme: light;
+  }
+
+  html.dark {
+    --color-ink: 249 250 251; /* gray-50 */
+    --color-canvas: 17 24 39; /* gray-900 */
+    --color-surface: 31 41 55; /* gray-800 */
+    --color-border: 55 65 81; /* gray-700 */
+    color-scheme: dark;
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
   }
 
-  html.dark {
-    color-scheme: dark;
+  body {
+    @apply bg-canvas font-sans text-ink antialiased transition-colors duration-300;
   }
 
-  body {
-    @apply bg-canvas font-sans text-ink antialiased transition-colors duration-300 dark:bg-gray-900 dark:text-gray-100;
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgb(209 213 219);
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(156 163 175);
+  }
+
+  html.dark ::-webkit-scrollbar-thumb {
+    background-color: rgb(75 85 99);
+  }
+
+  html.dark ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(107 114 128);
   }
 
   /* Khmer typography: use Khmer font and extra line-height to prevent
@@ -43,7 +83,7 @@
   }
 
   .card {
-    @apply rounded-xl border border-border-gray bg-white shadow-card transition-colors duration-300 dark:border-gray-700 dark:bg-gray-800;
+    @apply rounded-xl border border-border-gray bg-surface shadow-card transition-colors duration-300;
   }
 
   /* ---------- Buttons ---------- */
@@ -56,7 +96,7 @@
   }
 
   .btn-secondary {
-    @apply btn border border-border-gray bg-white px-5 py-2.5 text-sm text-ink hover:border-gray-300 hover:bg-canvas active:scale-[0.99] dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500 dark:hover:bg-gray-700;
+    @apply btn border border-border-gray bg-surface px-5 py-2.5 text-sm text-ink hover:border-gray-300 hover:bg-canvas active:scale-[0.99] dark:hover:border-gray-500 dark:hover:bg-gray-700;
   }
 
   .btn-outline {
@@ -64,7 +104,7 @@
   }
 
   .btn-accent {
-    @apply btn bg-accent px-5 py-2.5 text-sm text-ink hover:bg-accent/85 active:scale-[0.99];
+    @apply btn bg-accent px-5 py-2.5 text-sm text-ink hover:bg-accent/85 active:scale-[0.99] dark:text-gray-900;
   }
 
   .btn-danger {
@@ -89,7 +129,7 @@
 
   /* ---------- Form controls ---------- */
   .input {
-    @apply w-full rounded-lg border border-border-gray bg-white px-3 py-2.5 text-sm text-ink placeholder:text-gray-400 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-blue-500 dark:focus:ring-blue-500/30;
+    @apply w-full rounded-lg border border-border-gray bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-gray-400 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:placeholder:text-gray-500 dark:focus:border-blue-500 dark:focus:ring-blue-500/30;
   }
 
   .input-error {
@@ -97,15 +137,15 @@
   }
 
   .label {
-    @apply mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300;
+    @apply mb-1.5 block text-sm font-medium text-ink;
   }
 
   .select {
-    @apply w-full appearance-none rounded-lg border border-border-gray bg-white px-3 py-2.5 pr-9 text-sm text-ink transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-blue-500;
+    @apply w-full appearance-none rounded-lg border border-border-gray bg-surface px-3 py-2.5 pr-9 text-sm text-ink transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:border-blue-500;
   }
 
   .textarea {
-    @apply w-full rounded-lg border border-border-gray bg-white px-3 py-2.5 text-sm text-ink placeholder:text-gray-400 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-blue-500;
+    @apply w-full rounded-lg border border-border-gray bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-gray-400 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:placeholder:text-gray-500 dark:focus:border-blue-500;
   }
 
   /* ---------- Misc ---------- */
@@ -118,7 +158,7 @@
   }
 
   .section-title {
-    @apply mt-2 text-2xl font-bold text-ink sm:text-3xl dark:text-gray-100;
+    @apply mt-2 text-2xl font-bold text-ink sm:text-3xl;
   }
 
   .section-subtitle {
@@ -126,10 +166,10 @@
   }
 
   .nav-link {
-    @apply rounded-md px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-primary;
+    @apply rounded-md px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-canvas hover:text-primary dark:text-gray-300 dark:hover:text-primary;
   }
 
   .sticky-header {
-    @apply sticky top-0 z-40 border-b border-border-gray bg-white dark:border-gray-800 dark:bg-gray-900;
+    @apply sticky top-0 z-40 border-b border-border-gray bg-surface;
   }
 }

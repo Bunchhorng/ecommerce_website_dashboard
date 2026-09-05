@@ -417,7 +417,7 @@ const featureList = computed(() => {
             <span v-if="zoomActive" class="absolute right-3 top-3 z-20 rounded-full bg-white/80 p-2 text-ink dark:text-gray-100 dark:bg-gray-700/80">
               <ZoomIn class="h-5 w-5" />
             </span>
-            <span v-if="discountPercent" class="absolute left-4 top-4 z-20 rounded-lg bg-accent px-2.5 py-1 text-sm font-bold text-ink dark:text-gray-100">-{{ discountPercent }}%</span>
+            <span v-if="discountPercent" class="absolute left-4 top-4 z-20 rounded-lg bg-accent px-2.5 py-1 text-sm font-bold text-ink dark:text-gray-900">-{{ discountPercent }}%</span>
           </div>
 
           <div class="mt-4 grid grid-cols-4 gap-3">

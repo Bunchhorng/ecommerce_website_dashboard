@@ -238,4 +238,4 @@ onMounted(async () => {
       </div>
     </div>
   </template>
-</script>
+</template>

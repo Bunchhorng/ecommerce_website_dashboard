@@ -242,14 +242,17 @@ async function signOut(): Promise<void> {
             >
               Shop<span class="text-ink dark:text-gray-100">Verse</span>
             </RouterLink>
-            <button
-              type="button"
-              class="btn-icon"
-              :aria-label="$t('header.close_menu')"
-              @click="closeMobile"
-            >
-              <X :size="20" />
-            </button>
+            <div class="flex items-center gap-1">
+              <ThemeToggle />
+              <button
+                type="button"
+                class="btn-icon"
+                :aria-label="$t('header.close_menu')"
+                @click="closeMobile"
+              >
+                <X :size="20" />
+              </button>
+            </div>
           </div>
           <p
             class="px-5 pt-4 text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500"

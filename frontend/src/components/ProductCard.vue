@@ -63,7 +63,7 @@ function handleView(): void {
         />
       </RouterLink>
       <div v-if="discountPercent > 0 || props.product.isNew" class="absolute left-3 top-3 flex flex-col items-start gap-1">
-        <span v-if="discountPercent > 0" class="rounded-md bg-accent px-2 py-1 text-xs font-bold text-ink">
+        <span v-if="discountPercent > 0" class="rounded-md bg-accent px-2 py-1 text-xs font-bold text-ink dark:text-gray-900">
           -{{ discountPercent }}%
         </span>
         <span v-if="props.product.isNew" class="rounded-md bg-primary px-2 py-1 text-xs font-bold text-white dark:bg-blue-500">

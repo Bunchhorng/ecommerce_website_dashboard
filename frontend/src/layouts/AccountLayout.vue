@@ -18,6 +18,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { ref, computed, onMounted } from 'vue'
 import { accountApi } from '@/api'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 import type { Component } from 'vue'
 
 interface NavItem {
@@ -109,9 +110,12 @@ async function signOut() {
           <Menu class="h-5 w-5" />
         </button>
         <h2 class="text-base font-bold text-ink dark:text-gray-100">{{ $t('account.my_account') }}</h2>
-        <RouterLink to="/" class="btn-icon">
-          <ShoppingBag class="h-5 w-5" />
-        </RouterLink>
+        <div class="flex items-center gap-1">
+          <ThemeToggle />
+          <RouterLink to="/" class="btn-icon">
+            <ShoppingBag class="h-5 w-5" />
+          </RouterLink>
+        </div>
       </div>
     </header>
 
@@ -220,7 +224,10 @@ async function signOut() {
     </aside>
 
     <main class="flex-1 p-4 sm:p-6 lg:p-8">
-      <h1 class="mb-6 text-2xl font-bold text-ink dark:text-gray-100">{{ route.meta.title ?? 'Dashboard' }}</h1>
+      <div class="mb-6 flex items-center justify-between gap-3">
+        <h1 class="text-2xl font-bold text-ink dark:text-gray-100">{{ route.meta.title ?? 'Dashboard' }}</h1>
+        <ThemeToggle />
+      </div>
       <div
         v-if="showVerifyBanner"
         class="mb-6 flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm sm:flex-row sm:items-center dark:border-amber-900/50 dark:bg-amber-900/20"

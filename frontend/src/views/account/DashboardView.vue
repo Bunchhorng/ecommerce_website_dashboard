@@ -81,14 +81,14 @@ const cards = computed<SummaryCard[]>(() => [
     labelKey: 'account.completed_orders',
     value: completedCount.value,
     icon: PackageCheck,
-    tint: 'bg-emerald-100 text-emerald-600',
+    tint: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400',
     to: { name: 'account-orders' }
   },
   {
     labelKey: 'account.wishlist_items',
     value: wishlistCount.value,
     icon: Heart,
-    tint: 'bg-red-100 text-red-500',
+    tint: 'bg-red-100 text-red-500 dark:bg-red-500/15 dark:text-red-400',
     to: { name: 'account-wishlist' }
   }
 ])

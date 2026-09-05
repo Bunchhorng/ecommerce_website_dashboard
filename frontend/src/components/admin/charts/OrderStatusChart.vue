@@ -4,15 +4,16 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Lege
 import type { ChartData, ChartOptions, TooltipItem } from 'chart.js'
 import { Bar } from 'vue-chartjs'
 import { useI18n } from 'vue-i18n'
+import { useChartTheme } from '@/composables/useChartTheme'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 ChartJS.defaults.font.family = 'Inter, sans-serif'
-ChartJS.defaults.color = '#6B7280'
 
 const props = defineProps<{
   data: { status: string; count: number }[]
 }>()
 
+const { palette } = useChartTheme()
 const { t } = useI18n()
 
 const statusColors: Record<string, string> = {
@@ -42,7 +43,7 @@ const chartData = computed<ChartData<'bar'>>(() => ({
   ]
 }))
 
-const chartOptions: ChartOptions<'bar'> = {
+const chartOptions = computed<ChartOptions<'bar'>>(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -56,16 +57,16 @@ const chartOptions: ChartOptions<'bar'> = {
   scales: {
     x: {
       grid: { display: false },
-      ticks: { color: '#6B7280' }
+      ticks: { color: palette.value.text }
     },
     y: {
       beginAtZero: true,
       border: { display: false },
-      grid: { color: '#F3F4F6' },
-      ticks: { color: '#6B7280' }
+      grid: { color: palette.value.grid },
+      ticks: { color: palette.value.text }
     }
   }
-}
+}))
 </script>
 
 <template>

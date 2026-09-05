@@ -74,9 +74,9 @@ function aggregateByMonth(raw: { date: string; revenue: number }[]): { label: st
 }
 
 function lowStockTone(count: number): string {
-  if (count <= 5) return 'bg-red-50 text-red-600'
-  if (count <= 10) return 'bg-amber-50 text-amber-600'
-  return 'bg-gray-100 text-gray-600'
+  if (count <= 5) return 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400'
+  if (count <= 10) return 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400'
+  return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
 }
 
 async function loadDashboard() {
@@ -119,22 +119,26 @@ onMounted(() => {
       <div v-for="kpi in kpis" :key="kpi.label" class="card p-5">
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
-            <div class="text-sm text-gray-500">{{ kpi.label }}</div>
-            <div class="mt-2 truncate text-2xl font-extrabold text-ink sm:text-3xl">{{ kpi.value }}</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">{{ kpi.label }}</div>
+            <div class="mt-2 truncate text-2xl font-extrabold text-ink sm:text-3xl dark:text-gray-100">{{ kpi.value }}</div>
             <div v-if="kpi.delta !== null" class="mt-3 flex items-center gap-2">
               <span
                 class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold"
-                :class="kpi.delta >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'"
+                :class="kpi.delta >= 0
+                  ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400'
+                  : 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400'"
               >
                 <component :is="kpi.delta >= 0 ? TrendingUp : TrendingDown" class="h-3.5 w-3.5" />
                 {{ kpi.delta >= 0 ? '+' : '' }}{{ kpi.delta }}%
               </span>
-              <span class="text-xs text-gray-400">{{ $t('admin.dashboard.vs_last_month') }}</span>
+              <span class="text-xs text-gray-400 dark:text-gray-500">{{ $t('admin.dashboard.vs_last_month') }}</span>
             </div>
           </div>
           <div
             class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-            :class="kpi.danger ? 'bg-red-50 text-red-500' : 'bg-primary/10 text-primary'"
+            :class="kpi.danger
+              ? 'bg-red-50 text-red-500 dark:bg-red-500/15 dark:text-red-400'
+              : 'bg-primary/10 text-primary'"
           >
             <component :is="kpi.icon" class="h-5 w-5" />
           </div>
@@ -179,23 +183,23 @@ onMounted(() => {
           <div class="overflow-x-auto">
             <table class="w-full min-w-[640px] text-sm">
               <thead>
-                <tr class="border-y border-border-gray bg-gray-50">
-                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t('admin.table.col_order') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t('admin.table.col_customer') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t('admin.table.col_total') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t('admin.table.col_status') }}</th>
-                  <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t('admin.table.col_date') }}</th>
+                <tr class="border-y border-border-gray bg-gray-50 dark:bg-gray-700/40">
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $t('admin.table.col_order') }}</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $t('admin.table.col_customer') }}</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $t('admin.table.col_total') }}</th>
+                  <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $t('admin.table.col_status') }}</th>
+                  <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $t('admin.table.col_date') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-border-gray">
                 <tr v-for="order in recentOrders" :key="order.order_number" class="transition-colors hover:bg-canvas/50">
-                  <td class="px-5 py-3.5 font-semibold text-ink">{{ order.order_number }}</td>
-                  <td class="px-5 py-3.5 text-gray-600">{{ order.user?.name ?? '—' }}</td>
-                  <td class="px-5 py-3.5 font-medium text-gray-700">{{ formatPrice(order.total) }}</td>
+                  <td class="px-5 py-3.5 font-semibold text-ink dark:text-gray-100">{{ order.order_number }}</td>
+                  <td class="px-5 py-3.5 text-gray-600 dark:text-gray-300">{{ order.user?.name ?? '—' }}</td>
+                  <td class="px-5 py-3.5 font-medium text-gray-700 dark:text-gray-200">{{ formatPrice(order.total) }}</td>
                   <td class="px-5 py-3.5">
                     <StatusTag :status="capitalize(order.status)" />
                   </td>
-                  <td class="px-5 py-3.5 text-right text-gray-500">{{ formatDate(order.placed_at) }}</td>
+                  <td class="px-5 py-3.5 text-right text-gray-500 dark:text-gray-400">{{ formatDate(order.placed_at) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -208,7 +212,7 @@ onMounted(() => {
       <div class="flex flex-wrap items-center justify-between gap-2 p-5 pb-4">
         <div>
           <h2 class="text-base font-semibold text-ink">{{ $t('admin.dashboard.low_stock_alerts') }}</h2>
-          <p class="mt-0.5 text-sm text-gray-500">{{ $t('admin.dashboard.low_stock_description') }}</p>
+          <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{{ $t('admin.dashboard.low_stock_description') }}</p>
         </div>
         <RouterLink to="/admin/products" class="inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary-dark">
           {{ $t('admin.dashboard.view_all_products') }}
@@ -216,10 +220,10 @@ onMounted(() => {
         </RouterLink>
       </div>
       <ul class="divide-y divide-border-gray border-t border-border-gray">
-        <li v-if="metrics.low_stock_products === 0" class="px-5 py-6 text-center text-sm text-gray-400">
+        <li v-if="metrics.low_stock_products === 0" class="px-5 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
           {{ $t('admin.dashboard.no_low_stock') }}
         </li>
-        <li v-else class="px-5 py-3.5 text-center text-sm text-gray-500">
+        <li v-else class="px-5 py-3.5 text-center text-sm text-gray-500 dark:text-gray-400">
           {{ $t('admin.dashboard.low_stock_count', { count: metrics.low_stock_products }) }}
         </li>
       </ul>
