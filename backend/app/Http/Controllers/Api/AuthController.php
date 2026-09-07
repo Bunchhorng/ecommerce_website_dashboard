@@ -12,6 +12,8 @@ use App\Models\User;
 use App\Services\CartService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 
@@ -23,19 +25,38 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request)
     {
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => $request->password,
-            'role' => User::ROLE_CUSTOMER,
-            'newsletter' => $request->boolean('newsletter'),
-        ]);
+        $user = DB::transaction(function () use ($request) {
+            return User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => $request->password,
+                'role' => User::ROLE_CUSTOMER,
+                'newsletter' => $request->boolean('newsletter'),
+            ]);
+        });
 
-        if (!$user->hasVerifiedEmail()) {
-            $user->sendEmailVerificationNotification();
+        // Email verification and guest-cart merging are non-essential to account
+        // creation. If any of them throw, the user is already persisted and should
+        // still be able to complete registration rather than seeing a generic failure.
+        try {
+            if (!$user->hasVerifiedEmail()) {
+                $user->sendEmailVerificationNotification();
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Registration succeeded but verification email failed to send.', [
+                'user_id' => $user->id,
+                'exception' => $e->getMessage(),
+            ]);
         }
 
-        $this->carts->mergeGuestIntoUser($user, $request->header('X-Session-Id'));
+        try {
+            $this->carts->mergeGuestIntoUser($user, $request->header('X-Session-Id'));
+        } catch (\Throwable $e) {
+            Log::warning('Registration succeeded but guest cart could not be merged.', [
+                'user_id' => $user->id,
+                'exception' => $e->getMessage(),
+            ]);
+        }
 
         $token = $user->createToken('api')->plainTextToken;
 

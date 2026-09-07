@@ -104,7 +104,7 @@ async function signOut() {
 
 <template>
   <div class="flex min-h-screen flex-col bg-canvas dark:bg-canvas lg:flex-row">
-    <header class="sticky top-0 z-40 border-b border-border-gray dark:border-border-gray bg-white dark:bg-surface lg:hidden">
+    <header class="sticky top-0 z-40 shrink-0 border-b border-border-gray dark:border-border-gray bg-white dark:bg-surface lg:hidden">
       <div class="flex items-center justify-between px-4 py-3">
         <button type="button" class="btn-icon" @click="mobileOpen = true">
           <Menu class="h-5 w-5" />
@@ -174,50 +174,72 @@ async function signOut() {
       </div>
     </div>
 
-    <aside class="hidden w-72 shrink-0 border-r border-border-gray dark:border-border-gray bg-white dark:bg-surface lg:flex lg:flex-col">
-      <div class="flex items-center gap-3 border-b border-border-gray dark:border-border-gray p-6">
-        <div
-          class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white"
-        >
-          {{ initials }}
-        </div>
-        <div class="min-w-0">
-          <p class="truncate text-sm font-semibold text-ink dark:text-ink">{{ displayName }}</p>
-          <p class="truncate text-xs text-gray-500 dark:text-muted">{{ displayEmail }}</p>
+    <aside class="sticky top-0 hidden h-screen max-h-screen w-72 shrink-0 self-start flex-col overflow-hidden border-r border-border-gray dark:border-border-gray bg-white dark:bg-surface lg:flex">
+      <div class="relative shrink-0 overflow-hidden bg-primary p-6">
+        <div class="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10"></div>
+        <div class="pointer-events-none absolute -bottom-12 -left-6 h-28 w-28 rounded-full bg-white/10"></div>
+        <div class="relative flex items-center gap-3">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/95 text-sm font-bold text-primary shadow-sm">
+            {{ initials }}
+          </div>
+          <div class="min-w-0">
+            <p class="truncate text-sm font-semibold text-white">{{ displayName }}</p>
+            <p class="truncate text-xs text-white/70">{{ displayEmail }}</p>
+          </div>
         </div>
       </div>
-      <nav class="flex-1 space-y-1 p-4">
+
+      <div class="px-6 pb-1 pt-5 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+        {{ $t('account.my_account') }}
+      </div>
+
+      <nav class="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
         <RouterLink
           v-for="item in navItems"
           :key="item.route"
           :to="{ name: item.route }"
-          class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm"
-          :class="isActive(item.route) ? 'bg-primary/10 font-semibold text-primary' : 'text-gray-600 dark:text-muted hover:bg-gray-100 dark:hover:bg-surface-hover'"
+          class="group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
+          :class="isActive(item.route) ? 'bg-primary/10 font-semibold text-primary' : 'text-gray-600 dark:text-muted hover:bg-gray-100 dark:hover:bg-surface-hover hover:text-ink dark:hover:text-ink'"
         >
-          <component :is="item.icon" class="h-5 w-5 shrink-0" />
-          <span>{{ $t(item.nameKey) }}</span>
+          <span
+            class="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-primary"
+            :class="isActive(item.route) ? 'opacity-100' : 'opacity-0 transition-opacity group-hover:opacity-40'"
+          ></span>
+          <span
+            class="flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+            :class="isActive(item.route) ? 'bg-primary/15 text-primary' : 'bg-gray-50 text-gray-500 dark:bg-surface-hover dark:text-muted group-hover:text-ink dark:group-hover:text-ink'"
+          >
+            <component :is="item.icon" class="h-[18px] w-[18px] shrink-0" />
+          </span>
+          <span class="flex-1 truncate">{{ $t(item.nameKey) }}</span>
           <span
             v-if="item.count"
-            class="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary"
+            class="rounded-full px-2 py-0.5 text-xs font-semibold"
+            :class="isActive(item.route) ? 'bg-primary text-white' : 'bg-primary/10 text-primary'"
           >
             {{ item.count }}
           </span>
         </RouterLink>
       </nav>
-      <div class="border-t border-border-gray dark:border-border-gray p-4">
+
+      <div class="shrink-0 border-t border-border-gray dark:border-border-gray p-3">
         <RouterLink
           to="/"
-          class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-600 dark:text-muted hover:bg-gray-100 dark:hover:bg-surface-hover hover:text-ink dark:hover:text-ink"
+          class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-600 dark:text-muted transition-colors hover:bg-gray-100 dark:hover:bg-surface-hover hover:text-ink dark:hover:text-ink"
         >
-          <ShoppingBag class="h-5 w-5 shrink-0" />
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-50 text-gray-500 dark:bg-surface-hover dark:text-muted">
+            <ShoppingBag class="h-[18px] w-[18px] shrink-0" />
+          </span>
           {{ $t('nav.back_to_store') }}
         </RouterLink>
         <button
           type="button"
-          class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-600 dark:text-muted hover:bg-gray-100 dark:hover:bg-surface-hover hover:text-red-500"
+          class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-600 dark:text-muted transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
           @click="signOut"
         >
-          <LogOut class="h-5 w-5 shrink-0" />
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-50 text-gray-500 dark:bg-surface-hover dark:text-muted">
+            <LogOut class="h-[18px] w-[18px] shrink-0" />
+          </span>
           {{ $t('nav.sign_out') }}
         </button>
       </div>

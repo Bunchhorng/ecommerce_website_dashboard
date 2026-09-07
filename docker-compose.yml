@@ -113,7 +113,7 @@ services:
     container_name: ecommerce_frontend
     working_dir: /app
     ports:
-      - "5173:5173"
+      - "5174:5173"
     environment:
       # Proxy /api calls to the nginx container (backend) on the internal network.
       # localhost:8000 would point to the frontend container itself and fail.
