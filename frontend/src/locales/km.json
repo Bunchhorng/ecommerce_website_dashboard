@@ -896,6 +896,8 @@
     "edit_address": "កែសម្រួលអាសយដ្ឋាន",
     "update_address": "ធ្វើបច្ចុប្បន្នភាពអាសយដ្ឋាន",
     "cannot_delete_default_address": "អ្នកមិនអាចលុបអាសយដ្ឋានលំនាំដើមរបស់អ្នកបានទេ។",
+    "recipient_information": "ព័ត៌មានអ្នកទទួល",
+    "address_details": "ព័ត៌មានអាសយដ្ឋាន",
     "unread_count": "មិនទាន់អាន {count}",
     "mark_all_read": "សម្គាល់ទាំងអស់ថាបានអាន",
     "all_caught_up": "អ្នកបានអានទាំងអស់ហើយ។",

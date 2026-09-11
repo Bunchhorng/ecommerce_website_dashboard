@@ -56,7 +56,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
       <div class="fixed inset-0 animate-fade-in bg-black/40" @click="handleBackdropClick"></div>
       <div class="relative flex min-h-full items-center justify-center p-4">
         <div
-          class="relative mx-4 my-8 flex max-h-[85vh] w-full flex-col rounded-xl bg-white shadow-popover"
+          class="relative mx-4 my-8 flex max-h-[85vh] w-full flex-col rounded-xl bg-white shadow-popover dark:bg-surface"
           :class="sizeClasses[size]"
         >
           <header class="flex shrink-0 items-center justify-between border-b border-border-gray px-6 py-4">

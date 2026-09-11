@@ -896,6 +896,8 @@
     "edit_address": "Edit Address",
     "update_address": "Update Address",
     "cannot_delete_default_address": "You cannot delete your default address.",
+    "recipient_information": "Recipient Information",
+    "address_details": "Address Details",
     "unread_count": "{count} unread",
     "mark_all_read": "Mark all as read",
     "all_caught_up": "You're all caught up.",
