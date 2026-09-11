@@ -19,6 +19,7 @@ class UserResource extends JsonResource
             'newsletter' => (bool) $this->newsletter,
             'email_verified' => $this->hasVerifiedEmail() ? true : false,
             'email_verified_at' => $this->email_verified_at?->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
         ];
     }
 }

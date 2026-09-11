@@ -56,7 +56,8 @@
     "close": "Close"
   },
   "common": {
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "saving": "Saving…"
   },
   "product": {
     "sku": "SKU",
@@ -843,6 +844,31 @@
     "profile_updated": "Profile updated successfully.",
     "upload": "Upload",
     "profile_info": "Profile Information",
+    "personal_information": "Personal Information",
+    "personal_information_desc": "Update your personal details and how people can reach you.",
+    "account_summary": "Account Summary",
+    "account_summary_desc": "An overview of your account status.",
+    "member_since": "Member since {date}",
+    "email_status": "Email Status",
+    "verified": "Verified",
+    "not_verified": "Not Verified",
+    "account_type": "Account Type",
+    "customer_role": "Customer",
+    "admin_role": "Administrator",
+    "phone_number": "Phone Number",
+    "role_label": "Role",
+    "account_extra_info": "Account details",
+    "quick_links": "Quick Links",
+    "change_password_hint": "Secure your account with a new password.",
+    "manage_addresses_hint": "Manage your shipping details.",
+    "save_successful": "Changes saved successfully.",
+    "profile_photo": "Profile photo",
+    "change_photo": "Change photo",
+    "upload_photo": "Upload photo",
+    "avatar_hint": "JPG, PNG, WebP or GIF up to 2MB",
+    "avatar_updated": "Profile photo updated successfully.",
+    "avatar_update_failed": "Could not upload the photo. Please try a smaller image."
+    ,
     "wishlist_count": "My Wishlist ({count})",
     "add_from_collection": "Add from collection",
     "wishlist_cta_title": "Save items you love",

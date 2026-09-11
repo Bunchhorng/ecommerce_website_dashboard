@@ -8,11 +8,21 @@ use App\Models\Setting;
 use App\Models\TrackingEvent;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AccountAndSettingsTest extends TestCase
 {
     use RefreshDatabase;
+
+    private function storagePath(string $url): string
+    {
+        $path = parse_url($url, PHP_URL_PATH) ?? $url;
+        $path = ltrim($path, '/');
+
+        return str_starts_with($path, 'storage/') ? substr($path, strlen('storage/')) : $path;
+    }
 
     public function test_customer_can_list_their_reviews(): void
     {
@@ -119,5 +129,54 @@ class AccountAndSettingsTest extends TestCase
         $this->assertNotNull(
             TrackingEvent::where('order_id', $order->id)->where('status', Order::STATUS_CONFIRMED)->first()
         );
+    }
+
+    public function test_customer_can_upload_avatar(): void
+    {
+        Storage::fake('public');
+
+        $response = $this->actingAs(User::factory()->create(), 'sanctum')
+            ->postJson('/api/account/avatar', [
+                'image' => UploadedFile::fake()->image('avatar.jpg', 10, 10),
+            ])
+            ->assertOk()
+            ->assertJsonStructure(['data' => ['avatar']]);
+
+        $user = User::first();
+        $this->assertSame($response->json('data.avatar'), $user->avatar);
+        $this->assertStringContainsString('/storage/images/avatars/', $user->avatar);
+        $this->assertTrue(Storage::disk('public')->exists($this->storagePath($user->avatar)));
+    }
+
+    public function test_customer_avatar_replacement_deletes_old_file(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $oldUrl = Storage::disk('public')->url('images/avatars/old-avatar.jpg');
+        Storage::disk('public')->put('images/avatars/old-avatar.jpg', 'binary');
+        $user->update(['avatar' => $oldUrl]);
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/account/avatar', [
+                'image' => UploadedFile::fake()->image('new-avatar.jpg', 10, 10),
+            ])
+            ->assertOk();
+
+        $newAvatar = $response->json('data.avatar');
+        $this->assertNotSame($oldUrl, $newAvatar);
+        $this->assertSame($newAvatar, $user->fresh()->avatar);
+        $this->assertTrue(Storage::disk('public')->exists($this->storagePath($newAvatar)));
+        $this->assertFalse(Storage::disk('public')->exists('images/avatars/old-avatar.jpg'));
+    }
+
+    public function test_customer_avatar_rejects_a_non_image_file(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->create(), 'sanctum')
+            ->postJson('/api/account/avatar', [
+                'image' => UploadedFile::fake()->create('document.pdf', 200, 'application/pdf'),
+            ])->assertStatus(422);
     }
 }

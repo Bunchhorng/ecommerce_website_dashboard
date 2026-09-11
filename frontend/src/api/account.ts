@@ -34,6 +34,14 @@ export const accountApi = {
     return apiClient.put<AccountDashboard['user']>('/account/profile', payload)
   },
 
+  uploadAvatar(file: File) {
+    const formData = new FormData()
+    formData.append('image', file)
+    return apiClient.post<AccountDashboard['user']>('/account/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
   changePassword(payload: { current_password: string; password: string; password_confirmation: string }) {
     return apiClient.post<{ data: { message: string } }>('/account/password', payload)
   },

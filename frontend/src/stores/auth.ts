@@ -14,6 +14,7 @@ export interface AuthUser {
   newsletter?: boolean
   email_verified?: boolean
   email_verified_at?: string | null
+  created_at?: string | null
 }
 
 function loadUser(): AuthUser | null {

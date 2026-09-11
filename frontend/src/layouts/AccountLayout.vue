@@ -2,6 +2,7 @@
 import { RouterLink, useRoute } from 'vue-router'
 import {
   Bell,
+  Check,
   Heart,
   KeyRound,
   LayoutDashboard,
@@ -16,6 +17,7 @@ import {
 import { useWishlistStore } from '@/stores/wishlist'
 import { useAuthStore } from '@/stores/auth'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { useRouter } from 'vue-router'
 import { ref, computed, onMounted } from 'vue'
 import { accountApi } from '@/api'
@@ -37,11 +39,7 @@ const mobileOpen = ref(false)
 const displayName = computed(() => auth.user?.name ?? '')
 const displayEmail = computed(() => auth.user?.email ?? '')
 
-const initials = computed(() => displayName.value
-  .split(' ')
-  .map((word) => word[0])
-  .join('')
-)
+const isEmailVerified = computed(() => Boolean(auth.user?.email_verified))
 
 const unreadCount = ref(0)
 const ordersCount = ref(0)
@@ -103,15 +101,16 @@ async function signOut() {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-canvas dark:bg-canvas lg:flex-row">
-    <header class="sticky top-0 z-40 shrink-0 border-b border-border-gray dark:border-border-gray bg-white dark:bg-surface lg:hidden">
+  <div class="flex min-h-screen flex-col bg-canvas lg:flex-row">
+    <header class="sticky top-0 z-40 shrink-0 border-b border-border-gray bg-surface lg:hidden">
       <div class="flex items-center justify-between px-4 py-3">
         <button type="button" class="btn-icon" @click="mobileOpen = true">
           <Menu class="h-5 w-5" />
         </button>
-        <h2 class="text-base font-bold text-ink dark:text-ink">{{ $t('account.my_account') }}</h2>
+        <h2 class="text-base font-bold text-ink">{{ $t('account.my_account') }}</h2>
         <div class="flex items-center gap-1">
           <ThemeToggle />
+          <LanguageSwitcher />
           <RouterLink to="/" class="btn-icon">
             <ShoppingBag class="h-5 w-5" />
           </RouterLink>
@@ -121,20 +120,37 @@ async function signOut() {
 
     <div v-if="mobileOpen" class="fixed inset-0 z-50 lg:hidden">
       <div class="absolute inset-0 bg-black/50" @click="mobileOpen = false"></div>
-      <div class="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-y-auto bg-white dark:bg-surface shadow-2xl dark:shadow-black/40">
-        <div class="relative flex items-center gap-3 border-b border-border-gray dark:border-border-gray p-6">
-          <div
-            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white"
-          >
-            {{ initials }}
+      <div class="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col overflow-y-auto bg-surface shadow-2xl dark:shadow-black/40">
+        <div class="flex h-16 shrink-0 items-center gap-2.5 border-b border-border-gray px-4">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-extrabold text-white">EK</div>
+          <div class="flex flex-col items-start leading-none">
+            <span class="text-base font-extrabold tracking-tight text-ink">E-KHMER</span>
+            <span class="chip mt-1 !px-2 !py-0 text-[10px] uppercase tracking-wide">{{ $t('account.my_account') }}</span>
           </div>
-          <div class="min-w-0">
-            <p class="truncate text-sm font-semibold text-ink dark:text-ink">{{ displayName }}</p>
-            <p class="truncate text-xs text-gray-500 dark:text-muted">{{ displayEmail }}</p>
-          </div>
-          <button type="button" class="btn-icon absolute right-2 top-2" @click="mobileOpen = false">
+          <button type="button" class="btn-icon ml-auto" :title="$t('actions.close')" @click="mobileOpen = false">
             <X class="h-5 w-5" />
           </button>
+        </div>
+
+        <div class="p-4">
+          <div class="flex items-center gap-3 rounded-xl border border-border-gray bg-canvas/60 p-4">
+            <div class="relative shrink-0">
+              <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-sm font-bold text-white overflow-hidden ring-2 ring-surface">
+                <img v-if="auth.user?.avatar" :key="auth.user.avatar" :src="auth.user.avatar" :alt="displayName" class="h-full w-full object-cover" />
+                <User v-else class="h-5 w-5" />
+              </div>
+              <span
+                v-if="isEmailVerified"
+                class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-success text-white ring-2 ring-surface"
+              >
+                <Check class="h-2.5 w-2.5" />
+              </span>
+            </div>
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold text-ink">{{ displayName }}</p>
+              <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-muted">{{ displayEmail }}</p>
+            </div>
+          </div>
         </div>
         <nav class="flex-1 space-y-1 p-4">
           <RouterLink
@@ -142,7 +158,7 @@ async function signOut() {
             :key="item.route"
             :to="{ name: item.route }"
             class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm"
-            :class="isActive(item.route) ? 'bg-primary/10 font-semibold text-primary' : 'text-gray-600 dark:text-muted hover:bg-gray-100 dark:hover:bg-surface-hover'"
+            :class="isActive(item.route) ? 'bg-primary/10 font-semibold text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-muted dark:hover:bg-surface-hover'"
           >
             <component :is="item.icon" class="h-5 w-5 shrink-0" />
             <span>{{ $t(item.nameKey) }}</span>
@@ -154,7 +170,7 @@ async function signOut() {
             </span>
           </RouterLink>
         </nav>
-        <div class="border-t border-border-gray dark:border-border-gray p-4">
+        <div class="border-t border-border-gray p-4">
           <RouterLink
             to="/"
             class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-600 dark:text-muted hover:bg-gray-100 dark:hover:bg-surface-hover hover:text-ink dark:hover:text-ink"
@@ -174,17 +190,32 @@ async function signOut() {
       </div>
     </div>
 
-    <aside class="sticky top-0 hidden h-screen max-h-screen w-72 shrink-0 self-start flex-col overflow-hidden border-r border-border-gray dark:border-border-gray bg-white dark:bg-surface lg:flex">
-      <div class="relative shrink-0 overflow-hidden bg-primary p-6">
-        <div class="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10"></div>
-        <div class="pointer-events-none absolute -bottom-12 -left-6 h-28 w-28 rounded-full bg-white/10"></div>
-        <div class="relative flex items-center gap-3">
-          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/95 text-sm font-bold text-primary shadow-sm">
-            {{ initials }}
+    <aside class="sticky top-0 hidden h-screen max-h-screen w-72 shrink-0 self-start flex-col overflow-hidden border-r border-border-gray bg-surface lg:flex">
+      <div class="flex h-16 shrink-0 items-center gap-2.5 border-b border-border-gray px-4">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-extrabold text-white">EK</div>
+        <div class="flex flex-col items-start leading-none">
+          <span class="text-base font-extrabold tracking-tight text-ink">E-KHMER</span>
+          <span class="chip mt-1 !px-2 !py-0 text-[10px] uppercase tracking-wide">{{ $t('account.my_account') }}</span>
+        </div>
+      </div>
+
+      <div class="px-4 pt-4">
+        <div class="flex items-center gap-3 rounded-xl border border-border-gray bg-canvas/60 p-4">
+          <div class="relative shrink-0">
+            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-sm font-bold text-white overflow-hidden ring-2 ring-surface">
+              <img v-if="auth.user?.avatar" :key="auth.user.avatar" :src="auth.user.avatar" :alt="displayName" class="h-full w-full object-cover" />
+              <User v-else class="h-6 w-6" />
+            </div>
+            <span
+              v-if="isEmailVerified"
+              class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-success text-white ring-2 ring-surface"
+            >
+              <Check class="h-2.5 w-2.5" />
+            </span>
           </div>
           <div class="min-w-0">
-            <p class="truncate text-sm font-semibold text-white">{{ displayName }}</p>
-            <p class="truncate text-xs text-white/70">{{ displayEmail }}</p>
+            <p class="truncate text-sm font-semibold text-ink">{{ displayName }}</p>
+            <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-muted">{{ displayEmail }}</p>
           </div>
         </div>
       </div>
@@ -199,7 +230,7 @@ async function signOut() {
           :key="item.route"
           :to="{ name: item.route }"
           class="group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
-          :class="isActive(item.route) ? 'bg-primary/10 font-semibold text-primary' : 'text-gray-600 dark:text-muted hover:bg-gray-100 dark:hover:bg-surface-hover hover:text-ink dark:hover:text-ink'"
+          :class="isActive(item.route) ? 'bg-primary/10 font-semibold text-primary' : 'text-gray-600 hover:bg-gray-100 dark:text-muted dark:hover:bg-surface-hover'"
         >
           <span
             class="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-primary"
@@ -207,7 +238,7 @@ async function signOut() {
           ></span>
           <span
             class="flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
-            :class="isActive(item.route) ? 'bg-primary/15 text-primary' : 'bg-gray-50 text-gray-500 dark:bg-surface-hover dark:text-muted group-hover:text-ink dark:group-hover:text-ink'"
+            :class="isActive(item.route) ? 'bg-primary/15 text-primary' : 'bg-gray-50 text-gray-500 dark:bg-surface-hover dark:text-muted group-hover:text-ink'"
           >
             <component :is="item.icon" class="h-[18px] w-[18px] shrink-0" />
           </span>
@@ -222,10 +253,10 @@ async function signOut() {
         </RouterLink>
       </nav>
 
-      <div class="shrink-0 border-t border-border-gray dark:border-border-gray p-3">
+      <div class="shrink-0 border-t border-border-gray p-3">
         <RouterLink
           to="/"
-          class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-600 dark:text-muted transition-colors hover:bg-gray-100 dark:hover:bg-surface-hover hover:text-ink dark:hover:text-ink"
+          class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-600 dark:text-muted transition-colors hover:bg-gray-100 dark:hover:bg-surface-hover hover:text-ink"
         >
           <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-50 text-gray-500 dark:bg-surface-hover dark:text-muted">
             <ShoppingBag class="h-[18px] w-[18px] shrink-0" />
@@ -247,7 +278,11 @@ async function signOut() {
 
     <main class="flex-1 p-4 sm:p-6 lg:p-8">
       <div class="mb-6 flex items-center justify-between gap-3">
-        <h1 class="text-2xl font-bold text-ink dark:text-ink">{{ route.meta.title ?? 'Dashboard' }}</h1>
+        <h1 class="text-2xl font-bold text-ink">{{ route.meta.title ?? 'Dashboard' }}</h1>
+        <div class="flex items-center gap-1">
+          <LanguageSwitcher />
+          <ThemeToggle />
+        </div>
       </div>
       <div
         v-if="showVerifyBanner"

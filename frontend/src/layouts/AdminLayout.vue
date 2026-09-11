@@ -27,6 +27,7 @@ import {
 import { useUiStore } from '@/stores/ui'
 import { useAuthStore } from '@/stores/auth'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { accountApi } from '@/api'
 import type { ApiNotification } from '@/api/account'
 import { formatDateTime } from '@/utils/format'
@@ -175,6 +176,7 @@ async function signOut() {
         </div>
 
         <div class="flex items-center gap-1">
+          <LanguageSwitcher />
           <ThemeToggle />
           <div class="relative">
             <button class="btn-icon relative" :title="$t('nav.notifications')" @click="uiStore.toggleAdminNotifications()">

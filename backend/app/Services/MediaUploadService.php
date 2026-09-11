@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Storage;
 
 class MediaUploadService
 {
-    private const CONTEXTS = ['products', 'brands', 'categories'];
+    private const CONTEXTS = ['products', 'brands', 'categories', 'avatars'];
 
     /**
      * Store an uploaded image on the public disk and return its public URL.

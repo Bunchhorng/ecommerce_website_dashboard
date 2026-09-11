@@ -109,6 +109,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('account/dashboard', [AccountController::class, 'profile']);
     Route::put('account/profile', [AccountController::class, 'updateProfile']);
+    Route::post('account/avatar', [AccountController::class, 'updateAvatar']);
     Route::post('account/password', [AccountController::class, 'changePassword']);
     Route::get('account/reviews', [AccountController::class, 'reviews']);
     Route::get('account/notifications', [AccountController::class, 'notifications']);

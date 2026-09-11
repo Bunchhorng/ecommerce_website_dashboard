@@ -56,7 +56,8 @@
     "close": "បិទ"
   },
   "common": {
-    "loading": "កំពុងផ្ទុក…"
+    "loading": "កំពុងផ្ទុក…",
+    "saving": "កំពុងរក្សាទុក…"
   },
   "product": {
     "sku": "កូដ SKU",
@@ -843,6 +844,31 @@
     "profile_updated": "ប្រវត្តិរូបត្រូវបានធ្វើបច្ចុប្បន្នភាពដោយជោគជ័យ។",
     "upload": "បង្ហោះ",
     "profile_info": "ព័ត៌មានប្រវត្តិរូប",
+    "personal_information": "ព័ត៌មានផ្ទាល់ខ្លួន",
+    "personal_information_desc": "ធ្វើបច្ចុប្បន្នភាពព័ត៌មានផ្ទាល់ខ្លួន និងរបៀបដែលអ្នកដទៃអាចទាក់ទងអ្នក។",
+    "account_summary": "សង្ខេបគណនី",
+    "account_summary_desc": "ទិដ្ឋភាពទូទៅនៃស្ថានភាពគណនីរបស់អ្នក។",
+    "member_since": "សមាជិកតាំងពី {date}",
+    "email_status": "ស្ថានភាពអ៊ីមែល",
+    "verified": "បានផ្ទៀងផ្ទាត់",
+    "not_verified": "មិនទាន់បានផ្ទៀងផ្ទាត់",
+    "account_type": "ប្រភេទគណនី",
+    "customer_role": "អតិថិជន",
+    "admin_role": "អ្នកគ្រប់គ្រង",
+    "phone_number": "លេខទូរស័ព្ទ",
+    "role_label": "តួនាទី",
+    "account_extra_info": "ព័ត៌មានគណនី",
+    "quick_links": "តំណរហ័ស",
+    "change_password_hint": "ការពារគណនីរបស់អ្នកជាមួយពាក្យសម្ងាត់ថ្មី។",
+    "manage_addresses_hint": "គ្រប់គ្រងព័ត៌មានដឹកជញ្ជូនរបស់អ្នក។",
+    "save_successful": "ការផ្លាស់ប្តូរត្រូវបានរក្សាទុកដោយជោគជ័យ។",
+    "profile_photo": "រូបថតប្រវត្តិរូប",
+    "change_photo": "ប្តូររូបថត",
+    "upload_photo": "បង្ហោះរូបថត",
+    "avatar_hint": "JPG, PNG, WebP ឬ GIF រហូតដល់ 2MB",
+    "avatar_updated": "រូបថតប្រវត្តិរូបត្រូវបានធ្វើបច្ចុប្បន្នភាពដោយជោគជ័យ។",
+    "avatar_update_failed": "មិនអាចបង្ហោះរូបថតបានទេ។ សូមសាកល្បងរូបភាពតូចជាងនេះ។"
+    ,
     "wishlist_count": "បញ្ជីប្រាថ្នារបស់ខ្ញុំ ({count})",
     "add_from_collection": "បន្ថែមពីបណ្តុំ",
     "wishlist_cta_title": "រក្សាទុកធាតុដែលអ្នកចូលចិត្ត",

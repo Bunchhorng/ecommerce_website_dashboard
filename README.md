@@ -127,7 +127,7 @@ docker compose exec frontend npm install
 
 | Service | URL |
 | --- | --- |
-| Frontend (Vue) | http://localhost:5173 |
+| Frontend (Vue) | http://localhost:5174 |
 | Laravel API | http://localhost:8000 |
 | API Base URL | http://localhost:8000/api |
 | phpMyAdmin | http://localhost:8080 |

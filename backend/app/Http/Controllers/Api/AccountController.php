@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChangePasswordRequest;
+use App\Http\Requests\UpdateAvatarRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Resources\ReviewResource;
 use App\Http\Resources\UserResource;
+use App\Services\MediaUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -39,6 +41,19 @@ class AccountController extends Controller
             'phone' => $request->phone,
             'newsletter' => $request->boolean('newsletter'),
         ]);
+
+        return new UserResource($user);
+    }
+
+    public function updateAvatar(UpdateAvatarRequest $request, MediaUploadService $mediaService)
+    {
+        $user = $request->user();
+
+        $url = $mediaService->storeImage($request->file('image'), 'avatars');
+
+        $mediaService->deleteImage($user->avatar);
+
+        $user->update(['avatar' => $url]);
 
         return new UserResource($user);
     }
