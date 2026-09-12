@@ -1,46 +1,18 @@
 <script setup lang="ts">
-import { LoaderCircle, MapPin, Pencil, Phone, Plus, Save, Trash2, User } from 'lucide-vue-next'
-import { addressesApi, type AddressPayload } from '@/api/addresses'
+import { useRouter } from 'vue-router'
+import { MapPin, Pencil, Phone, Plus, Trash2 } from 'lucide-vue-next'
+import { addressesApi } from '@/api/addresses'
 import BaseBadge from '@/components/BaseBadge.vue'
-import BaseModal from '@/components/BaseModal.vue'
 import { useI18n } from 'vue-i18n'
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import type { Address } from '@/types'
 
 const { t } = useI18n()
-
-interface AddressForm {
-  label: string
-  fullName: string
-  line1: string
-  line2: string
-  city: string
-  state: string
-  postalCode: string
-  country: string
-  phone: string
-}
+const router = useRouter()
 
 const addresses = ref<Address[]>([])
 const loading = ref(true)
-const modalOpen = ref(false)
-const editingAddress = ref<Address | null>(null)
 const deleteError = ref('')
-const saving = ref(false)
-
-const emptyForm = (): AddressForm => ({
-  label: '',
-  fullName: '',
-  line1: '',
-  line2: '',
-  city: '',
-  state: '',
-  postalCode: '',
-  country: '',
-  phone: ''
-})
-
-const form = reactive<AddressForm>(emptyForm())
 
 function mapAddress(raw: { id: number; label: string | null; full_name: string; phone: string | null; address_line1: string; address_line2: string | null; city: string; state: string; postal_code: string; country: string; is_default: boolean }): Address {
   return {
@@ -70,68 +42,12 @@ async function fetchAddresses() {
 
 onMounted(fetchAddresses)
 
-function openNew() {
-  editingAddress.value = null
-  Object.assign(form, emptyForm())
-  deleteError.value = ''
-  modalOpen.value = true
-}
-
-function openEdit(address: Address) {
-  editingAddress.value = address
-  Object.assign(form, {
-    label: address.label,
-    fullName: address.fullName,
-    line1: address.line1,
-    line2: address.line2 ?? '',
-    city: address.city,
-    state: address.state,
-    postalCode: address.postalCode,
-    country: address.country,
-    phone: address.phone
-  })
-  deleteError.value = ''
-  modalOpen.value = true
-}
-
-function closeModal() {
-  modalOpen.value = false
-  editingAddress.value = null
-}
-
-async function saveAddress() {
-  if (saving.value) return
-  saving.value = true
-  try {
-    const payload: AddressPayload = {
-      label: form.label || undefined,
-      full_name: form.fullName,
-      phone: form.phone || undefined,
-      address_line1: form.line1,
-      address_line2: form.line2 || undefined,
-      city: form.city,
-      state: form.state,
-      postal_code: form.postalCode,
-      country: form.country || undefined
-    }
-
-    if (editingAddress.value) {
-      await addressesApi.update(Number(editingAddress.value.id), payload)
-    } else {
-      await addressesApi.create(payload)
-    }
-    await fetchAddresses()
-    closeModal()
-  } finally {
-    saving.value = false
-  }
-}
-
 async function removeAddress(address: Address) {
   if (address.isDefault) {
     deleteError.value = t('account.cannot_delete_default_address')
     return
   }
+  deleteError.value = ''
   await addressesApi.remove(Number(address.id))
   await fetchAddresses()
 }
@@ -146,10 +62,10 @@ async function removeAddress(address: Address) {
         </span>
         <h1 class="text-2xl font-bold text-ink">{{ $t('account.my_addresses') }}</h1>
       </div>
-      <button type="button" class="btn-primary btn-sm w-fit" @click="openNew">
+      <router-link :to="{ name: 'account-address-create' }" class="btn-primary btn-sm w-fit">
         <Plus class="h-4 w-4" />
         {{ $t('checkout.add_new_address') }}
-      </button>
+      </router-link>
     </div>
 
     <p v-if="deleteError" class="text-sm text-red-500">{{ deleteError }}</p>
@@ -181,7 +97,7 @@ async function removeAddress(address: Address) {
           {{ a.phone }}
         </p>
         <div class="mt-4 flex justify-end gap-1 border-t border-border-gray pt-3">
-          <button type="button" class="btn-ghost btn-sm" @click="openEdit(a)">
+          <button type="button" class="btn-ghost btn-sm" @click="router.push({ name: 'account-address-edit', params: { id: a.id } })">
             <Pencil class="h-4 w-4" />
             {{ $t('actions.edit') }}
           </button>
@@ -202,85 +118,11 @@ async function removeAddress(address: Address) {
       :title="$t('account.no_addresses_title')"
       :description="$t('account.no_addresses_description')"
       :cta-label="$t('checkout.add_new_address')"
-      @cta="openNew"
+      @cta="router.push({ name: 'account-address-create' })"
     >
       <template #icon>
         <Plus class="h-10 w-10 text-gray-300" />
       </template>
     </EmptyState>
-
-    <BaseModal v-model="modalOpen" :title="editingAddress ? $t('account.edit_address') : $t('account.add_address')" size="lg">
-      <form id="address-form" class="space-y-6" @submit.prevent="saveAddress">
-        <div class="flex items-center gap-2.5">
-          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <User class="h-4 w-4" />
-          </span>
-          <p class="text-sm font-semibold uppercase tracking-wide text-ink">{{ $t('account.recipient_information') }}</p>
-        </div>
-
-        <div class="space-y-4">
-          <div>
-            <label class="label" for="addr-full-name">{{ $t('checkout.full_name') }}</label>
-            <input id="addr-full-name" v-model="form.fullName" type="text" class="input" />
-          </div>
-          <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label class="label" for="addr-label">{{ $t('account.label') }}</label>
-              <input id="addr-label" v-model="form.label" type="text" class="input" :placeholder="$t('account.label_home')" />
-            </div>
-            <div>
-              <label class="label" for="addr-phone">{{ $t('checkout.phone') }}</label>
-              <input id="addr-phone" v-model="form.phone" type="tel" class="input" />
-            </div>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2.5 border-t border-border-gray pt-5">
-          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <MapPin class="h-4 w-4" />
-          </span>
-          <p class="text-sm font-semibold uppercase tracking-wide text-ink">{{ $t('account.address_details') }}</p>
-        </div>
-
-        <div class="space-y-4">
-          <div>
-            <label class="label" for="addr-line1">{{ $t('checkout.address_line_1') }}</label>
-            <input id="addr-line1" v-model="form.line1" type="text" class="input" :placeholder="$t('checkout.street_placeholder')" />
-          </div>
-          <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label class="label" for="addr-line2">{{ $t('checkout.address_line_2') }}</label>
-              <input id="addr-line2" v-model="form.line2" type="text" class="input" :placeholder="$t('checkout.apt_placeholder')" />
-            </div>
-            <div>
-              <label class="label" for="addr-city">{{ $t('checkout.city') }}</label>
-              <input id="addr-city" v-model="form.city" type="text" class="input" />
-            </div>
-            <div>
-              <label class="label" for="addr-state">{{ $t('checkout.state') }}</label>
-              <input id="addr-state" v-model="form.state" type="text" class="input" />
-            </div>
-            <div>
-              <label class="label" for="addr-postal">{{ $t('checkout.postal_code') }}</label>
-              <input id="addr-postal" v-model="form.postalCode" type="text" class="input" />
-            </div>
-            <div>
-              <label class="label" for="addr-country">{{ $t('checkout.country') }}</label>
-              <input id="addr-country" v-model="form.country" type="text" class="input" />
-            </div>
-          </div>
-        </div>
-      </form>
-      <template #footer>
-        <div class="flex w-full items-center justify-between gap-2">
-          <button type="button" class="btn-ghost btn-sm" @click="closeModal">{{ $t('actions.cancel') }}</button>
-          <button type="submit" form="address-form" class="btn-primary btn-sm" :disabled="saving">
-            <LoaderCircle v-if="saving" class="h-4 w-4 animate-spin" />
-            <Save v-else class="h-4 w-4" />
-            {{ editingAddress ? $t('account.update_address') : $t('account.add_address') }}
-          </button>
-        </div>
-      </template>
-    </BaseModal>
   </div>
 </template>
