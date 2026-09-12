@@ -371,7 +371,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <form class="mx-auto max-w-5xl space-y-6 pb-16" @submit.prevent="save()">
+  <form class="space-y-6 pb-16" @submit.prevent="save()">
     <div class="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <div class="section-eyebrow">{{ $t('admin.products.catalog') }}</div>

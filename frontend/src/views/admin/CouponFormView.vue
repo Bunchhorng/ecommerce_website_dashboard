@@ -1,0 +1,217 @@
+<script setup lang="ts">
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Save } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+import { adminApi } from '@/api/admin'
+import type { AdminCoupon } from '@/api/admin'
+
+const { t } = useI18n()
+
+const router = useRouter()
+const route = useRoute()
+
+const isEdit = computed(() => Boolean(route.params.id))
+const couponId = computed(() => (isEdit.value ? Number(route.params.id) : null))
+
+const form = reactive({
+  code: '',
+  type: 'percentage' as 'percentage' | 'fixed',
+  value: '',
+  minOrderAmount: '',
+  usageLimit: '',
+  expiresAt: '',
+  status: 'Active'
+})
+
+const errors = reactive<Record<string, string>>({})
+
+const formTitle = computed(() =>
+  isEdit.value
+    ? t('admin.coupons.edit_coupon')
+    : t('admin.coupons.create_coupon')
+)
+
+const saving = ref(false)
+const toast = ref('')
+let toastTimer: ReturnType<typeof setTimeout> | undefined
+
+function showToast(msg: string) {
+  toast.value = msg
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    toast.value = ''
+  }, 2500)
+}
+
+onMounted(async () => {
+  try {
+    const { data: resp } = await adminApi.listCoupons()
+    if (isEdit.value && couponId.value) {
+      const coupon = resp.data.find((c: AdminCoupon) => c.id === couponId.value)
+      if (!coupon) {
+        router.replace({ name: 'admin-coupons' })
+        return
+      }
+      form.code = coupon.code
+      form.type = coupon.type
+      form.value = String(coupon.value)
+      form.minOrderAmount = coupon.min_order_amount != null ? String(coupon.min_order_amount) : ''
+      form.usageLimit = coupon.usage_limit != null ? String(coupon.usage_limit) : ''
+      form.expiresAt = coupon.expires_at ? coupon.expires_at.slice(0, 10) : ''
+      form.status = coupon.is_active ? 'Active' : 'Draft'
+    }
+  } catch {
+    if (isEdit.value) {
+      showToast(t('admin.coupons.toast_load_error'))
+      router.replace({ name: 'admin-coupons' })
+    }
+  }
+})
+
+function validate(): boolean {
+  const value = Number(form.value)
+  if (!form.code.trim()) {
+    errors.code = t('admin.coupons.toast_fill_required')
+  } else {
+    errors.code = ''
+  }
+  errors.value = Number.isFinite(value) && value > 0 ? '' : t('admin.coupons.toast_fill_required')
+  return Object.values(errors).every((v) => v === '')
+}
+
+async function save() {
+  if (!validate()) {
+    showToast(t('admin.coupons.toast_fill_required'))
+    return
+  }
+
+  const payload: Record<string, unknown> = {
+    code: form.code.trim().toUpperCase(),
+    type: form.type,
+    value: Number(form.value),
+    min_order_amount: form.minOrderAmount ? Number(form.minOrderAmount) : null,
+    usage_limit: form.usageLimit ? Number(form.usageLimit) : null,
+    expires_at: form.expiresAt || null,
+    is_active: form.status === 'Active'
+  }
+
+  try {
+    saving.value = true
+    const targetId = couponId.value
+
+    if (isEdit.value && targetId) {
+      await adminApi.updateCoupon(targetId, payload)
+      showToast(t('admin.coupons.toast_updated', { code: form.code }))
+    } else {
+      await adminApi.createCoupon(payload)
+      showToast(t('admin.coupons.toast_created'))
+    }
+    router.push({ name: 'admin-coupons' })
+  } catch {
+    showToast(t('admin.coupons.toast_update_error'))
+  } finally {
+    saving.value = false
+  }
+}
+</script>
+
+<template>
+  <form class="space-y-6 pb-16" @submit.prevent="save()">
+    <div class="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <div class="section-eyebrow">{{ $t('admin.nav.group_marketing') }}</div>
+        <h1 class="text-xl font-bold text-ink">{{ formTitle }}</h1>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button class="btn-secondary btn-sm" type="button" @click="router.push({ name: 'admin-coupons' })">{{ $t('actions.cancel') }}</button>
+        <button class="btn-primary btn-sm" type="submit" :disabled="saving">
+          <Save class="h-4 w-4" />
+          {{ $t('admin.coupons.save_coupon') }}
+        </button>
+      </div>
+    </div>
+
+    <div class="card p-6">
+      <div class="section-eyebrow">{{ $t('admin.products.step_1') }}</div>
+      <h2 class="mt-2 text-lg font-semibold">{{ $t('admin.products.basic_information') }}</h2>
+
+      <div class="mt-5 grid gap-4 sm:grid-cols-2">
+        <div>
+          <label class="label" for="cp-code">{{ $t('admin.coupons.code_label') }}</label>
+          <input
+            id="cp-code"
+            v-model="form.code"
+            class="input"
+            :class="{ 'input-error': errors.code }"
+            placeholder="SUMMER30"
+          />
+          <p v-if="errors.code" class="mt-1 text-xs text-red-600">{{ errors.code }}</p>
+        </div>
+
+        <div>
+          <label class="label" for="cp-status">{{ $t('admin.products.status_label') }}</label>
+          <select id="cp-status" v-model="form.status" class="select">
+            <option value="Active">{{ $t('status.active') }}</option>
+            <option value="Draft">{{ $t('status.draft') }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="label" for="cp-type">{{ $t('admin.coupons.type_label') }}</label>
+          <select id="cp-type" v-model="form.type" class="select">
+            <option value="percentage">{{ $t('admin.coupons.type_percentage') }}</option>
+            <option value="fixed">{{ $t('admin.coupons.type_fixed_option') }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="label" for="cp-value">{{ $t('admin.coupons.value_label') }}</label>
+          <input
+            id="cp-value"
+            v-model="form.value"
+            class="input"
+            :class="{ 'input-error': errors.value }"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="10"
+          />
+          <p v-if="errors.value" class="mt-1 text-xs text-red-600">{{ errors.value }}</p>
+        </div>
+
+        <div>
+          <label class="label" for="cp-min">{{ $t('admin.coupons.min_order_label') }}</label>
+          <input id="cp-min" v-model="form.minOrderAmount" class="input" type="number" min="0" step="0.01" placeholder="50" />
+        </div>
+
+        <div>
+          <label class="label" for="cp-limit">{{ $t('admin.coupons.usage_limit_label') }}</label>
+          <input id="cp-limit" v-model="form.usageLimit" class="input" type="number" min="1" placeholder="1000" />
+        </div>
+
+        <div>
+          <label class="label" for="cp-expires">{{ $t('admin.coupons.expires_label') }}</label>
+          <input id="cp-expires" v-model="form.expiresAt" class="input" type="date" />
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-end gap-2">
+      <button class="btn-secondary" type="button" @click="router.push({ name: 'admin-coupons' })">{{ $t('actions.cancel') }}</button>
+      <button class="btn-primary" type="submit" :disabled="saving">
+        <Save class="h-4 w-4" />
+        {{ $t('admin.coupons.save_coupon') }}
+      </button>
+    </div>
+
+    <transition name="fade">
+      <div
+        v-if="toast"
+        class="fixed bottom-6 right-6 card px-5 py-3 text-sm shadow-popover"
+      >
+        {{ toast }}
+      </div>
+    </transition>
+  </form>
+</template>

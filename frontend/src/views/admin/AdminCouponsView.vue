@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { Plus, X } from 'lucide-vue-next'
+import { Plus } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AdminDataTable from '@/components/admin/AdminDataTable.vue'
 import type { TableColumn, TableRow } from '@/types'
@@ -9,6 +10,7 @@ import type { AdminCoupon } from '@/api/admin'
 import { formatPrice } from '@/utils/format'
 
 const { t } = useI18n()
+const router = useRouter()
 
 const loading = ref(true)
 const coupons = ref<AdminCoupon[]>([])
@@ -38,29 +40,6 @@ const rows = computed<TableRow[]>(() =>
   }))
 )
 
-const showCreateForm = ref(false)
-const editingId = ref<number | null>(null)
-const form = ref<{
-  code: string
-  type: 'percentage' | 'fixed'
-  value: string
-  minOrderAmount: string
-  usageLimit: string
-  expiresAt: string
-}>({
-  code: '',
-  type: 'percentage',
-  value: '',
-  minOrderAmount: '',
-  usageLimit: '',
-  expiresAt: ''
-})
-
-function resetForm() {
-  form.value = { code: '', type: 'percentage', value: '', minOrderAmount: '', usageLimit: '', expiresAt: '' }
-  editingId.value = null
-}
-
 async function loadCoupons() {
   loading.value = true
   try {
@@ -71,38 +50,6 @@ async function loadCoupons() {
     showToast(t('admin.coupons.toast_load_error'))
   } finally {
     loading.value = false
-  }
-}
-
-async function saveCoupon() {
-  const value = Number(form.value.value)
-  if (!form.value.code || !Number.isFinite(value)) {
-    showToast(t('admin.coupons.toast_fill_required'))
-    return
-  }
-
-  const payload = {
-    code: form.value.code.toUpperCase(),
-    type: form.value.type,
-    value,
-    min_order_amount: Number(form.value.minOrderAmount) || null,
-    usage_limit: Number(form.value.usageLimit) || null,
-    expires_at: form.value.expiresAt || null
-  }
-
-  try {
-    if (editingId.value != null) {
-      await adminApi.updateCoupon(editingId.value, payload)
-      showToast(t('admin.coupons.toast_updated', { code: form.value.code }))
-    } else {
-      await adminApi.createCoupon(payload)
-      showToast(t('admin.coupons.toast_created'))
-    }
-    await loadCoupons()
-    resetForm()
-    showCreateForm.value = false
-  } catch {
-    showToast(t('admin.coupons.toast_update_error'))
   }
 }
 
@@ -129,24 +76,13 @@ async function toggleStatus(id: string) {
 }
 
 function onRowAction(payload: { action: string; row: TableRow }) {
-  const id = String(payload.row.id)
+  const id = Number(payload.row.id)
   if (payload.action === 'edit') {
-    const c = coupons.value.find((x) => x.id === Number(id))
-    if (!c) return
-    editingId.value = c.id
-    form.value = {
-      code: c.code,
-      type: c.type,
-      value: String(c.value),
-      minOrderAmount: c.min_order_amount != null ? String(c.min_order_amount) : '',
-      usageLimit: c.usage_limit != null ? String(c.usage_limit) : '',
-      expiresAt: c.expires_at ? c.expires_at.slice(0, 10) : ''
-    }
-    showCreateForm.value = true
+    router.push({ name: 'admin-coupon-edit', params: { id } })
   } else if (payload.action === 'toggle') {
-    toggleStatus(id)
+    toggleStatus(String(id))
   } else if (payload.action === 'delete') {
-    remove(id)
+    remove(String(id))
   }
 }
 
@@ -186,52 +122,10 @@ onMounted(loadCoupons)
         <h1 class="text-2xl font-bold text-ink">{{ $t('admin.coupons.title') }}</h1>
         <span class="chip">{{ $t('admin.coupons.total_count', { count: totalCount }) }}</span>
       </div>
-      <button class="btn-primary btn-sm" @click="showCreateForm = !showCreateForm; editingId = null">
+      <router-link :to="{ name: 'admin-coupon-create' }" class="btn-primary btn-sm w-fit">
         <Plus class="h-4 w-4" />
         {{ $t('admin.coupons.new_coupon') }}
-      </button>
-    </div>
-
-    <div v-if="showCreateForm" class="card p-6">
-      <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-lg font-semibold">{{ editingId != null ? $t('admin.coupons.edit_coupon') : $t('admin.coupons.create_coupon') }}</h2>
-        <button class="btn-icon" type="button" @click="showCreateForm = false; resetForm()">
-          <X class="h-5 w-5" />
-        </button>
-      </div>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div>
-          <label class="label" for="cp-code">{{ $t('admin.coupons.code_label') }}</label>
-          <input id="cp-code" v-model="form.code" class="input" placeholder="SUMMER30" />
-        </div>
-        <div>
-          <label class="label" for="cp-type">{{ $t('admin.coupons.type_label') }}</label>
-          <select id="cp-type" v-model="form.type" class="select">
-            <option value="percentage">{{ $t('admin.coupons.type_percentage') }}</option>
-            <option value="fixed">{{ $t('admin.coupons.type_fixed_option') }}</option>
-          </select>
-        </div>
-        <div>
-          <label class="label" for="cp-value">{{ $t('admin.coupons.value_label') }}</label>
-          <input id="cp-value" v-model="form.value" class="input" type="number" min="0" placeholder="10" />
-        </div>
-        <div>
-          <label class="label" for="cp-min">{{ $t('admin.coupons.min_order_label') }}</label>
-          <input id="cp-min" v-model="form.minOrderAmount" class="input" type="number" min="0" placeholder="50" />
-        </div>
-        <div>
-          <label class="label" for="cp-limit">{{ $t('admin.coupons.usage_limit_label') }}</label>
-          <input id="cp-limit" v-model="form.usageLimit" class="input" type="number" min="1" placeholder="1000" />
-        </div>
-        <div>
-          <label class="label" for="cp-expires">{{ $t('admin.coupons.expires_label') }}</label>
-          <input id="cp-expires" v-model="form.expiresAt" class="input" type="date" />
-        </div>
-      </div>
-      <div class="mt-5 flex justify-end gap-2">
-        <button class="btn-secondary btn-sm" type="button" @click="showCreateForm = false; resetForm()">{{ $t('actions.cancel') }}</button>
-        <button class="btn-primary btn-sm" type="button" @click="saveCoupon">{{ editingId != null ? $t('actions.save_changes') : $t('admin.coupons.save_coupon') }}</button>
-      </div>
+      </router-link>
     </div>
 
     <AdminDataTable

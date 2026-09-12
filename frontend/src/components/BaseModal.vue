@@ -2,7 +2,7 @@
 import { onBeforeUnmount, watch } from 'vue'
 import { X } from 'lucide-vue-next'
 
-type ModalSize = 'sm' | 'md' | 'lg'
+type ModalSize = 'sm' | 'md' | 'lg' | 'xl'
 
 const props = withDefaults(
   defineProps<{
@@ -22,7 +22,8 @@ const emit = defineEmits<{
 const sizeClasses: Record<ModalSize, string> = {
   sm: 'sm:max-w-sm',
   md: 'lg:max-w-lg',
-  lg: 'xl:max-w-xl'
+  lg: 'xl:max-w-xl',
+  xl: '2xl:max-w-6xl'
 }
 
 function close(): void {

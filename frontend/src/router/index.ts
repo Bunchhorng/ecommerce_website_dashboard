@@ -67,10 +67,18 @@ const router = createRouter({
         { path: 'customers/:id', name: 'admin-customer-detail', component: () => import('@/views/admin/AdminCustomerDetailView.vue'), meta: { title: 'Customer Detail' } },
         { path: 'settings', name: 'admin-settings', component: () => import('@/views/admin/AdminSettingsView.vue'), meta: { title: 'Settings' } },
         { path: 'coupons', name: 'admin-coupons', component: () => import('@/views/admin/AdminCouponsView.vue'), meta: { title: 'Coupons' } },
+        { path: 'coupons/new', name: 'admin-coupon-create', component: () => import('@/views/admin/CouponFormView.vue'), meta: { title: 'Add Coupon' } },
+        { path: 'coupons/:id/edit', name: 'admin-coupon-edit', component: () => import('@/views/admin/CouponFormView.vue'), meta: { title: 'Edit Coupon' } },
         { path: 'reviews', name: 'admin-reviews', component: () => import('@/views/admin/AdminReviewsView.vue'), meta: { title: 'Reviews' } },
         { path: 'categories', name: 'admin-categories', component: () => import('@/views/admin/AdminCategoriesView.vue'), meta: { title: 'Categories' } },
+        { path: 'categories/new', name: 'admin-category-create', component: () => import('@/views/admin/CategoryFormView.vue'), meta: { title: 'Add Category' } },
+        { path: 'categories/:id/edit', name: 'admin-category-edit', component: () => import('@/views/admin/CategoryFormView.vue'), meta: { title: 'Edit Category' } },
         { path: 'brands', name: 'admin-brands', component: () => import('@/views/admin/AdminBrandsView.vue'), meta: { title: 'Brands' } },
-        { path: 'shipping', name: 'admin-shipping', component: () => import('@/views/admin/AdminShippingMethodsView.vue'), meta: { title: 'Shipping Methods' } }
+        { path: 'brands/new', name: 'admin-brand-create', component: () => import('@/views/admin/BrandFormView.vue'), meta: { title: 'Add Brand' } },
+        { path: 'brands/:id/edit', name: 'admin-brand-edit', component: () => import('@/views/admin/BrandFormView.vue'), meta: { title: 'Edit Brand' } },
+        { path: 'shipping', name: 'admin-shipping', component: () => import('@/views/admin/AdminShippingMethodsView.vue'), meta: { title: 'Shipping Methods' } },
+        { path: 'shipping/new', name: 'admin-shipping-create', component: () => import('@/views/admin/ShippingMethodFormView.vue'), meta: { title: 'Add Shipping Method' } },
+        { path: 'shipping/:id/edit', name: 'admin-shipping-edit', component: () => import('@/views/admin/ShippingMethodFormView.vue'), meta: { title: 'Edit Shipping Method' } }
       ]
     },
     {
