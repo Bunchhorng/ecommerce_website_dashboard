@@ -18,8 +18,10 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class OrderService
 {
-    public function __construct(private InventoryService $inventory)
-    {
+    public function __construct(
+        private InventoryService $inventory,
+        private CouponService $coupon,
+    ) {
     }
 
     /**
@@ -68,6 +70,8 @@ class OrderService
     public function transition(Order $order, string $to): Order
     {
         return DB::transaction(function () use ($order, $to): Order {
+            $order = Order::with(['items', 'payment'])->whereKey($order->getKey())->lockForUpdate()->firstOrFail();
+
             $allowed = $this->transitions()[$order->status] ?? [];
 
             if (! in_array($to, $allowed, true)) {
@@ -92,22 +96,20 @@ class OrderService
                 }
             }
 
+            // Any terminal outcome (cancelled / refunded) must return the goods
+            // to the pool and release coupon capacity so stock and usage are
+            // never leaked.
+            if ($to === Order::STATUS_CANCELLED || $to === Order::STATUS_REFUNDED) {
+                $this->revertFulfilment($order);
+                $this->coupon->releaseUsage($order);
+            }
+
             if ($to === Order::STATUS_REFUNDED) {
-                $payment = $order->payment;
-                if ($payment !== null) {
-                    $payment->status = Payment::STATUS_REFUNDED;
-                    $payment->save();
+                $this->markPaymentRefunded($order);
+            }
 
-                    PaymentTransaction::create([
-                        'payment_id' => $payment->id,
-                        'type' => 'refund',
-                        'status' => 'success',
-                        'amount' => round((float) $payment->amount, 2),
-                        'reference' => $payment->transaction_id,
-                    ]);
-                }
-
-                $order->payment_status = Order::PAYMENT_REFUNDED;
+            if ($to === Order::STATUS_CANCELLED) {
+                $this->markPaymentRefunded($order);
             }
 
             $order->status = $to;
@@ -156,27 +158,78 @@ class OrderService
     }
 
     /**
-     * Cancel an order by the customer or admin, releasing active reservations.
+     * Reverse the effect fulfilment had on inventory.
+     *
+     * Orders that never left `pending` only hold reservations, so they are
+     * released. Orders that were confirmed have already been deducted at
+     * payment time, so their quantity and sold-count are restored instead.
+     */
+    private function revertFulfilment(Order $order): void
+    {
+        $items = [];
+        foreach ($order->items as $item) {
+            if ($item->product_variant_id === null) {
+                continue;
+            }
+            $items[(int) $item->product_variant_id] = (int) $item->quantity;
+        }
+
+        if ($order->status === Order::STATUS_PENDING) {
+            $this->inventory->releaseMany($items);
+
+            return;
+        }
+
+        $this->inventory->restockMany($items);
+    }
+
+    /**
+     * Mark an order's payment as refunded, but only if money was actually taken.
+     */
+    private function markPaymentRefunded(Order $order): void
+    {
+        $payment = $order->payment;
+
+        if ($payment === null || $order->payment_status !== Order::PAYMENT_PAID) {
+            return;
+        }
+
+        if ($payment->status !== Payment::STATUS_REFUNDED) {
+            $payment->status = Payment::STATUS_REFUNDED;
+            $payment->save();
+
+            PaymentTransaction::create([
+                'payment_id' => $payment->id,
+                'type' => 'refund',
+                'status' => 'success',
+                'amount' => round((float) $payment->amount, 2),
+                'reference' => $payment->transaction_id,
+            ]);
+        }
+
+        $order->payment_status = Order::PAYMENT_REFUNDED;
+    }
+
+    /**
+     * Cancel an order by the customer or admin, releasing active reservations,
+     * refunding paid orders and restoring any deducted stock.
      */
     public function cancelOwn(Order $order): Order
     {
         return DB::transaction(function () use ($order): Order {
+            $order = Order::with(['items', 'payment'])->whereKey($order->getKey())->lockForUpdate()->firstOrFail();
+
             $allowed = [Order::STATUS_PENDING, Order::STATUS_CONFIRMED, Order::STATUS_PROCESSING];
 
             if (! in_array($order->status, $allowed, true)) {
                 throw ValidationException::withMessages(['message' => 'Order cannot be cancelled in its current state']);
             }
 
-            if ($order->status === Order::STATUS_PENDING) {
-                $items = [];
-                foreach ($order->items as $item) {
-                    $items[(int) $item->product_variant_id] = (int) $item->quantity;
-                }
-                $this->inventory->releaseMany($items);
-            }
+            $this->revertFulfilment($order);
+            $this->markPaymentRefunded($order);
+            $this->coupon->releaseUsage($order);
 
             $order->status = Order::STATUS_CANCELLED;
-            $order->payment_status = Order::PAYMENT_UNPAID;
             $order->note = trim(($order->note ? $order->note.' ' : '').'cancelled');
             $order->save();
 

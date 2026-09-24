@@ -154,14 +154,14 @@ class AdminProductController extends Controller
             $variant = $product->variants()->create([
                 'name' => $variantData['name'] ?? null,
                 'sku' => $variantData['sku'] ?? null,
-                'price' => $variantData['price'] ?? null,
-                'compare_at_price' => $variantData['compare_at_price'] ?? null,
+                'price' => ($variantData['price'] ?? null) !== null ? max((float) $variantData['price'], 0) : null,
+                'compare_at_price' => ($variantData['compare_at_price'] ?? null) !== null ? max((float) $variantData['compare_at_price'], 0) : null,
                 'is_active' => $variantData['is_active'] ?? true,
             ]);
 
             Inventory::create([
                 'product_variant_id' => $variant->id,
-                'quantity' => (int) ($variantData['quantity'] ?? 0),
+                'quantity' => max((int) ($variantData['quantity'] ?? 0), 0),
                 'reserved_quantity' => 0,
                 'low_stock_threshold' => 5,
             ]);

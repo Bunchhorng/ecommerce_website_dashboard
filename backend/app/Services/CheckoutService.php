@@ -155,15 +155,11 @@ class CheckoutService
     public function confirm(Order $order, ?string $transactionId = null): Order
     {
         return DB::transaction(function () use ($order, $transactionId): Order {
+            $order = Order::with(['items', 'payment'])->whereKey($order->getKey())->lockForUpdate()->firstOrFail();
+
             if ($order->payment_status !== Order::PAYMENT_UNPAID || $order->status !== Order::STATUS_PENDING) {
                 throw ValidationException::withMessages(['message' => 'Order already settled']);
             }
-
-            $items = [];
-            foreach ($order->items as $item) {
-                $items[(int) $item->product_variant_id] = (int) $item->quantity;
-            }
-            $this->inventory->deductMany($items);
 
             $payment = $order->payment;
             if ($payment === null) {
@@ -171,6 +167,18 @@ class CheckoutService
             }
 
             $isCashOnDelivery = $payment->method === 'cod';
+
+            if (! $isCashOnDelivery && config('ecommerce.payment_mode') !== 'sandbox') {
+                throw ValidationException::withMessages([
+                    'message' => 'Online payment confirmation is disabled until a payment gateway is configured.',
+                ]);
+            }
+
+            $items = [];
+            foreach ($order->items as $item) {
+                $items[(int) $item->product_variant_id] = (int) $item->quantity;
+            }
+            $this->inventory->deductMany($items);
 
             if (! $isCashOnDelivery) {
                 $payment->status = Payment::STATUS_COMPLETED;
@@ -212,24 +220,29 @@ class CheckoutService
      */
     public function release(Order $order): void
     {
-        if ($order->payment_status !== Order::PAYMENT_UNPAID || $order->status !== Order::STATUS_PENDING) {
-            return;
-        }
+        DB::transaction(function () use ($order): void {
+            $order = Order::with(['items', 'payment'])->whereKey($order->getKey())->lockForUpdate()->firstOrFail();
 
-        $items = [];
-        foreach ($order->items as $item) {
-            $items[(int) $item->product_variant_id] = (int) $item->quantity;
-        }
-        $this->inventory->releaseMany($items);
+            if ($order->payment_status !== Order::PAYMENT_UNPAID || $order->status !== Order::STATUS_PENDING) {
+                return;
+            }
 
-        $order->status = Order::STATUS_CANCELLED;
-        $order->note = trim(($order->note ? $order->note.' ' : '').'reservation released');
-        $order->save();
+            $items = [];
+            foreach ($order->items as $item) {
+                $items[(int) $item->product_variant_id] = (int) $item->quantity;
+            }
+            $this->inventory->releaseMany($items);
+            $this->coupon->releaseUsage($order);
 
-        $order->trackingEvents()->create([
-            'status' => Order::STATUS_CANCELLED,
-            'description' => 'Order cancelled',
-        ]);
+            $order->status = Order::STATUS_CANCELLED;
+            $order->note = trim(($order->note ? $order->note.' ' : '').'reservation released');
+            $order->save();
+
+            $order->trackingEvents()->create([
+                'status' => Order::STATUS_CANCELLED,
+                'description' => 'Order cancelled',
+            ]);
+        });
     }
 
     /**

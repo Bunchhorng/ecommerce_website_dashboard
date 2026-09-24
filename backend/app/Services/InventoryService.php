@@ -153,6 +153,46 @@ class InventoryService
     }
 
     /**
+     * Return stock permanently deducted by a successful payment back to the pool
+     * when the order is cancelled or refunded, reverting both quantity and the
+     * running sold-count.
+     */
+    public function restock(int $variantId, int $quantity): void
+    {
+        if ($quantity <= 0) {
+            return;
+        }
+
+        DB::transaction(function () use ($variantId, $quantity): void {
+            $inventory = Inventory::where('product_variant_id', $variantId)->lockForUpdate()->first();
+
+            if ($inventory === null) {
+                return;
+            }
+
+            $inventory->quantity = (int) $inventory->quantity + $quantity;
+            $inventory->sold_count = max((int) $inventory->sold_count - $quantity, 0);
+            $inventory->save();
+
+            $balanceAfter = (int) $inventory->quantity - (int) $inventory->reserved_quantity;
+            $this->log($inventory, 'restock', $quantity, $balanceAfter, 'VARIANT:'.$variantId, 'Order cancelled or refunded');
+            $this->checkLowStock($inventory);
+        });
+    }
+
+    /**
+     * Return deducted stock for several variants at once.
+     */
+    public function restockMany(array $items): void
+    {
+        DB::transaction(function () use ($items): void {
+            foreach ($items as $variantId => $quantity) {
+                $this->restock((int) $variantId, (int) $quantity);
+            }
+        });
+    }
+
+    /**
      * Adjust total stock up or down for a variant.
      */
     public function adjust(int $variantId, int $newQuantity, ?int $userId = null): void

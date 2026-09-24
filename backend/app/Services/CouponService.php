@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\Coupon;
+use App\Models\CouponUsage;
 use App\Models\Order;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CouponService
@@ -81,5 +83,37 @@ class CouponService
             'order_id' => $order->id,
             'redeemed_at' => now(),
         ]);
+    }
+
+    /**
+     * Return any coupon usage recorded for an order back to the pool. Called
+     * when an order is cancelled, refunded, or its reservation is released, so
+     * abandoned checkouts do not permanently burn usage capacity.
+     */
+    public function releaseUsage(Order $order): void
+    {
+        DB::transaction(function () use ($order): void {
+            $usages = CouponUsage::query()->where('order_id', $order->id)->get();
+
+            if ($usages->isEmpty()) {
+                return;
+            }
+
+            $couponIds = $usages->pluck('coupon_id')->unique();
+
+            $usages->each->delete();
+
+            foreach ($couponIds as $couponId) {
+                $coupon = Coupon::query()->lockForUpdate()->find($couponId);
+
+                if ($coupon === null) {
+                    continue;
+                }
+
+                $released = $usages->where('coupon_id', $couponId)->count();
+                $coupon->used_count = max((int) $coupon->used_count - $released, 0);
+                $coupon->save();
+            }
+        });
     }
 }

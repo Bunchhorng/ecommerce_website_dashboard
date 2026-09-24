@@ -70,10 +70,23 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request)
     {
-        if (!Auth::guard('web')->validate([
-            'email' => $request->email,
-            'password' => $request->password,
-        ])) {
+        try {
+            $valid = Auth::guard('web')->validate([
+                'email' => $request->email,
+                'password' => $request->password,
+            ]);
+        } catch (\Throwable $e) {
+            // A stored password hash that is not bcrypt (e.g. a legacy plaintext
+            // row) makes the hasher throw. Treat it as invalid credentials rather
+            // than surfacing a 500 with an internal hashing error.
+            Log::info('Login rejected for malformed stored password hash.', [
+                'email' => $request->email,
+                'exception' => $e->getMessage(),
+            ]);
+            $valid = false;
+        }
+
+        if (!$valid) {
             throw ValidationException::withMessages([
                 'email' => ['Invalid credentials.'],
             ]);
