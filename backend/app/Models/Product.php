@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['category_id', 'brand_id', 'name', 'slug', 'description', 'short_description', 'price', 'compare_at_price', 'cost_price', 'sku', 'barcode', 'weight', 'is_featured', 'is_active', 'rating_avg', 'rating_count', 'meta_title', 'meta_description', 'seo_keywords'])]
+#[Fillable(['category_id', 'brand_id', 'shop_id', 'name', 'slug', 'description', 'short_description', 'price', 'compare_at_price', 'cost_price', 'sku', 'barcode', 'weight', 'is_featured', 'is_active', 'rating_avg', 'rating_count', 'meta_title', 'meta_description', 'seo_keywords'])]
 class Product extends Model
 {
     use HasFactory;
@@ -20,6 +20,11 @@ class Product extends Model
             'is_featured' => 'boolean',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class);
     }
 
     public function category()

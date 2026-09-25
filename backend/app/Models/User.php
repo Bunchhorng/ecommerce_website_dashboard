@@ -70,4 +70,33 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(CouponUsage::class, 'user_id');
     }
+
+    public function shops()
+    {
+        return $this->belongsToMany(Shop::class, 'shop_users')
+            ->withPivot(['role_in_shop', 'status'])
+            ->withTimestamps();
+    }
+
+    public function shopMemberships()
+    {
+        return $this->hasMany(ShopUser::class);
+    }
+
+    public function ownsShop(Shop $shop): bool
+    {
+        return $this->shops()
+            ->where('shops.id', $shop->getKey())
+            ->wherePivotIn('role_in_shop', ['owner', 'manager'])
+            ->wherePivot('status', 'active')
+            ->exists();
+    }
+
+    public function belongsToShop(Shop $shop): bool
+    {
+        return $this->shops()
+            ->where('shops.id', $shop->getKey())
+            ->wherePivot('status', 'active')
+            ->exists();
+    }
 }

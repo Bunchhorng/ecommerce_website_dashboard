@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\ShippingMethodController;
+use App\Http\Controllers\Api\ShopController;
 use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\Api\Admin\AdminBrandController;
 use App\Http\Controllers\Api\Admin\AdminCategoryController;
@@ -29,6 +30,7 @@ use App\Http\Controllers\Api\Admin\AdminShippingMethodController;
 use App\Http\Controllers\Api\Admin\AdminNotificationController;
 use App\Http\Controllers\Api\Admin\AdminPaymentController;
 use App\Http\Controllers\Api\Admin\AdminShipmentController;
+use App\Http\Controllers\Api\Admin\AdminShopController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -67,6 +69,13 @@ Route::get('shipping-methods', [ShippingMethodController::class, 'index']);
 Route::get('products/{product}/reviews', [ReviewController::class, 'index'])
     ->whereNumber('product');
 Route::post('coupons/validate', [CouponController::class, 'validate']);
+
+// Public branch (shop) pages
+Route::prefix('shops')->group(function () {
+    Route::get('/', [ShopController::class, 'index']);
+    Route::get('{shop:slug}', [ShopController::class, 'show']);
+    Route::get('{shop:slug}/products', [ShopController::class, 'products']);
+});
 
 Route::get('orders/guest/{orderNumber}', [OrderController::class, 'guest'])
     ->where('orderNumber', '[A-Za-z0-9-]+');
@@ -123,6 +132,13 @@ Route::prefix('admin')
     ->middleware(['auth:sanctum', 'admin'])
     ->group(function () {
         Route::get('dashboard/overview', [DashboardController::class, 'overview']);
+
+        Route::get('shops', [AdminShopController::class, 'index']);
+        Route::post('shops', [AdminShopController::class, 'store']);
+        Route::get('shops/{shop}', [AdminShopController::class, 'show']);
+        Route::put('shops/{shop}', [AdminShopController::class, 'update']);
+        Route::patch('shops/{shop}/status', [AdminShopController::class, 'updateStatus']);
+        Route::delete('shops/{shop}', [AdminShopController::class, 'destroy']);
 
         Route::get('products', [AdminProductController::class, 'index']);
         Route::post('products', [AdminProductController::class, 'store']);

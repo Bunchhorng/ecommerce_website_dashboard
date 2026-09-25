@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['code', 'type', 'value', 'min_order_amount', 'max_discount_amount', 'usage_limit', 'per_user_limit', 'used_count', 'starts_at', 'expires_at', 'is_active'])]
+#[Fillable(['shop_id', 'code', 'type', 'value', 'min_order_amount', 'max_discount_amount', 'usage_limit', 'per_user_limit', 'used_count', 'starts_at', 'expires_at', 'is_active'])]
 class Coupon extends Model
 {
     use HasFactory;
@@ -20,6 +20,11 @@ class Coupon extends Model
             'expires_at' => 'datetime',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class);
     }
 
     public function usages()
