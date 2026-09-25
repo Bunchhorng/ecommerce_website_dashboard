@@ -12,6 +12,7 @@ services:
     working_dir: /var/www
     volumes:
       - ./backend:/var/www
+      - ./docker/php/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini:ro
     depends_on:
       - mysql
       - redis
@@ -31,6 +32,7 @@ services:
     command: php artisan schedule:work
     volumes:
       - ./backend:/var/www
+      - ./docker/php/opcache.ini:/usr/local/etc/php/conf.d/zz-opcache.ini:ro
     depends_on:
       - mysql
       - redis

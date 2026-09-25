@@ -16,18 +16,22 @@ use App\Services\InventoryService;
 use App\Services\MediaUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class AdminProductController extends Controller
 {
     public function __construct(
         private InventoryService $inventoryService,
         private MediaUploadService $mediaService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {
         $query = Product::with(['brand', 'category', 'images', 'variants.inventory']);
+
+        if ($request->boolean('deleted')) {
+            $query->onlyTrashed();
+        }
 
         if ($request->filled('q')) {
             $term = mb_strtolower(trim((string) $request->q));
@@ -75,6 +79,7 @@ class AdminProductController extends Controller
         $product = Product::create($data);
 
         if ($request->filled('variants')) {
+            $this->assertUniqueSkus($request->input('variants'));
             $this->createVariants($product, $request->input('variants'));
         }
 
@@ -103,6 +108,7 @@ class AdminProductController extends Controller
         $product->update($data);
 
         if ($request->has('variants')) {
+            $this->assertUniqueSkus($request->input('variants') ?? [], $product->id);
             $this->syncVariants($product, $request->input('variants') ?? [], $request->user()?->id);
         }
 
@@ -120,6 +126,68 @@ class AdminProductController extends Controller
         return response()->json(['data' => ['message' => 'Product deleted.']]);
     }
 
+    public function restore(int $id)
+    {
+        $product = Product::withTrashed()->findOrFail($id);
+        $product->restore();
+
+        return new ProductDetailResource($this->loadDetail($product));
+    }
+
+    public function updateStatus(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:products,id'],
+            'is_active' => ['required', 'boolean'],
+        ]);
+
+        Product::whereIn('id', $data['ids'])->update(['is_active' => $data['is_active']]);
+
+        return ['data' => ['updated' => count($data['ids'])]];
+    }
+
+    protected function assertUniqueSkus(array $variants, ?int $exceptProductId = null): void
+    {
+        $incoming = [];
+
+        foreach ($variants as $variant) {
+            $sku = isset($variant['sku']) ? trim((string) $variant['sku']) : '';
+
+            if ($sku === '') {
+                continue;
+            }
+
+            $key = mb_strtoupper($sku);
+
+            if (isset($incoming[$key])) {
+                throw ValidationException::withMessages([
+                    'variants' => "Duplicate SKU \"{$sku}\" in the variant list.",
+                ]);
+            }
+
+            $incoming[$key] = $sku;
+        }
+
+        if ($incoming === []) {
+            return;
+        }
+
+        $existing = ProductVariant::withTrashed()
+            ->whereNotNull('sku')
+            ->when($exceptProductId !== null, fn ($q) => $q->where('product_id', '!=', $exceptProductId))
+            ->whereIn('sku', array_values($incoming))
+            ->pluck('sku');
+
+        foreach ($existing as $existingSku) {
+            if (isset($incoming[mb_strtoupper($existingSku)])) {
+                throw ValidationException::withMessages([
+                    'variants' => "SKU \"{$existingSku}\" is already used by another product.",
+                ]);
+            }
+        }
+    }
+
     protected function productData(AdminProductRequest $request): array
     {
         $data = $request->only([
@@ -133,15 +201,15 @@ class AdminProductController extends Controller
             'is_active' => true,
             'price' => 0,
         ] as $key => $default) {
-            if (!array_key_exists($key, $data) || $data[$key] === null) {
+            if (! array_key_exists($key, $data) || $data[$key] === null) {
                 $data[$key] = $default;
             }
         }
 
-        if (!empty($data['is_featured'])) {
+        if (! empty($data['is_featured'])) {
             $data['is_featured'] = true;
         }
-        if (!empty($data['is_active'])) {
+        if (! empty($data['is_active'])) {
             $data['is_active'] = true;
         }
 
@@ -178,11 +246,11 @@ class AdminProductController extends Controller
         foreach ($variants as $variantData) {
             $variant = null;
 
-            if (!empty($variantData['id'])) {
+            if (! empty($variantData['id'])) {
                 $variant = $existing->firstWhere('id', (int) $variantData['id']);
             }
 
-            if ($variant === null && !empty($variantData['sku'])) {
+            if ($variant === null && ! empty($variantData['sku'])) {
                 $variant = $existing->first(fn ($v) => $v->sku === $variantData['sku']);
             }
 
@@ -232,7 +300,7 @@ class AdminProductController extends Controller
         }
 
         foreach ($existing as $variant) {
-            if (!in_array($variant->id, $referencedIds, true)) {
+            if (! in_array($variant->id, $referencedIds, true)) {
                 $variant->delete();
             }
         }
@@ -256,7 +324,7 @@ class AdminProductController extends Controller
         $keep = array_flip($paths);
 
         foreach ($existing as $image) {
-            if (!isset($keep[$image->image_path])) {
+            if (! isset($keep[$image->image_path])) {
                 $this->mediaService->deleteImage($image->image_path);
                 $image->delete();
             }
@@ -338,7 +406,7 @@ class AdminProductController extends Controller
             ->when($ignoreId !== null, fn ($q) => $q->where('id', '!=', $ignoreId))
             ->exists()
         ) {
-            $slug = $base . '-' . $suffix++;
+            $slug = $base.'-'.$suffix++;
         }
 
         return $slug;

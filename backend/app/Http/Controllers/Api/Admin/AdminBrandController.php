@@ -7,6 +7,7 @@ use App\Http\Requests\AdminBrandRequest;
 use App\Http\Resources\BrandResource;
 use App\Models\Brand;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class AdminBrandController extends Controller
 {
@@ -18,6 +19,7 @@ class AdminBrandController extends Controller
     public function store(AdminBrandRequest $request)
     {
         $brand = Brand::create($request->validated());
+        Cache::forget('brands:active');
 
         return (new BrandResource($brand))->response()->setStatusCode(201);
     }
@@ -25,6 +27,7 @@ class AdminBrandController extends Controller
     public function update(AdminBrandRequest $request, Brand $brand)
     {
         $brand->update($request->validated());
+        Cache::forget('brands:active');
 
         return new BrandResource($brand);
     }
@@ -32,6 +35,7 @@ class AdminBrandController extends Controller
     public function destroy(Brand $brand)
     {
         $brand->delete();
+        Cache::forget('brands:active');
 
         return response()->json(['data' => ['message' => 'Brand deleted.']]);
     }

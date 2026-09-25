@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Address;
 use App\Models\Coupon;
 use App\Models\CouponUsage;
 use App\Models\Order;
@@ -166,7 +165,7 @@ class OrderSeeder extends Seeder
                     'tracking_number' => '1Z'.Str::upper(Str::random(16)),
                     'carrier' => 'SwiftPost',
                     'status' => $shipStatus,
-                    'address_snapshot' => json_encode($shipAddress),
+                    'address_snapshot' => $shipAddress,
                     'shipped_at' => $shippedAt,
                     'delivered_at' => $shipStatus === Shipment::STATUS_DELIVERED ? $shippedAt->copy()->addDays(3) : null,
                 ]);

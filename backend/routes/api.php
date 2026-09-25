@@ -26,6 +26,9 @@ use App\Http\Controllers\Api\Admin\AdminProductController;
 use App\Http\Controllers\Api\Admin\AdminReportController;
 use App\Http\Controllers\Api\Admin\AdminReviewController;
 use App\Http\Controllers\Api\Admin\AdminShippingMethodController;
+use App\Http\Controllers\Api\Admin\AdminNotificationController;
+use App\Http\Controllers\Api\Admin\AdminPaymentController;
+use App\Http\Controllers\Api\Admin\AdminShipmentController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -126,6 +129,8 @@ Route::prefix('admin')
         Route::get('products/{product}', [AdminProductController::class, 'show']);
         Route::put('products/{product}', [AdminProductController::class, 'update']);
         Route::delete('products/{product}', [AdminProductController::class, 'destroy']);
+        Route::patch('products', [AdminProductController::class, 'updateStatus']);
+        Route::post('products/{product}/restore', [AdminProductController::class, 'restore']);
         Route::post('products/{product}/images', [AdminMediaController::class, 'storeProductImage']);
         Route::delete('products/{product}/images/{image}', [AdminMediaController::class, 'destroyProductImage']);
 
@@ -175,4 +180,19 @@ Route::prefix('admin')
 
         Route::get('reports/orders.csv', [AdminReportController::class, 'ordersCsv']);
         Route::get('reports/orders.pdf', [AdminReportController::class, 'ordersPdf']);
+        Route::get('reports/products.csv', [AdminReportController::class, 'productsCsv']);
+        Route::get('reports/payments.csv', [AdminReportController::class, 'paymentsCsv']);
+        Route::get('reports/summary', [AdminReportController::class, 'summary']);
+
+        Route::get('payments', [AdminPaymentController::class, 'index']);
+        Route::get('payments/{payment}', [AdminPaymentController::class, 'show']);
+
+        Route::get('shipments', [AdminShipmentController::class, 'index']);
+        Route::get('shipments/{shipment}', [AdminShipmentController::class, 'show']);
+        Route::put('shipments/{shipment}', [AdminShipmentController::class, 'update']);
+
+        Route::get('notifications', [AdminNotificationController::class, 'index']);
+        Route::get('notifications/unread-count', [AdminNotificationController::class, 'unreadCount']);
+        Route::post('notifications/{notification}/read', [AdminNotificationController::class, 'markRead']);
+        Route::delete('notifications/{notification}', [AdminNotificationController::class, 'destroy']);
     });

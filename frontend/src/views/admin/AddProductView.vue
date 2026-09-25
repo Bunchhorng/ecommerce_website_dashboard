@@ -76,7 +76,7 @@ const categoryNames = computed(() => categories.value.map((c) => c.name))
 const discountPct = computed(() => {
   const price = Number(form.price)
   const compare = Number(form.compareAt)
-  if (compare > price && price > 0) return -Math.round((1 - price / compare) * 100)
+  if (compare > price && price > 0) return Math.round((1 - price / compare) * 100)
   return 0
 })
 
@@ -284,20 +284,18 @@ async function save() {
     const imagePaths = await resolveImagePaths()
 
     if (isEdit.value) {
-      const variantsPayload = variants.value
-        .filter((x) => x.enabled)
-        .map((v) => ({
-          ...(v.backendId ? { id: v.backendId } : {}),
-          name: v.attributes.map((a) => `${a.name}: ${a.value}`).join(', '),
-          sku: v.sku,
-          price: v.price ?? form.price,
-          compare_at_price: form.compareAt || null,
-          quantity: v.stock,
-          is_active: true,
-          ...(v.backendId
-            ? {}
-            : { attributes: v.attributes.map((a) => ({ attribute: a.name, value: a.value })) })
-        }))
+      const variantsPayload = variants.value.map((v) => ({
+        ...(v.backendId ? { id: v.backendId } : {}),
+        name: v.attributes.map((a) => `${a.name}: ${a.value}`).join(', '),
+        sku: v.sku,
+        price: v.price ?? form.price,
+        compare_at_price: form.compareAt || null,
+        quantity: v.stock,
+        is_active: v.enabled,
+        ...(v.backendId
+          ? {}
+          : { attributes: v.attributes.map((a) => ({ attribute: a.name, value: a.value })) })
+      }))
 
       await adminApi.updateProduct(productId, { ...payload, variants: variantsPayload, images: imagePaths })
       showToast(t('admin.products.toast_updated', { title: form.title, price: formatPrice(form.price) }))
@@ -305,20 +303,23 @@ async function save() {
       return
     }
 
-    const { data: resp } = await adminApi.createProduct({ ...payload, images: imagePaths })
-    const createdId = resp.data.id
-
-    for (const v of variants.value.filter((x) => x.enabled)) {
-      const variantPayload: Record<string, unknown> = {
+    const variantsPayload = variants.value
+      .filter((x) => x.enabled)
+      .map((v) => ({
         name: v.attributes.map((a) => `${a.name}: ${a.value}`).join(', '),
         sku: v.sku,
         price: v.price ?? form.price,
         compare_at_price: form.compareAt || null,
         quantity: v.stock,
+        is_active: true,
         attributes: v.attributes.map((a) => ({ attribute: a.name, value: a.value }))
-      }
-      await adminApi.updateProduct(createdId, { variants: [variantPayload] })
-    }
+      }))
+
+    await adminApi.createProduct({
+      ...payload,
+      variants: variantsPayload,
+      images: imagePaths
+    })
 
     showToast(t('admin.products.toast_saved', { title: form.title, price: formatPrice(form.price) }))
     router.push({ name: 'admin-products' })
@@ -465,7 +466,7 @@ onMounted(async () => {
           <label class="label">{{ $t('admin.products.discount_label') }}</label>
           <div class="flex h-[42px] items-center">
             <span
-              v-if="discountPct < 0"
+              v-if="discountPct > 0"
               class="inline-flex items-center gap-1 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-600"
             >
               {{ discountPct }}%
@@ -478,8 +479,8 @@ onMounted(async () => {
       <div v-if="form.price > 0" class="mt-5 rounded-xl bg-canvas p-4">
         <div class="flex items-baseline gap-3">
           <span class="text-2xl font-bold text-ink">{{ formatPrice(form.price) }}</span>
-          <span v-if="discountPct < 0" class="text-sm text-gray-400 line-through">{{ formatPrice(Number(form.compareAt)) }}</span>
-          <span v-if="discountPct < 0" class="text-sm font-semibold text-red-600">{{ $t('admin.products.percent_off', { percent: discountPct }) }}</span>
+          <span v-if="discountPct > 0" class="text-sm text-gray-400 line-through">{{ formatPrice(Number(form.compareAt)) }}</span>
+          <span v-if="discountPct > 0" class="text-sm font-semibold text-red-600">{{ $t('admin.products.percent_off', { percent: discountPct }) }}</span>
         </div>
       </div>
     </div>

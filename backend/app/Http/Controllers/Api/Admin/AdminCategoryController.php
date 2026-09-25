@@ -7,6 +7,7 @@ use App\Http\Requests\AdminCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class AdminCategoryController extends Controller
 {
@@ -26,6 +27,7 @@ class AdminCategoryController extends Controller
     public function store(AdminCategoryRequest $request)
     {
         $category = Category::create($request->validated());
+        Cache::forget('categories:tree');
 
         return (new CategoryResource($category))->response()->setStatusCode(201);
     }
@@ -33,6 +35,7 @@ class AdminCategoryController extends Controller
     public function update(AdminCategoryRequest $request, Category $category)
     {
         $category->update($request->validated());
+        Cache::forget('categories:tree');
 
         return new CategoryResource($category);
     }
@@ -46,6 +49,7 @@ class AdminCategoryController extends Controller
         }
 
         $category->delete();
+        Cache::forget('categories:tree');
 
         return response()->json(['data' => ['message' => 'Category deleted.']]);
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -21,6 +22,16 @@ class ProductResource extends JsonResource
             'is_featured' => (bool) $this->is_featured,
             'is_active' => (bool) $this->is_active,
             'in_stock' => $this->inStock ?? $this->computeInStock(),
+            'variants' => $this->whenLoaded('variants', fn () => $this->variants
+                ->filter(fn ($variant) => (bool) $variant->is_active)
+                ->map(fn ($variant) => [
+                    'id' => $variant->id,
+                    'sku' => $variant->sku,
+                    'name' => $variant->name,
+                    'price' => $variant->price !== null ? (float) $variant->price : (float) $this->price,
+                    'in_stock' => $this->variantInStock($variant),
+                ])
+                ->values()),
             'cover_image' => $this->resolveCoverImage(),
             'brand' => $this->whenLoaded('brand', fn () => [
                 'slug' => $this->brand->slug,
@@ -33,6 +44,17 @@ class ProductResource extends JsonResource
         ];
     }
 
+    protected function variantInStock(ProductVariant $variant): bool
+    {
+        if (! (bool) $variant->is_active) {
+            return false;
+        }
+        $inventory = $this->relationLoaded('variants') ? $variant->inventory : null;
+        $quantity = $inventory ? (int) $inventory->quantity - (int) $inventory->reserved_quantity : 0;
+
+        return $quantity > 0;
+    }
+
     protected function computeInStock(): bool
     {
         $variants = $this->variants;
@@ -41,7 +63,7 @@ class ProductResource extends JsonResource
         }
 
         foreach ($variants as $variant) {
-            if (!(bool) $variant->is_active) {
+            if (! (bool) $variant->is_active) {
                 continue;
             }
             $inventory = $variant->inventory;
@@ -59,6 +81,7 @@ class ProductResource extends JsonResource
         if ($this->relationLoaded('images')) {
             $cover = $this->images->firstWhere('is_cover', true);
             $image = $cover ?? $this->images->first();
+
             return $image?->image_path;
         }
 

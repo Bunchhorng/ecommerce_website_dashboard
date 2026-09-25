@@ -21,6 +21,7 @@ class Shipment extends Model
     protected function casts(): array
     {
         return [
+            'address_snapshot' => 'array',
             'shipped_at' => 'datetime',
             'delivered_at' => 'datetime',
         ];

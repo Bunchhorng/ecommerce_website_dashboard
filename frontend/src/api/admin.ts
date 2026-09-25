@@ -3,16 +3,49 @@ import type { ApiOrder } from './checkout'
 import type { CatalogProduct, PaginatedResponse } from './catalog'
 
 export interface AdminDashboard {
+  range?: string
   metrics: {
     total_revenue: number
+    today_revenue: number
+    week_revenue: number
+    month_revenue: number
+    revenue_delta: number | null
     orders_count: number
-    customers_count: number
+    orders_delta: number | null
     pending_orders: number
+    processing_orders: number
+    completed_orders: number
+    cancelled_orders: number
+    customers_count: number
+    customers_delta: number | null
+    total_products: number
+    total_categories: number
+    total_brands: number
     low_stock_products: number
+    out_of_stock_products: number
   }
   revenue_trend: { date: string; revenue: number }[]
+  orders_trend: { date: string; orders: number }[]
   status_distribution: { status: string; count: number }[]
+  payment_status_distribution: { status: string; count: number }[]
   sales_by_category: { id: number; name: string; slug: string; revenue: number; order_count: number }[]
+  top_selling_products: { product_id: number; product_name: string; total_qty: number; revenue: number }[]
+  low_stock: {
+    id: number
+    product_id: number | null
+    product_name: string | null
+    product_slug: string | null
+    variant_name: string | null
+    sku: string | null
+    quantity: number
+    reserved_quantity: number
+    available_quantity: number
+    low_stock_threshold: number
+    is_out_of_stock: boolean
+  }[]
+  recent_customers: { id: number; name: string; email: string; avatar: string | null; created_at: string }[]
+  recent_reviews: { id: number; rating: number; title: string | null; body: string | null; status: string; user_name: string | null; product_name: string | null; created_at: string }[]
+  recent_payments: { id: number; order_number: string | null; method: string | null; status: string; amount: number; transaction_id: string | null; paid_at: string | null }[]
 }
 
 export interface AdminProduct extends CatalogProduct {
@@ -119,11 +152,14 @@ export interface AdminSettings {
   storeName: string
   supportEmail: string
   supportPhone: string
+  storeAddress: string
   currency: string
   locale: string
+  timezone: string
   lowStockThreshold: number
   emailOrderNotifications: boolean
   emailLowStockAlerts: boolean
+  maintenanceMode: boolean
 }
 
 export interface AdminInventoryItem {
@@ -171,10 +207,58 @@ export interface AdminCustomerDetail {
   recent_orders: AdminOrderItem[]
 }
 
+export interface AdminPayment {
+  id: number
+  order_id: number
+  order_number: string | null
+  customer_name: string | null
+  method: string | null
+  status: string
+  amount: number
+  transaction_id: string | null
+  paid_at: string | null
+  created_at: string
+  transactions?: {
+    id: number
+    type: string
+    status: string
+    amount: number
+    reference: string | null
+    created_at: string
+  }[]
+}
+
+export interface AdminShipment {
+  id: number
+  order_id: number
+  order_number: string | null
+  customer_name: string | null
+  shipping_method_id: number | null
+  shipping_method: string | null
+  tracking_number: string | null
+  carrier: string | null
+  status: string
+  address_snapshot: Record<string, unknown> | null
+  shipped_at: string | null
+  delivered_at: string | null
+  created_at: string
+}
+
+export interface AdminNotification {
+  id: string
+  type: string
+  title: string | null
+  message: string | null
+  read_at: string | null
+  created_at: string
+}
+
 export const adminApi = {
-  getDashboard(days?: number) {
+  getDashboard(range?: string, from?: string, to?: string) {
     const params: Record<string, string> = {}
-    if (days) params.days = String(days)
+    if (range) params.range = range
+    if (from) params.from = from
+    if (to) params.to = to
     return apiClient.get<{ data: AdminDashboard }>('/admin/dashboard/overview', { params })
   },
 
@@ -194,7 +278,38 @@ export const adminApi = {
     return apiClient.get<Blob>('/admin/reports/orders.pdf', { params, responseType: 'blob' })
   },
 
-  listProducts(params: { q?: string; category_id?: number; brand_id?: number; stock_status?: string } = {}) {
+  getProductsCsv(from?: string, to?: string) {
+    const params: Record<string, string> = {}
+    if (from) params.from = from
+    if (to) params.to = to
+    return apiClient.get<Blob>('/admin/reports/products.csv', { params, responseType: 'blob' })
+  },
+
+  getPaymentsCsv(status?: string, from?: string, to?: string) {
+    const params: Record<string, string> = {}
+    if (status) params.status = status
+    if (from) params.from = from
+    if (to) params.to = to
+    return apiClient.get<Blob>('/admin/reports/payments.csv', { params, responseType: 'blob' })
+  },
+
+  getReportsSummary(params: { from?: string; to?: string } = {}) {
+    return apiClient.get<{
+      data: {
+        revenue: number
+        items_revenue: number
+        refunded: number
+        orders_count: number
+        customers_count: number
+        units_sold: number
+        avg_order_value: number
+        payment_methods: { method: string; count: number; amount: number }[]
+        low_stock_count: number
+      }
+    }>('/admin/reports/summary', { params })
+  },
+
+  listProducts(params: { q?: string; category_id?: number; brand_id?: number; stock_status?: string; deleted?: boolean } = {}) {
     return apiClient.get<PaginatedResponse<AdminProduct>>('/admin/products', { params })
   },
 
@@ -332,5 +447,53 @@ export const adminApi = {
 
   listInventoryTransactions(inventoryId: number, params: { type?: string; page?: number } = {}) {
     return apiClient.get<PaginatedResponse<InventoryTransaction>>(`/admin/inventory/${inventoryId}/transactions`, { params })
+  },
+
+  listPayments(params: { status?: string; method?: string; q?: string; page?: number } = {}) {
+    return apiClient.get<PaginatedResponse<AdminPayment>>('/admin/payments', { params })
+  },
+
+  getPayment(id: number) {
+    return apiClient.get<{ data: AdminPayment }>(`/admin/payments/${id}`)
+  },
+
+  listShipments(params: { status?: string; q?: string; page?: number } = {}) {
+    return apiClient.get<PaginatedResponse<AdminShipment>>('/admin/shipments', { params })
+  },
+
+  getShipment(id: number) {
+    return apiClient.get<{ data: AdminShipment }>(`/admin/shipments/${id}`)
+  },
+
+  updateShipment(id: number, payload: { tracking_number?: string; carrier?: string; status: string }) {
+    return apiClient.put<{ data: AdminShipment }>(`/admin/shipments/${id}`, payload)
+  },
+
+  listNotifications(params: { filter?: string; page?: number } = {}) {
+    return apiClient.get<
+      PaginatedResponse<AdminNotification> & { meta: { unread_count: number } }
+    >('/admin/notifications', {
+      params,
+    })
+  },
+
+  getNotificationUnreadCount() {
+    return apiClient.get<{ data: { unread_count: number } }>('/admin/notifications/unread-count')
+  },
+
+  markNotificationRead(id: string | 'all') {
+    return apiClient.post<{ data: { message: string } }>(`/admin/notifications/${id}/read`)
+  },
+
+  deleteNotification(id: string) {
+    return apiClient.delete(`/admin/notifications/${id}`)
+  },
+
+  updateProductStatus(ids: number[], isActive: boolean) {
+    return apiClient.patch<{ data: { updated: number } }>('/admin/products', { ids, is_active: isActive })
+  },
+
+  restoreProduct(id: number) {
+    return apiClient.post<{ data: AdminProduct }>(`/admin/products/${id}/restore`)
   }
 }

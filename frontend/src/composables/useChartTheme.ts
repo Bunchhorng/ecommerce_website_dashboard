@@ -7,6 +7,7 @@ export interface ChartPalette {
   mutedText: string
   grid: string
   border: string
+  cardBg: string
 }
 
 export function useChartTheme(): { isDark: ComputedRef<boolean>; palette: ComputedRef<ChartPalette> } {
@@ -20,7 +21,8 @@ export function useChartTheme(): { isDark: ComputedRef<boolean>; palette: Comput
       text: dark ? '#9CA3AF' : '#6B7280',
       mutedText: dark ? '#6B7280' : '#9CA3AF',
       grid: dark ? '#374151' : '#F3F4F6',
-      border: dark ? '#1F2937' : '#FFFFFF'
+      border: dark ? '#1F2937' : '#FFFFFF',
+      cardBg: dark ? '#111827' : '#FFFFFF'
     }
   })
 

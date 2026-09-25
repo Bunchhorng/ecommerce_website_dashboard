@@ -149,12 +149,39 @@ async function fetchFacets() {
   }
 }
 
+function sameArray(v: unknown, arr: string[]): boolean {
+  const a = toArray(v)
+  if (a.length !== arr.length) return false
+  const set = new Set(arr)
+  return a.every((x) => set.has(x))
+}
+
+function sameAsFilters(q: Record<string, unknown>): boolean {
+  return (
+    (typeof q.q === 'string' ? q.q : undefined) === (filters.q ?? undefined) &&
+    (typeof q.category === 'string' ? q.category : undefined) === (filters.category ?? undefined) &&
+    (typeof q.brand === 'string' ? q.brand : undefined) === (filters.brand ?? undefined) &&
+    sameArray(q.colors, filters.colors) &&
+    sameArray(q.sizes, filters.sizes) &&
+    (toNum(q.min) ?? undefined) === (filters.min ?? undefined) &&
+    (toNum(q.max) ?? undefined) === (filters.max ?? undefined) &&
+    (toNum(q.rating) ?? undefined) === (filters.rating ?? undefined) &&
+    (q.stock === '1') === filters.inStockOnly &&
+    (typeof q.sort === 'string' && q.sort !== '' ? q.sort : 'featured') === filters.sort &&
+    (toNum(q.page) ?? 1) === filters.page
+  )
+}
+
 watch(filters, () => {
+  if (applying) return
+  if (sameAsFilters(route.query)) return
   pushRoute()
   fetchProducts()
 }, { deep: true })
 
 watch(() => route.query, (q) => {
+  if (applying) return
+  if (sameAsFilters(q)) return
   applyFromQuery(q)
   fetchProducts()
 })
@@ -182,7 +209,10 @@ const summaryChips = computed(() => {
     const c = facets.value.categories.find((x) => x.slug === filters.category)
     chips.push({ key: 'category', label: c ? c.name : filters.category })
   }
-  if (filters.brand) chips.push({ key: 'brand', label: filters.brand })
+  if (filters.brand) {
+    const b = facets.value.brands.find((x) => x.slug === filters.brand)
+    chips.push({ key: 'brand', label: b ? b.name : filters.brand })
+  }
   return chips
 })
 
@@ -359,9 +389,9 @@ function setPage(p: number) {
                   <input
                     type="radio"
                     name="brand"
-                    :checked="filters.brand === b.name"
+                    :checked="filters.brand === b.slug"
                     class="h-4 w-4 accent-primary"
-                    @change="setBrand(filters.brand === b.name ? undefined : b.name)"
+                    @change="setBrand(filters.brand === b.slug ? undefined : b.slug)"
                   />
                   {{ b.name }}
                 </span>
@@ -520,7 +550,7 @@ function setPage(p: number) {
               <div class="space-y-2">
                 <label v-for="b in facets.brands" :key="b.slug" class="flex cursor-pointer items-center justify-between text-sm text-gray-700 dark:text-muted">
                   <span class="flex items-center gap-2">
-                    <input type="radio" name="m-brand" :checked="filters.brand === b.name" class="h-4 w-4 accent-primary" @change="setBrand(filters.brand === b.name ? undefined : b.name)" />
+                    <input type="radio" name="m-brand" :checked="filters.brand === b.slug" class="h-4 w-4 accent-primary" @change="setBrand(filters.brand === b.slug ? undefined : b.slug)" />
                     {{ b.name }}
                   </span>
                   <span class="text-xs text-gray-400 dark:text-gray-500">{{ b.count }}</span>

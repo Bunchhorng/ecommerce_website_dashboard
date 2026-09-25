@@ -53,7 +53,10 @@
     "load_more": "Load More",
     "back": "Back",
     "apply": "Apply",
-    "close": "Close"
+    "close": "Close",
+    "save": "Save",
+    "retry": "Retry",
+    "refresh": "Refresh"
   },
   "common": {
     "loading": "Loading…",
@@ -367,6 +370,9 @@
       "brands": "Brands",
       "orders": "Orders",
       "inventory": "Inventory",
+      "payments": "Payments",
+      "shipments": "Shipments",
+      "notifications": "Notifications",
       "reports": "Reports",
       "shipping_methods": "Shipping Methods",
       "coupons": "Coupons",
@@ -378,26 +384,53 @@
       "admin_label": "Admin"
     },
     "dashboard": {
+      "title": "Dashboard",
       "total_revenue": "Total Revenue",
       "total_orders": "Total Orders",
       "total_customers": "Total Customers",
+      "pending_orders": "Pending Orders",
+      "processing_orders": "Processing",
+      "completed_orders": "Completed",
+      "out_of_stock": "Out of Stock",
       "low_stock_alerts": "Low Stock Alerts",
       "vs_last_month": "vs last month",
       "last_12_months": "Last 12 months",
       "total_count": "Total {count}",
       "this_year": "This year",
       "recent_orders": "Recent Orders",
+      "recent_customers": "Recent Customers",
+      "recent_reviews": "Recent Reviews",
+      "recent_payments": "Recent Payments",
+      "top_selling": "Top Selling Products",
+      "units_sold": "Units Sold",
+      "threshold": "Threshold {count}",
+      "no_data": "No data available",
+      "load_failed": "Failed to load dashboard data.",
+      "range_label_days": "Daily",
+      "range_label_months": "Monthly",
+      "range": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "7": "7D",
+        "30": "30D",
+        "this_month": "This Month",
+        "last_month": "Last Month"
+      },
       "low_stock_description": "Products that need restocking soon.",
       "view_all_products": "View all products",
       "count_left": "{count} left",
-      "new_count": "{count} new"
+      "new_count": "{count} new",
+      "no_low_stock": "No low-stock products",
+      "low_stock_count": "{count} product(s) need restocking"
     },
     "chart": {
       "revenue_trend": "Revenue Trend",
       "orders_by_status": "Orders by Status",
+      "payments_by_status": "Payments by Status",
       "sales_by_category": "Sales by Category",
       "revenue": "Revenue",
-      "orders": "Orders"
+      "orders": "Orders",
+      "orders_over_time": "Orders Over Time"
     },
     "table": {
       "search_placeholder": "Search…",
@@ -409,7 +442,86 @@
       "col_customer": "Customer",
       "col_total": "Total",
       "col_status": "Status",
-      "col_date": "Date"
+      "col_date": "Date",
+      "col_product": "Product"
+    },
+    "payments": {
+      "title": "Payments",
+      "total": "total",
+      "order": "Order",
+      "customer": "Customer",
+      "method": "Method",
+      "status": "Status",
+      "amount": "Amount",
+      "date": "Date",
+      "transaction_id": "Transaction ID",
+      "transactions": "Transactions",
+      "tx_type": "Type",
+      "tx_status": "Status",
+      "tx_date": "Date",
+      "detail_title": "Payment details",
+      "row": {
+        "details": "View details"
+      },
+      "filter": {
+        "all": "All",
+        "pending": "Pending",
+        "completed": "Completed",
+        "failed": "Failed",
+        "refunded": "Refunded"
+      },
+      "search_placeholder": "Search payments…",
+      "toast": {
+        "load_error": "Failed to load payments."
+      }
+    },
+    "shipments": {
+      "title": "Shipments",
+      "total": "total",
+      "order": "Order",
+      "customer": "Customer",
+      "carrier": "Carrier",
+      "tracking": "Tracking No.",
+      "status": "Status",
+      "date": "Date",
+      "shipping_address": "Shipping Address",
+      "edit_title": "Edit shipment {order}",
+      "row": {
+        "edit": "Edit"
+      },
+      "filter": {
+        "all": "All",
+        "pending": "Pending",
+        "shipped": "Shipped",
+        "in_transit": "In Transit",
+        "delivered": "Delivered",
+        "returned": "Returned"
+      },
+      "search_placeholder": "Search shipments…",
+      "toast": {
+        "load_error": "Failed to load shipments.",
+        "saved": "Shipment updated.",
+        "save_error": "Could not save shipment."
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "total_count": "{count} notifications",
+      "unread_count": "{count} unread",
+      "mark_all_read": "Mark all as read",
+      "mark_read": "Mark as read",
+      "delete": "Delete",
+      "no_notifications": "No notifications",
+      "untitled": "Notification",
+      "filter": {
+        "all": "All",
+        "unread": "Unread",
+        "read": "Read"
+      },
+      "toast": {
+        "load_error": "Failed to load notifications.",
+        "action_failed": "The action failed. Please try again."
+      }
     },
     "orders": {
       "title": "Orders",
@@ -488,16 +600,37 @@
     },
     "reports": {
       "title": "Reports",
-      "subtitle": "Export orders as CSV or PDF.",
+      "subtitle": "Track sales performance and export reports as CSV or PDF.",
       "orders_report": "Orders Report",
+      "products_report": "Products Report",
+      "payments_report": "Payments Report",
+      "orders_description": "Orders in the selected status and date range.",
+      "products_description": "Units sold and revenue per product.",
+      "payments_description": "Payments recorded in the selected range.",
       "all_statuses": "All statuses",
+      "filters": "Summary & Filters",
+      "order_status": "Order status",
+      "exports": "Export Reports",
+      "payment_methods": "Payment Method Breakdown",
+      "revenue": "Revenue",
+      "items_revenue": "Items Revenue",
+      "refunded": "Refunded",
+      "orders_count": "Orders",
+      "customers_count": "Customers",
+      "units_sold": "Units Sold",
+      "avg_order_value": "Avg. Order Value",
+      "low_stock": "Low Stock Items",
+      "type_orders": "Orders",
+      "type_products": "Products",
+      "type_payments": "Payments",
+      "toast_exported": "{type} report exported.",
       "from": "From",
       "to": "To",
       "download_pdf": "Download PDF",
       "download_csv": "Download CSV",
       "downloading": "Downloading…",
       "summary_title": "How exports work",
-      "summary_description": "Reports include all orders that match the selected status and date range. CSV is best for spreadsheets, while PDF is a shareable, printable document.",
+      "summary_description": "Reports include all matching records within the selected status and date range.",
       "toast_csv": "Exported orders CSV ({status}).",
       "toast_pdf": "Exported orders PDF ({status}).",
       "toast_error": "Export failed. Please try again."
@@ -510,6 +643,8 @@
       "store_name": "Store name",
       "support_email": "Support email",
       "support_phone": "Support phone",
+      "store_address": "Store address",
+      "timezone": "Timezone",
       "currency": "Default currency",
       "locale": "Default locale",
       "notifications": "Notifications",
@@ -519,6 +654,10 @@
       "email_order_notifications_desc": "Email when a new order is placed.",
       "email_low_stock_alerts": "Low stock alerts",
       "email_low_stock_alerts_desc": "Email when a product drops below its threshold.",
+      "maintenance": "Maintenance",
+      "maintenance_description": "Control store availability during maintenance windows.",
+      "maintenance_mode": "Maintenance mode",
+      "maintenance_mode_desc": "Keep the store online for admins only while maintenance runs.",
       "stored_in_db": "Stored in database",
       "stored_in_db_description": "These preferences apply store-wide and persist on the server.",
       "save_changes": "Save Changes",
@@ -536,6 +675,7 @@
       "orders": "Orders",
       "total_spent": "Total Spent",
       "joined": "Joined",
+      "role": "Role",
       "search_placeholder": "Search customers…",
       "bulk": {
         "export_csv": "Export CSV",
@@ -602,9 +742,17 @@
       "search_placeholder": "Search products…",
       "export_csv": "Export CSV",
       "duplicate": "Duplicate",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "show_deleted": "Show deleted",
+      "show_active": "Show active",
+      "restore": "Restore",
       "toast_duplicated": "Duplicated {name}",
       "toast_deleted": "Deleted {name}",
       "toast_deleted_count": "Deleted {count} products",
+      "toast_restored": "Restored {name}",
+      "toast_status_updated": "Updated status for {count} products",
+      "toast_action_failed": "The action failed. Please try again.",
       "toast_exported_csv": "Exported {count} products to CSV",
       "catalog": "Catalog",
       "add_new_product": "Add New Product",

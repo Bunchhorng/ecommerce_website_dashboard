@@ -11,12 +11,39 @@ const defaults: AdminSettings = {
   storeName: 'E-KHMER',
   supportEmail: 'support@e-khmer.com',
   supportPhone: '',
+  storeAddress: '',
   currency: 'USD',
   locale: 'en',
+  timezone: 'Asia/Phnom_Penh',
   lowStockThreshold: 5,
   emailOrderNotifications: true,
-  emailLowStockAlerts: true
+  emailLowStockAlerts: true,
+  maintenanceMode: false
 }
+
+const timezones = [
+  'UTC',
+  'Asia/Phnom_Penh',
+  'Asia/Bangkok',
+  'Asia/Ho_Chi_Minh',
+  'Asia/Singapore',
+  'Asia/Kuala_Lumpur',
+  'Asia/Manila',
+  'Asia/Jakarta',
+  'Asia/Kolkata',
+  'Asia/Shanghai',
+  'Asia/Tokyo',
+  'Asia/Seoul',
+  'Australia/Sydney',
+  'Europe/London',
+  'Europe/Paris',
+  'Europe/Berlin',
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'America/Sao_Paulo'
+]
 
 const form = reactive<AdminSettings>({ ...defaults })
 const loaded = ref(false)
@@ -127,6 +154,21 @@ async function resetSettings() {
               </select>
             </div>
           </div>
+          <div>
+            <label class="label" for="store-address">{{ $t('admin.settings.store_address') }}</label>
+            <textarea
+              id="store-address"
+              v-model="form.storeAddress"
+              class="input min-h-[90px] resize-y"
+              rows="3"
+            ></textarea>
+          </div>
+          <div>
+            <label class="label" for="timezone">{{ $t('admin.settings.timezone') }}</label>
+            <select id="timezone" v-model="form.timezone" class="input">
+              <option v-for="tz in timezones" :key="tz" :value="tz">{{ tz }}</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -189,6 +231,33 @@ async function resetSettings() {
               </button>
             </label>
           </div>
+        </div>
+
+        <div class="card p-6">
+          <div class="flex items-center gap-2">
+            <Database class="h-5 w-5 text-primary" />
+            <h2 class="text-base font-semibold text-ink">{{ $t('admin.settings.maintenance') }}</h2>
+          </div>
+          <p class="mt-1 text-sm text-gray-500">{{ $t('admin.settings.maintenance_description') }}</p>
+          <label class="mt-5 flex items-start justify-between gap-4 rounded-lg border border-border-gray p-4">
+            <span>
+              <span class="block text-sm font-medium text-ink">{{ $t('admin.settings.maintenance_mode') }}</span>
+              <span class="text-xs text-gray-500">{{ $t('admin.settings.maintenance_mode_desc') }}</span>
+            </span>
+            <button
+              type="button"
+              class="relative h-6 w-11 shrink-0 rounded-full transition-colors"
+              :class="form.maintenanceMode ? 'bg-red-500' : 'bg-gray-200 dark:bg-surface-hover'"
+              :aria-checked="form.maintenanceMode"
+              role="switch"
+              @click="form.maintenanceMode = !form.maintenanceMode"
+            >
+              <span
+                class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all"
+                :class="form.maintenanceMode ? 'left-[22px]' : 'left-0.5'"
+              ></span>
+            </button>
+          </label>
         </div>
 
         <div class="card p-6">

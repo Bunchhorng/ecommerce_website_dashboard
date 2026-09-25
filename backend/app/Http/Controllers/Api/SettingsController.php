@@ -13,17 +13,21 @@ class SettingsController extends Controller
         'storeName' => 'E-KHMER',
         'supportEmail' => 'support@e-khmer.com',
         'supportPhone' => '',
+        'storeAddress' => '',
         'currency' => 'USD',
         'locale' => 'en',
+        'timezone' => 'Asia/Phnom_Penh',
         'lowStockThreshold' => 5,
         'emailOrderNotifications' => true,
         'emailLowStockAlerts' => true,
+        'maintenanceMode' => false,
     ];
 
     protected array $casts = [
         'lowStockThreshold' => 'int',
         'emailOrderNotifications' => 'bool',
         'emailLowStockAlerts' => 'bool',
+        'maintenanceMode' => 'bool',
     ];
 
     public function show()
@@ -37,11 +41,14 @@ class SettingsController extends Controller
             'storeName' => ['sometimes', 'string', 'max:120'],
             'supportEmail' => ['sometimes', 'email', 'max:190'],
             'supportPhone' => ['sometimes', 'string', 'max:30'],
+            'storeAddress' => ['sometimes', 'string', 'max:500'],
             'currency' => ['sometimes', 'string', 'max:5', Rule::in(['USD', 'EUR', 'KHR'])],
             'locale' => ['sometimes', 'string', 'max:5', Rule::in(['en', 'km'])],
+            'timezone' => ['sometimes', 'string', 'max:60', 'timezone'],
             'lowStockThreshold' => ['sometimes', 'integer', 'min:0', 'max:999'],
             'emailOrderNotifications' => ['sometimes', 'boolean'],
             'emailLowStockAlerts' => ['sometimes', 'boolean'],
+            'maintenanceMode' => ['sometimes', 'boolean'],
         ]);
 
         foreach ($data as $key => $value) {

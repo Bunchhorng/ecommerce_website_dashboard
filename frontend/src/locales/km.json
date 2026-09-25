@@ -53,7 +53,10 @@
     "load_more": "ផ្ទុកបន្ថែម",
     "back": "ត្រឡប់ក្រោយ",
     "apply": "អនុវត្ត",
-    "close": "បិទ"
+    "close": "បិទ",
+    "save": "រក្សាទុក",
+    "retry": "ព្យាយាមម្តងទៀត",
+    "refresh": "ធ្វើឱ្យស្រស់"
   },
   "common": {
     "loading": "កំពុងផ្ទុក…",
@@ -367,6 +370,9 @@
       "brands": "ម៉ាក",
       "orders": "ការបញ្ជាទិញ",
       "inventory": "ស្តុក",
+      "payments": "ការទូទាត់",
+      "shipments": "ការដឹកជញ្ជូន",
+      "notifications": "ការជូនដំណឹង",
       "reports": "របាយការណ៍",
       "shipping_methods": "វិធីសាស្ត្រដឹកជញ្ជូន",
       "coupons": "ប័ណ្ណបញ្ចុះតម្លៃ",
@@ -378,26 +384,53 @@
       "admin_label": "អ្នកគ្រប់គ្រង"
     },
     "dashboard": {
+      "title": "ផ្ទាំងគ្រប់គ្រង",
       "total_revenue": "ចំណូលសរុប",
       "total_orders": "ការបញ្ជាទិញសរុប",
       "total_customers": "អតិថិជនសរុប",
+      "pending_orders": "ការបញ្ជាទិញកំពុងរង់ចាំ",
+      "processing_orders": "កំពុងដំណើរការ",
+      "completed_orders": "បញ្ចប់",
+      "out_of_stock": "អស់ស្តុក",
       "low_stock_alerts": "ការជូនដំណឹងស្តុកទាប",
       "vs_last_month": "ធៀបនឹងខែមុន",
       "last_12_months": "១២ខែចុងក្រោយ",
       "total_count": "សរុប {count}",
       "this_year": "ឆ្នាំនេះ",
       "recent_orders": "ការបញ្ជាទិញថ្មីៗ",
+      "recent_customers": "អតិថិជនថ្មីៗ",
+      "recent_reviews": "ការវាយតម្លៃថ្មីៗ",
+      "recent_payments": "ការទូទាត់ថ្មីៗ",
+      "top_selling": "ផលិតផលលក់ដាច់បំផុត",
+      "units_sold": "លក់បាន",
+      "threshold": "កម្រិត {count}",
+      "no_data": "មិនមានទិន្នន័យ",
+      "load_failed": "មិនអាចទាញយកទិន្នន័យផ្ទាំងគ្រប់គ្រងបានទេ។",
+      "range_label_days": "ប្រចាំថ្ងៃ",
+      "range_label_months": "ប្រចាំខែ",
+      "range": {
+        "today": "ថ្ងៃនេះ",
+        "yesterday": "ម្សិលមិញ",
+        "7": "៧ថ្ងៃ",
+        "30": "៣០ថ្ងៃ",
+        "this_month": "ខែនេះ",
+        "last_month": "ខែមុន"
+      },
       "low_stock_description": "ផលិតផលដែលត្រូវការបញ្ចូលស្តុកឆាប់ៗនេះ។",
       "view_all_products": "មើលផលិតផលទាំងអស់",
       "count_left": "នៅសល់ {count}",
-      "new_count": "ថ្មី {count}"
+      "new_count": "ថ្មី {count}",
+      "no_low_stock": "មិនមានផលិតផលស្តុកទាបទេ",
+      "low_stock_count": "{count} ផលិតផលត្រូវការបញ្ចូលស្តុក"
     },
     "chart": {
       "revenue_trend": "និន្នាការចំណូល",
       "orders_by_status": "ការបញ្ជាទិញតាមស្ថានភាព",
+      "payments_by_status": "ការទូទាត់តាមស្ថានភាព",
       "sales_by_category": "ការលក់តាមប្រភេទ",
       "revenue": "ចំណូល",
-      "orders": "ការបញ្ជាទិញ"
+      "orders": "ការបញ្ជាទិញ",
+      "orders_over_time": "ការបញ្ជាទិញតាមពេលវេលា"
     },
     "table": {
       "search_placeholder": "ស្វែងរក…",
@@ -409,7 +442,86 @@
       "col_customer": "អតិថិជន",
       "col_total": "សរុប",
       "col_status": "ស្ថានភាព",
-      "col_date": "កាលបរិច្ឆេទ"
+      "col_date": "កាលបរិច្ឆេទ",
+      "col_product": "ផលិតផល"
+    },
+    "payments": {
+      "title": "ការទូទាត់",
+      "total": "សរុប",
+      "order": "ការបញ្ជាទិញ",
+      "customer": "អតិថិជន",
+      "method": "វិធីសាស្ត្រ",
+      "status": "ស្ថានភាព",
+      "amount": "ចំនួនទឹកប្រាក់",
+      "date": "កាលបរិច្ឆេទ",
+      "transaction_id": "លេខប្រតិបត្តិការ",
+      "transactions": "ប្រតិបត្តិការ",
+      "tx_type": "ប្រភេទ",
+      "tx_status": "ស្ថានភាព",
+      "tx_date": "កាលបរិច្ឆេទ",
+      "detail_title": "ព័ត៌មានលម្អិតការទូទាត់",
+      "row": {
+        "details": "មើលព័ត៌មានលម្អិត"
+      },
+      "filter": {
+        "all": "ទាំងអស់",
+        "pending": "រង់ចាំ",
+        "completed": "បញ្ចប់",
+        "failed": "បរាជ័យ",
+        "refunded": "បង្វិលសង"
+      },
+      "search_placeholder": "ស្វែងរកការទូទាត់…",
+      "toast": {
+        "load_error": "មិនអាចទាញយកការទូទាត់បានទេ។"
+      }
+    },
+    "shipments": {
+      "title": "ការដឹកជញ្ជូន",
+      "total": "សរុប",
+      "order": "ការបញ្ជាទិញ",
+      "customer": "អតិថិជន",
+      "carrier": "ក្រុមហ៊ុនដឹកជញ្ជូន",
+      "tracking": "លេខតាមដាន",
+      "status": "ស្ថានភាព",
+      "date": "កាលបរិច្ឆេទ",
+      "shipping_address": "អាសយដ្ឋានដឹកជញ្ជូន",
+      "edit_title": "កែសម្រួលការដឹកជញ្ជូន {order}",
+      "row": {
+        "edit": "កែសម្រួល"
+      },
+      "filter": {
+        "all": "ទាំងអស់",
+        "pending": "រង់ចាំ",
+        "shipped": "បានដឹកជញ្ជូន",
+        "in_transit": "កំពុងធ្វើដំណើរ",
+        "delivered": "បានប្រគល់",
+        "returned": "បានប្រគល់មកវិញ"
+      },
+      "search_placeholder": "ស្វែងរកការដឹកជញ្ជូន…",
+      "toast": {
+        "load_error": "មិនអាចទាញយកការដឹកជញ្ជូនបានទេ។",
+        "saved": "បានធ្វើបច្ចុប្បន្នភាពការដឹកជញ្ជូន។",
+        "save_error": "មិនអាចរក្សាទុកការដឹកជញ្ជូនបានទេ។"
+      }
+    },
+    "notifications": {
+      "title": "ការជូនដំណឹង",
+      "total_count": "{count} ការជូនដំណឹង",
+      "unread_count": "{count} មិនទាន់អាន",
+      "mark_all_read": "សម្គាល់ថាអានទាំងអស់",
+      "mark_read": "សម្គាល់ថាបានអាន",
+      "delete": "លុប",
+      "no_notifications": "មិនមានការជូនដំណឹង",
+      "untitled": "ការជូនដំណឹង",
+      "filter": {
+        "all": "ទាំងអស់",
+        "unread": "មិនទាន់អាន",
+        "read": "បានអាន"
+      },
+      "toast": {
+        "load_error": "មិនអាចទាញយកការជូនដំណឹងបានទេ។",
+        "action_failed": "សកម្មភាពបរាជ័យ។ សូមព្យាយាមម្តងទៀត។"
+      }
     },
     "orders": {
       "title": "ការបញ្ជាទិញ",
@@ -488,16 +600,37 @@
     },
     "reports": {
       "title": "របាយការណ៍",
-      "subtitle": "នាំចេញការបញ្ជាទិញជា CSV ឬ PDF។",
+      "subtitle": "តាមដានលទ្ធផលលក់ និងនាំចេញរបាយការណ៍ជា CSV ឬ PDF។",
       "orders_report": "របាយការណ៍ការបញ្ជាទិញ",
+      "products_report": "របាយការណ៍ផលិតផល",
+      "payments_report": "របាយការណ៍ការទូទាត់",
+      "orders_description": "ការបញ្ជាទិញក្នុងស្ថានភាព និងជួរកាលបរិច្ឆេទដែលបានជ្រើសរើស។",
+      "products_description": "ចំនួនលក់ចេញ និងចំណូលក្នុងមួយផលិតផល។",
+      "payments_description": "ការទូទាត់ដែលបានកត់ត្រាក្នុងជួរដែលបានជ្រើសរើស។",
       "all_statuses": "គ្រប់ស្ថានភាព",
+      "filters": "សេចក្តីសង្ខេប និងតម្រង",
+      "order_status": "ស្ថានភាពការបញ្ជាទិញ",
+      "exports": "នាំចេញរបាយការណ៍",
+      "payment_methods": "ការវិភាគតាមវិធីសាស្ត្រទូទាត់",
+      "revenue": "ចំណូល",
+      "items_revenue": "ចំណូលទំនិញ",
+      "refunded": "បង្វិលសង",
+      "orders_count": "ការបញ្ជាទិញ",
+      "customers_count": "អតិថិជន",
+      "units_sold": "លក់បាន",
+      "avg_order_value": "ចំនួនមធ្យមក្នុងមួយការបញ្ជាទិញ",
+      "low_stock": "ទំនិញស្តុកទាប",
+      "type_orders": "ការបញ្ជាទិញ",
+      "type_products": "ផលិតផល",
+      "type_payments": "ការទូទាត់",
+      "toast_exported": "បាននាំចេញរបាយការណ៍ {type}។",
       "from": "ចាប់ពី",
       "to": "ដល់",
       "download_pdf": "ទាញយក PDF",
       "download_csv": "ទាញយក CSV",
       "downloading": "កំពុងទាញយក…",
       "summary_title": "របៀបធ្វើនាំចេញ",
-      "summary_description": "របាយការណ៍រួមបញ្ចូលការបញ្ជាទិញទាំងអស់ដែលត្រូវនឹងស្ថានភាព និងជួរកាលបរិច្ឆេទដែលបានជ្រើសរើស។",
+      "summary_description": "របាយការណ៍រួមបញ្ចូលកំណត់ត្រាទាំងអស់ដែលត្រូវនឹងស្ថានភាព និងជួរកាលបរិច្ឆេទដែលបានជ្រើសរើស។",
       "toast_csv": "នាំចេញ CSV នៃការបញ្ជាទិញ ({status}) ដោយជោគជ័យ។",
       "toast_pdf": "នាំចេញ PDF នៃការបញ្ជាទិញ ({status}) ដោយជោគជ័យ។",
       "toast_error": "ការនាំចេញបរាជ័យ។ សូមព្យាយាមម្តងទៀត។"
@@ -510,6 +643,8 @@
       "store_name": "ឈ្មោះហាង",
       "support_email": "អ៊ីមែលជំនួយ",
       "support_phone": "ទូរស័ព្ទជំនួយ",
+      "store_address": "អាសយដ្ឋានហាង",
+      "timezone": "តំបន់ពេលវេលា",
       "currency": "រូបិយប័ណ្ណលំនាំដើម",
       "locale": "ភាសាលំនាំដើម",
       "notifications": "ការជូនដំណឹង",
@@ -519,6 +654,10 @@
       "email_order_notifications_desc": "ផ្ញើអ៊ីមែលនៅពេលមានការបញ្ជាទិញថ្មី។",
       "email_low_stock_alerts": "ការជូនដំណឹងស្តុកទាប",
       "email_low_stock_alerts_desc": "ផ្ញើអ៊ីមែលនៅពេលផលិតផលធ្លាក់ក្រោមកម្រិត។",
+      "maintenance": "ការថែទាំ",
+      "maintenance_description": "គ្រប់គ្រងភាពបើកដំណើរការហាងក្នុងអំឡុងពេលថែទាំ។",
+      "maintenance_mode": "របៀបថែទាំ",
+      "maintenance_mode_desc": "រក្សាហាងឱ្យដំណើរការសម្រាប់តែអ្នកគ្រប់គ្រងប៉ុណ្ណោះ អំឡុងពេលថែទាំ។",
       "stored_in_db": "រក្សាទុកក្នុងមូលដ្ឋានទិន្នន័យ",
       "stored_in_db_description": "ចំណូលចិត្តទាំងនេះអនុវត្តទូទាំងហាង ហើយត្រូវបានរក្សាទុកនៅលើម៉ាស៊ីនមេ។",
       "save_changes": "រក្សាទុកការផ្លាស់ប្តូរ",
@@ -536,6 +675,7 @@
       "orders": "ការបញ្ជាទិញ",
       "total_spent": "ចំណាយសរុប",
       "joined": "បានចូលរួម",
+      "role": "តួនាទី",
       "search_placeholder": "ស្វែងរកអតិថិជន…",
       "bulk": {
         "export_csv": "នាំចេញ CSV",
@@ -602,9 +742,17 @@
       "search_placeholder": "ស្វែងរកផលិតផល…",
       "export_csv": "នាំចេញ CSV",
       "duplicate": "ចម្លង",
+      "activate": "ដំណើរការ",
+      "deactivate": "បញ្ឈប់",
+      "show_deleted": "បង្ហាញដែលបានលុប",
+      "show_active": "បង្ហាញសកម្ម",
+      "restore": "ស្តារឡើងវិញ",
       "toast_duplicated": "បានចម្លង {name}",
       "toast_deleted": "បានលុប {name}",
       "toast_deleted_count": "បានលុប {count} ផលិតផល",
+      "toast_restored": "បានស្តារ {name} ឡើងវិញ",
+      "toast_status_updated": "បានធ្វើបច្ចុប្បន្នភាពស្ថានភាពសម្រាប់ {count} ផលិតផល",
+      "toast_action_failed": "សកម្មភាពបរាជ័យ។ សូមព្យាយាមម្តងទៀត។",
       "toast_exported_csv": "បាននាំចេញ {count} ផលិតផលទៅ CSV",
       "catalog": "កាតាឡុក",
       "add_new_product": "បន្ថែមផលិតផលថ្មី",

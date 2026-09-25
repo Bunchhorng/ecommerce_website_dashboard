@@ -17,8 +17,7 @@ class CheckoutController extends Controller
         protected CheckoutService $checkout,
         protected CartService $carts,
         protected CouponService $coupons,
-    ) {
-    }
+    ) {}
 
     protected function user(Request $request)
     {
@@ -54,7 +53,7 @@ class CheckoutController extends Controller
         $order = $this->checkout->begin([
             'cart' => $cart,
             'session_id' => $user === null ? (string) $sessionId : null,
-            'session_token' => $user === null ? 'guest_' . md5((string) $sessionId) : null,
+            'session_token' => $user === null ? 'guest_'.md5((string) $sessionId) : null,
             'shipping_method_id' => (int) $request->shipping_method_id,
             'payment_method' => (string) $request->payment_method,
             'coupon_code' => $request->coupon_code,
@@ -68,7 +67,7 @@ class CheckoutController extends Controller
 
         return (new OrderResource($order))
             ->additional([
-                'reservation_expires_at' => $order->placed_at?->addMinutes(15)->toISOString(),
+                'reservation_expires_at' => $order->placed_at?->addMinutes((int) config('ecommerce.reservation_minutes', 15))->toISOString(),
             ]);
     }
 
@@ -111,7 +110,7 @@ class CheckoutController extends Controller
         $sessionId = $request->header('X-Session-Id');
         $stored = $order->payment?->provider_data['session_id'] ?? null;
 
-        if ($sessionId === null || $stored !== 'guest_' . md5((string) $sessionId)) {
+        if ($sessionId === null || $stored !== 'guest_'.md5((string) $sessionId)) {
             abort(404, 'Order not found.');
         }
 

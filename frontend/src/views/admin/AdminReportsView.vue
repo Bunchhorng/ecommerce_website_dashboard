@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { FileText, FileSpreadsheet, FileBarChart2 } from 'lucide-vue-next'
+import { computed, onMounted, ref } from 'vue'
+import { FileText, FileSpreadsheet, RefreshCw, DollarSign, ShoppingCart, Users, Package, TrendingUp, XCircle, AlertTriangle, Landmark } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { adminApi } from '@/api/admin'
 import { downloadResponse } from '@/utils/download'
+import { formatCompactNumber, formatPrice } from '@/utils/format'
 
 const { t } = useI18n()
 
@@ -11,6 +12,18 @@ const status = ref('all')
 const from = ref('')
 const to = ref('')
 const downloading = ref('')
+const loadingSummary = ref(true)
+const summary = ref<{
+  revenue: number
+  items_revenue: number
+  refunded: number
+  orders_count: number
+  customers_count: number
+  units_sold: number
+  avg_order_value: number
+  payment_methods: { method: string; count: number; amount: number }[]
+  low_stock_count: number
+} | null>(null)
 
 const statusOptions = [
   { value: 'all', labelKey: 'admin.reports.all_statuses' },
@@ -23,6 +36,20 @@ const statusOptions = [
   { value: 'refunded', labelKey: 'status.refunded' }
 ]
 
+const cards = computed(() => {
+  const s = summary.value
+  return [
+    { key: 'revenue', label: t('admin.reports.revenue'), value: s ? formatPrice(s.revenue) : '—', icon: DollarSign },
+    { key: 'orders', label: t('admin.reports.orders_count'), value: s ? String(s.orders_count) : '—', icon: ShoppingCart },
+    { key: 'customers', label: t('admin.reports.customers_count'), value: s ? String(s.customers_count) : '—', icon: Users },
+    { key: 'units', label: t('admin.reports.units_sold'), value: s ? String(s.units_sold) : '—', icon: Package },
+    { key: 'avg', label: t('admin.reports.avg_order_value'), value: s ? formatPrice(s.avg_order_value) : '—', icon: TrendingUp },
+    { key: 'items', label: t('admin.reports.items_revenue'), value: s ? formatPrice(s.items_revenue) : '—', icon: FileSpreadsheet },
+    { key: 'refunded', label: t('admin.reports.refunded'), value: s ? formatPrice(s.refunded) : '—', icon: XCircle },
+    { key: 'low_stock', label: t('admin.reports.low_stock'), value: s ? String(s.low_stock_count) : '—', icon: AlertTriangle }
+  ]
+})
+
 const toast = ref('')
 let toastTimer: ReturnType<typeof setTimeout> | undefined
 function showToast(msg: string) {
@@ -33,34 +60,46 @@ function showToast(msg: string) {
   }, 2500)
 }
 
-function selectedStatusLabel(): string {
-  const opt = statusOptions.find((o) => o.value === status.value)
-  return opt ? t(opt.labelKey) : t('admin.reports.all_statuses')
+async function loadSummary() {
+  loadingSummary.value = true
+  try {
+    const { data: resp } = await adminApi.getReportsSummary({
+      from: from.value || undefined,
+      to: to.value || undefined
+    })
+    summary.value = resp.data
+  } catch {
+    showToast(t('admin.reports.toast_error'))
+  } finally {
+    loadingSummary.value = false
+  }
 }
 
-async function exportReport(format: 'csv' | 'pdf') {
+async function exportFile(type: 'orders' | 'products' | 'payments', format: 'csv' | 'pdf') {
   if (downloading.value) return
-  downloading.value = format
+  downloading.value = `${type}-${format}`
   try {
-    const response =
-      format === 'csv'
-        ? await adminApi.getOrdersCsv(status.value, from.value || undefined, to.value || undefined)
-        : await adminApi.getOrdersPdf(status.value, from.value || undefined, to.value || undefined)
-
-    const isPdf = format === 'pdf'
-    downloadResponse(response, `orders-${new Date().toISOString().slice(0, 10)}.${isPdf ? 'pdf' : 'csv'}`)
-
-    showToast(
-      t(format === 'pdf' ? 'admin.reports.toast_pdf' : 'admin.reports.toast_csv', {
-        status: selectedStatusLabel()
-      })
-    )
+    let response: Awaited<ReturnType<typeof adminApi.getOrdersCsv>> | undefined
+    if (type === 'orders') {
+      response =
+        format === 'csv'
+          ? await adminApi.getOrdersCsv(status.value, from.value || undefined, to.value || undefined)
+          : await adminApi.getOrdersPdf(status.value, from.value || undefined, to.value || undefined)
+    } else if (type === 'products') {
+      response = await adminApi.getProductsCsv(from.value || undefined, to.value || undefined)
+    } else {
+      response = await adminApi.getPaymentsCsv(status.value, from.value || undefined, to.value || undefined)
+    }
+    downloadResponse(response, `${type}-${new Date().toISOString().slice(0, 10)}.${format === 'pdf' ? 'pdf' : 'csv'}`)
+    showToast(t('admin.reports.toast_exported', { type: t(`admin.reports.type_${type}`) }))
   } catch {
     showToast(t('admin.reports.toast_error'))
   } finally {
     downloading.value = ''
   }
 }
+
+onMounted(() => loadSummary())
 </script>
 
 <template>
@@ -71,11 +110,17 @@ async function exportReport(format: 'csv' | 'pdf') {
     </div>
 
     <div class="card p-6">
-      <h2 class="text-base font-semibold text-ink">{{ $t('admin.reports.orders_report') }}</h2>
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h2 class="text-base font-semibold text-ink">{{ $t('admin.reports.filters') }}</h2>
+        <button type="button" class="btn-outline btn-sm" :disabled="loadingSummary" @click="loadSummary">
+          <RefreshCw class="h-4 w-4" />
+          {{ $t('actions.refresh') }}
+        </button>
+      </div>
 
-      <div class="mt-5 grid gap-4 sm:grid-cols-3">
+      <div class="mt-5 grid gap-4 sm:grid-cols-4">
         <div>
-          <label class="label" for="report-status">{{ $t('order.status') }}</label>
+          <label class="label" for="report-status">{{ $t('admin.reports.order_status') }}</label>
           <select id="report-status" v-model="status" class="input">
             <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
               {{ $t(opt.labelKey) }}
@@ -90,42 +135,110 @@ async function exportReport(format: 'csv' | 'pdf') {
           <label class="label" for="report-to">{{ $t('admin.reports.to') }}</label>
           <input id="report-to" v-model="to" type="date" class="input" />
         </div>
-      </div>
-
-      <div class="mt-6 flex flex-col gap-3 sm:flex-row">
-        <button
-          type="button"
-          class="btn-primary"
-          :disabled="downloading === 'pdf'"
-          @click="exportReport('pdf')"
-        >
-          <FileText v-if="downloading !== 'pdf'" class="h-4 w-4" />
-          {{ downloading === 'pdf'
-            ? $t('admin.reports.downloading')
-            : $t('admin.reports.download_pdf') }}
-        </button>
-        <button
-          type="button"
-          class="btn-secondary"
-          :disabled="downloading === 'csv'"
-          @click="exportReport('csv')"
-        >
-          <FileSpreadsheet v-if="downloading !== 'csv'" class="h-4 w-4" />
-          {{ downloading === 'csv'
-            ? $t('admin.reports.downloading')
-            : $t('admin.reports.download_csv') }}
-        </button>
+        <div class="flex items-end">
+          <button type="button" class="btn-primary w-full" @click="loadSummary">
+            <RefreshCw class="h-4 w-4" />
+            {{ $t('actions.apply') }}
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="card flex items-start gap-4 p-6">
-      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <FileBarChart2 class="h-6 w-6" />
+    <div v-if="loadingSummary" class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div v-for="i in 8" :key="i" class="card animate-pulse p-5">
+        <div class="h-3 w-2/3 rounded bg-gray-200 dark:bg-surface-hover"></div>
+        <div class="mt-4 h-7 w-1/2 rounded bg-gray-200 dark:bg-surface-hover"></div>
       </div>
-      <div>
-        <p class="font-semibold text-ink">{{ $t('admin.reports.summary_title') }}</p>
-        <p class="mt-1 text-sm text-gray-500">{{ $t('admin.reports.summary_description') }}</p>
+    </div>
+
+    <div v-else-if="summary" class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div v-for="card in cards" :key="card.key" class="card p-5">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="text-sm text-gray-500 dark:text-muted">{{ card.label }}</div>
+            <div class="mt-2 truncate text-xl font-extrabold text-ink dark:text-ink">{{ card.value }}</div>
+          </div>
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <component :is="card.icon" class="h-5 w-5" />
+          </div>
+        </div>
       </div>
+    </div>
+
+    <div class="card p-6">
+      <h2 class="text-base font-semibold text-ink">{{ $t('admin.reports.exports') }}</h2>
+
+      <div class="mt-5 grid gap-5 lg:grid-cols-3">
+        <div class="rounded-xl border border-border-gray p-5">
+          <h3 class="text-sm font-semibold text-ink">{{ $t('admin.reports.orders_report') }}</h3>
+          <p class="mt-1 text-xs text-gray-500 dark:text-muted">{{ $t('admin.reports.orders_description') }}</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              class="btn-primary btn-sm"
+              :disabled="downloading === 'orders-pdf'"
+              @click="exportFile('orders', 'pdf')"
+            >
+              <FileText v-if="downloading !== 'orders-pdf'" class="h-4 w-4" />
+              {{ downloading === 'orders-pdf' ? $t('admin.reports.downloading') : $t('admin.reports.download_pdf') }}
+            </button>
+            <button
+              type="button"
+              class="btn-secondary btn-sm"
+              :disabled="downloading === 'orders-csv'"
+              @click="exportFile('orders', 'csv')"
+            >
+              <FileSpreadsheet v-if="downloading !== 'orders-csv'" class="h-4 w-4" />
+              {{ downloading === 'orders-csv' ? $t('admin.reports.downloading') : $t('admin.reports.download_csv') }}
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-border-gray p-5">
+          <h3 class="text-sm font-semibold text-ink">{{ $t('admin.reports.products_report') }}</h3>
+          <p class="mt-1 text-xs text-gray-500 dark:text-muted">{{ $t('admin.reports.products_description') }}</p>
+          <div class="mt-4">
+            <button
+              type="button"
+              class="btn-secondary btn-sm"
+              :disabled="downloading === 'products-csv'"
+              @click="exportFile('products', 'csv')"
+            >
+              <FileSpreadsheet v-if="downloading !== 'products-csv'" class="h-4 w-4" />
+              {{ downloading === 'products-csv' ? $t('admin.reports.downloading') : $t('admin.reports.download_csv') }}
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-border-gray p-5">
+          <h3 class="text-sm font-semibold text-ink">{{ $t('admin.reports.payments_report') }}</h3>
+          <p class="mt-1 text-xs text-gray-500 dark:text-muted">{{ $t('admin.reports.payments_description') }}</p>
+          <div class="mt-4">
+            <button
+              type="button"
+              class="btn-secondary btn-sm"
+              :disabled="downloading === 'payments-csv'"
+              @click="exportFile('payments', 'csv')"
+            >
+              <FileSpreadsheet v-if="downloading !== 'payments-csv'" class="h-4 w-4" />
+              {{ downloading === 'payments-csv' ? $t('admin.reports.downloading') : $t('admin.reports.download_csv') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="summary?.payment_methods.length" class="card p-6">
+      <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-ink">
+        <Landmark class="h-5 w-5 text-primary" />
+        {{ $t('admin.reports.payment_methods') }}
+      </h2>
+      <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <li v-for="pm in summary.payment_methods" :key="pm.method" class="rounded-xl bg-canvas p-4">
+          <div class="text-sm font-semibold capitalize text-ink dark:text-ink">{{ pm.method }} ({{ formatCompactNumber(pm.count) }})</div>
+          <div class="mt-1 text-lg font-extrabold text-primary">{{ formatPrice(pm.amount) }}</div>
+        </li>
+      </ul>
     </div>
 
     <transition name="fade">

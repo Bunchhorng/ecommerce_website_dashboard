@@ -13,6 +13,13 @@ export interface CatalogProduct {
   is_active: boolean
   in_stock: boolean
   cover_image: string | null
+  variants: {
+    id: number
+    sku: string
+    name: string | null
+    price: number | null
+    in_stock: boolean
+  }[]
   brand: { slug: string; name: string } | null
   category: { slug: string; name: string } | null
 }

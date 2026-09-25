@@ -12,7 +12,6 @@ use App\Models\PaymentTransaction;
 use App\Models\ProductVariant;
 use App\Models\Shipment;
 use App\Models\ShippingMethod;
-use App\Models\TrackingEvent;
 use App\Models\User;
 use App\Notifications\OrderPlacedNotification;
 use Illuminate\Support\Facades\DB;
@@ -26,8 +25,7 @@ class CheckoutService
         private InventoryService $inventory,
         private CouponService $coupon,
         private OrderNumberGenerator $orderNumber,
-    ) {
-    }
+    ) {}
 
     /**
      * Begin the checkout, reserving stock and snapshotting the order.
@@ -138,7 +136,7 @@ class CheckoutService
                 'order_id' => $order->id,
                 'shipping_method_id' => $shippingMethod->id,
                 'status' => Shipment::STATUS_PENDING,
-                'address_snapshot' => json_encode($snapshot),
+                'address_snapshot' => $snapshot,
             ]);
 
             if ($coupon !== null && $discount > 0) {
@@ -252,6 +250,10 @@ class CheckoutService
      */
     public function expireStaleReservations(int $minutes = 15): int
     {
+        if (func_num_args() === 0) {
+            $minutes = (int) config('ecommerce.reservation_minutes', 15);
+        }
+
         $cutoff = now()->subMinutes($minutes);
         $count = 0;
 

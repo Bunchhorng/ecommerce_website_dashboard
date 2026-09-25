@@ -14,6 +14,7 @@ const router = useRouter()
 const loading = ref(true)
 const products = ref<AdminProduct[]>([])
 const totalCount = ref(0)
+const showDeleted = ref(false)
 
 const columns = computed<TableColumn[]>(() => [
   { key: 'image', label: t('admin.products.column_image'), type: 'image', sortable: true },
@@ -36,8 +37,28 @@ const rows = computed<TableRow[]>(() =>
     sku: p.sku,
     price: p.price,
     stock: p.variants?.reduce((sum, v) => sum + v.available_quantity, 0) ?? 0,
-    status: p.in_stock ? (p.variants?.some((v) => v.available_quantity <= 5) ? 'Low Stock' : 'In Stock') : 'Out of Stock'
+    status: showDeleted.value
+      ? 'Deleted'
+      : p.in_stock
+        ? (p.variants?.some((v) => v.available_quantity <= 5) ? 'Low Stock' : 'In Stock')
+        : 'Out of Stock'
   }))
+)
+
+const bulkActions = computed(() => [
+  { label: t('admin.products.activate'), value: 'activate' },
+  { label: t('admin.products.deactivate'), value: 'deactivate' },
+  ...(showDeleted.value ? [] : [{ label: t('actions.delete'), value: 'delete' as string }])
+])
+
+const rowActions = computed(() =>
+  showDeleted.value
+    ? [{ label: t('admin.products.restore'), value: 'restore' }]
+    : [
+        { label: t('actions.edit'), value: 'edit' },
+        { label: t('admin.products.duplicate'), value: 'duplicate' },
+        { label: t('actions.delete'), value: 'delete' }
+      ]
 )
 
 const toast = ref('')
@@ -53,7 +74,7 @@ function showToast(msg: string) {
 async function loadProducts() {
   loading.value = true
   try {
-    const { data: resp } = await adminApi.listProducts()
+    const { data: resp } = await adminApi.listProducts({ deleted: showDeleted.value })
     products.value = resp.data
     totalCount.value = resp.meta.total
   } catch {
@@ -61,6 +82,11 @@ async function loadProducts() {
   } finally {
     loading.value = false
   }
+}
+
+function toggleDeletedView() {
+  showDeleted.value = !showDeleted.value
+  void loadProducts()
 }
 
 function onRowAction(payload: { action: string; row: TableRow }) {
@@ -71,6 +97,15 @@ function onRowAction(payload: { action: string; row: TableRow }) {
     }
   } else if (payload.action === 'duplicate') {
     showToast(t('admin.products.toast_duplicated', { name: String(payload.row.title) }))
+  } else if (payload.action === 'restore') {
+    const id = Number(payload.row.id)
+    adminApi.restoreProduct(id).then(() => {
+      products.value = products.value.filter((p) => p.id !== id)
+      totalCount.value--
+      showToast(t('admin.products.toast_restored', { name: String(payload.row.title) }))
+    }).catch(() => {
+      showToast(t('admin.products.toast_action_failed'))
+    })
   } else if (payload.action === 'delete') {
     const id = Number(payload.row.id)
     adminApi.deleteProduct(id).then(() => {
@@ -94,6 +129,14 @@ function onBulkAction(payload: { action: string; ids: string[] }) {
       .catch(() => {
         showToast(t('admin.products.toast_delete_error'))
       })
+  } else if (payload.action === 'activate' || payload.action === 'deactivate') {
+    const ids = payload.ids.map((id) => Number(id))
+    adminApi.updateProductStatus(ids, payload.action === 'activate').then(() => {
+      showToast(t('admin.products.toast_status_updated', { count: ids.length }))
+      void loadProducts()
+    }).catch(() => {
+      showToast(t('admin.products.toast_action_failed'))
+    })
   } else if (payload.action === 'export') {
     showToast(t('admin.products.toast_exported_csv', { count: payload.ids.length }))
   }
@@ -109,10 +152,19 @@ onMounted(loadProducts)
         <h1 class="text-2xl font-bold text-ink">{{ $t('admin.products.title') }}</h1>
         <span class="chip">{{ $t('admin.products.total_count', { count: totalCount }) }}</span>
       </div>
-      <router-link :to="{ name: 'admin-product-create' }" class="btn-primary btn-sm">
-        <Plus class="h-4 w-4" />
-        {{ $t('admin.products.add_product') }}
-      </router-link>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="btn-outline btn-sm"
+          @click="toggleDeletedView"
+        >
+          {{ showDeleted ? $t('admin.products.show_active') : $t('admin.products.show_deleted') }}
+        </button>
+        <router-link :to="{ name: 'admin-product-create' }" class="btn-primary btn-sm">
+          <Plus class="h-4 w-4" />
+          {{ $t('admin.products.add_product') }}
+        </router-link>
+      </div>
     </div>
 
     <AdminDataTable
@@ -122,8 +174,8 @@ onMounted(loadProducts)
       :search-keys="['title', 'brand', 'sku']"
       :search-placeholder="$t('admin.products.search_placeholder')"
       :page-size="8"
-      :bulk-actions="[{ label: $t('actions.delete'), value: 'delete' }, { label: $t('admin.products.export_csv'), value: 'export' }]"
-      :row-actions="[{ label: $t('actions.edit'), value: 'edit' }, { label: $t('admin.products.duplicate'), value: 'duplicate' }, { label: $t('actions.delete'), value: 'delete' }]"
+      :bulk-actions="bulkActions"
+      :row-actions="rowActions"
       @row-action="onRowAction"
       @bulk-action="onBulkAction"
     />

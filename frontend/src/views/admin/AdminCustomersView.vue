@@ -18,7 +18,7 @@ const columns = computed<TableColumn[]>(() => [
   { key: 'avatar', label: t('admin.customers.customer'), type: 'image' },
   { key: 'name', label: '', sortable: true },
   { key: 'email', label: t('admin.customers.email') },
-  { key: 'status', label: t('order.status'), type: 'status' },
+  { key: 'status', label: t('admin.customers.role'), type: 'status' },
   { key: 'joinedAt', label: t('admin.customers.joined'), type: 'date', sortable: true },
   { key: 'actions', label: '', type: 'actions' }
 ])

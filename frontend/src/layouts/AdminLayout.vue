@@ -11,6 +11,8 @@ import {
   ShoppingCart,
   Warehouse,
   Truck,
+  Ship,
+  CreditCard,
   FileBarChart,
   TicketPercent,
   Users,
@@ -81,6 +83,8 @@ const navGroups: NavGroup[] = [
     items: [
       { labelKey: 'admin.nav.orders', route: { name: 'admin-orders' }, icon: ShoppingCart },
       { labelKey: 'admin.nav.inventory', route: { name: 'admin-inventory' }, icon: Warehouse },
+      { labelKey: 'admin.nav.payments', route: { name: 'admin-payments' }, icon: CreditCard },
+      { labelKey: 'admin.nav.shipments', route: { name: 'admin-shipments' }, icon: Ship },
       { labelKey: 'admin.nav.reports', route: { name: 'admin-reports' }, icon: FileBarChart },
       { labelKey: 'admin.nav.shipping_methods', route: { name: 'admin-shipping' }, icon: Truck }
     ]
@@ -98,7 +102,10 @@ const navGroups: NavGroup[] = [
   },
   {
     titleKey: 'admin.nav.group_system',
-    items: [{ labelKey: 'admin.nav.settings', route: { name: 'admin-settings' }, icon: Settings }]
+    items: [
+      { labelKey: 'admin.nav.notifications', route: { name: 'admin-notifications' }, icon: Bell },
+      { labelKey: 'admin.nav.settings', route: { name: 'admin-settings' }, icon: Settings }
+    ]
   }
 ]
 

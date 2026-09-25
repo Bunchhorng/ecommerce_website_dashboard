@@ -90,6 +90,23 @@ class AdminInventoryTest extends TestCase
             ->assertJsonCount(1, 'data');
     }
 
+    public function test_inventory_index_handles_soft_deleted_products(): void
+    {
+        $product = Product::factory()->withVariant(stock: 3)->create(['name' => 'Orphan Legacy']);
+        $variant = $product->variants()->first();
+        $product->delete();
+
+        $data = $this->actingAs($this->admin(), 'sanctum')
+            ->getJson('/api/admin/inventory')
+            ->assertOk()
+            ->json('data');
+
+        $row = collect($data)->firstWhere('product_variant_id', $variant->id);
+        $this->assertNotNull($row);
+        $this->assertNull($row['product']);
+        $this->assertSame($variant->name, $row['variant']['name']);
+    }
+
     public function test_transactions_returns_ledger_for_inventory(): void
     {
         $product = Product::factory()->withVariant(price: 50, stock: 10)->create();

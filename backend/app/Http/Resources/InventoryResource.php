@@ -12,14 +12,17 @@ class InventoryResource extends JsonResource
         return [
             'id' => (int) $this->id,
             'product_variant_id' => (int) $this->product_variant_id,
-            'product' => $this->when(
-                $this->relationLoaded('variant') && $this->variant?->relationLoaded('product'),
-                fn () => [
-                    'id' => (int) $this->variant->product->id,
-                    'name' => $this->variant->product->name,
-                    'slug' => $this->variant->product->slug,
-                ],
-            ),
+            'product' => $this->variant !== null && $this->variant->relationLoaded('product')
+                ? (
+                    $this->variant->product !== null
+                        ? [
+                            'id' => (int) $this->variant->product->id,
+                            'name' => $this->variant->product->name,
+                            'slug' => $this->variant->product->slug,
+                        ]
+                        : null
+                )
+                : null,
             'variant' => $this->whenLoaded('variant', fn () => [
                 'id' => (int) $this->variant->id,
                 'name' => $this->variant->name,

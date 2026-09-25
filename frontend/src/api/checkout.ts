@@ -70,7 +70,7 @@ export interface ApiOrder {
     status: string
     shipped_at: string | null
     delivered_at: string | null
-    address_snapshot: string | null
+    address_snapshot: Record<string, string> | null
   } | null
 }
 

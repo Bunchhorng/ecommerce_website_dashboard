@@ -216,7 +216,7 @@ class AdminTest extends TestCase
         Shipment::create([
             'order_id' => $order->id,
             'status' => $paymentStatus === 'paid' ? 'shipped' : 'pending',
-            'address_snapshot' => json_encode(['full_name' => 'x']),
+            'address_snapshot' => ['full_name' => 'x'],
         ]);
 
         return $order;

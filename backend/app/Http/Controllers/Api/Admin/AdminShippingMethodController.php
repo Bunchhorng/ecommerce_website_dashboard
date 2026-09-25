@@ -7,6 +7,7 @@ use App\Http\Requests\AdminShippingMethodRequest;
 use App\Http\Resources\ShippingMethodResource;
 use App\Models\ShippingMethod;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class AdminShippingMethodController extends Controller
 {
@@ -18,6 +19,7 @@ class AdminShippingMethodController extends Controller
     public function store(AdminShippingMethodRequest $request)
     {
         $method = ShippingMethod::create($request->validated());
+        Cache::forget('shipping_methods:active');
 
         return (new ShippingMethodResource($method))->response()->setStatusCode(201);
     }
@@ -25,6 +27,7 @@ class AdminShippingMethodController extends Controller
     public function update(AdminShippingMethodRequest $request, ShippingMethod $method)
     {
         $method->update($request->validated());
+        Cache::forget('shipping_methods:active');
 
         return new ShippingMethodResource($method);
     }
@@ -32,6 +35,7 @@ class AdminShippingMethodController extends Controller
     public function destroy(ShippingMethod $method)
     {
         $method->delete();
+        Cache::forget('shipping_methods:active');
 
         return response()->json(['data' => ['message' => 'Shipping method deleted.']]);
     }
